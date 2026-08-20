@@ -1,0 +1,25 @@
+node_modules
+dist
+dist-ssr
+dist-electron
+*.local
+
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+coverage
+test-results
+
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+Thumbs.db
+
+*.tsbuildinfo
+
+# 本机个人配置 (MCP / IDE 本地环境)
+yyc3-cn-assistant.json
+.vscode/

@@ -1,0 +1,26 @@
+/**
+ * @file: index.css
+ * @description: 全局样式入口 · 导入字体、Tailwind、主题样式
+ * @author: YanYuCloudCube Team
+ * @version: v1.0.0
+ * @created: 2026-03-31
+ * @updated: 2026-04-09
+ * @status: active
+ * @tags: [style],[global],[entry]
+ *
+ * @brief: 全局样式入口文件
+ *
+ * @details:
+ * - 导入字体样式
+ * - 导入 Tailwind CSS
+ * - 导入主题变量
+ * - 全局样式重置
+ *
+ * @dependencies: TailwindCSS, Custom Theme
+ * @exports: -
+ * @notes: 在 main.tsx 中引入，确保全局生效
+ */
+
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';

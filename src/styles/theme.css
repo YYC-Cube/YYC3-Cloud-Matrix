@@ -1,0 +1,309 @@
+/**
+ * @file: theme.css
+ * @description: theme.css description
+ * @author: YanYuCloudCube Team
+ * @version: v1.0.0
+ * @created: 2026-03-31
+ * @updated: 2026-03-31
+ * @status: active
+ * @tags: [style]
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ═══════════════════════════════════════════════════════════════
+   *  基础设置
+   * ═══════════════════════════════════════════════════════════════ */
+  --font-size: 16px;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  色彩系统 - 与 design-system.ts COLOR_TOKENS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --background: #060e1f;
+  --foreground: #e0f0ff;
+  --card: rgba(10, 30, 60, 0.7);
+  --card-foreground: #e0f0ff;
+  --popover: rgba(10, 30, 60, 0.85);
+  --popover-foreground: #e0f0ff;
+  --primary: #00d4ff;
+  --primary-foreground: #060e1f;
+  --secondary: rgba(0, 180, 255, 0.15);
+  --secondary-foreground: #80dfff;
+  --muted: rgba(0, 120, 200, 0.2);
+  --muted-foreground: #6bb8d9;
+  --accent: rgba(0, 200, 255, 0.1);
+  --accent-foreground: #00d4ff;
+  --destructive: #ff3366;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 180, 255, 0.2);
+  --ring: rgba(0, 212, 255, 0.5);
+
+  /* 状态色 */
+  --success: #00ff88;
+  --warning: #ffaa00;
+  --error: #ff3366;
+
+  /* 图表色 */
+  --chart-1: #00d4ff;
+  --chart-2: #00ff88;
+  --chart-3: #ff6600;
+  --chart-4: #aa55ff;
+  --chart-5: #ffdd00;
+
+  /* AI Family 专属色 */
+  --family-navigator: #FFD700;
+  --family-thinker: #FF69B4;
+  --family-prophet: #00BFFF;
+  --family-bolero: #FFD700;
+  --family-sentinel: #00FF88;
+  --family-master: #FFD700;
+  --family-oracle: #00BFFF;
+  --family-creator: #BF00FF;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  表单组件
+   * ═══════════════════════════════════════════════════════════════ */
+  --input: transparent;
+  --input-background: rgba(0, 40, 80, 0.5);
+  --switch-background: rgba(0, 100, 160, 0.4);
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  字体排版 - 与 design-system.ts TYPOGRAPHY_TOKENS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --font-family-display: 'Orbitron', sans-serif;
+  --font-family-body: 'Rajdhani', sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --font-size-micro: 0.625rem;
+  --font-size-caption: 0.75rem;
+  --font-size-body: 0.875rem;
+  --font-size-subtitle: 1rem;
+  --font-size-h3: 1.125rem;
+  --font-size-h2: 1.25rem;
+  --font-size-h1: 1.5rem;
+  --font-size-display: 2rem;
+  --font-size-hero: 3rem;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  间距规范 - 与 design-system.ts SPACING_TOKENS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --spacing-4xs: 0.125rem;
+  --spacing-3xs: 0.25rem;
+  --spacing-2xs: 0.375rem;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  圆角规范 - 与 design-system.ts BORDER_RADIUS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+  --radius: 0.75rem;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  阴影效果 - 与 design-system.ts SHADOW_TOKENS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --shadow-glow-sm: 0 0 15px rgba(0, 180, 255, 0.05);
+  --shadow-glow-md: 0 0 30px rgba(0, 180, 255, 0.1);
+  --shadow-glow-lg: 0 0 40px rgba(0, 180, 255, 0.15);
+  --shadow-glow-xl: 0 0 60px rgba(0, 180, 255, 0.2);
+  --shadow-glow-primary: 0 0 16px rgba(0, 212, 255, 0.4);
+  --shadow-glow-success: 0 0 12px rgba(0, 255, 136, 0.3);
+  --shadow-glow-danger: 0 0 8px rgba(255, 51, 102, 0.5);
+  --shadow-drop-sm: 0 4px 15px rgba(0, 0, 0, 0.2);
+  --shadow-drop-lg: 0 10px 50px rgba(0, 0, 0, 0.5);
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  动效定义 - 与 design-system.ts ANIMATION_TOKENS 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --animation-micro: 100ms ease-out;
+  --animation-fast: 200ms ease-out;
+  --animation-normal: 300ms ease-in-out;
+  --animation-smooth: 500ms ease-in-out;
+  --animation-slow: 800ms ease-in-out;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  Z-Index 层级 - 与 design-system.ts Z_INDEX 同步
+   * ═══════════════════════════════════════════════════════════════ */
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal: 40;
+  --z-popover: 50;
+  --z-tooltip: 60;
+  --z-toast: 70;
+  --z-max: 9999;
+
+  /* ═══════════════════════════════════════════════════════════════
+   *  侧边栏
+   * ═══════════════════════════════════════════════════════════════ */
+  --sidebar: rgba(8, 20, 40, 0.9);
+  --sidebar-foreground: #e0f0ff;
+  --sidebar-primary: #00d4ff;
+  --sidebar-primary-foreground: #060e1f;
+  --sidebar-accent: rgba(0, 200, 255, 0.1);
+  --sidebar-accent-foreground: #80dfff;
+  --sidebar-border: rgba(0, 180, 255, 0.15);
+  --sidebar-ring: rgba(0, 212, 255, 0.5);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-family-display: 'Orbitron', sans-serif;
+  --font-family-body: 'Rajdhani', sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+    font-family: 'Rajdhani', sans-serif;
+  }
+}
+
+/* ── Mobile touch & scroll optimization ── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent text selection on nav elements during touch */
+.touch-none-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Safe area padding utility */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Smooth momentum scrolling for iOS */
+@supports (-webkit-overflow-scrolling: touch) {
+  .overflow-auto,
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Prevent overscroll bounce on mobile */
+@media (max-width: 768px) {
+  html, body {
+    overscroll-behavior: none;
+  }
+}
