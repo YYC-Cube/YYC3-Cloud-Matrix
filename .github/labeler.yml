@@ -1,0 +1,26 @@
+# PR 自动打标规则（actions/labeler v5 语法）
+ai-family:
+  - changed-files:
+      - any-glob-to-any-file: "src/app/modules/ai-family/**"
+
+ide:
+  - changed-files:
+      - any-glob-to-any-file: "ide/**"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file: "docs/**"
+      - any-glob-to-any-file: "**/*.md"
+
+media:
+  - changed-files:
+      - any-glob-to-any-file: "public/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: "pnpm-lock.yaml"
+      - any-glob-to-any-file: "pnpm-workspace.yaml"

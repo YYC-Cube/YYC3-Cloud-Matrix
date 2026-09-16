@@ -330,7 +330,6 @@ describe("StorageManager", () => {
 
     it("(TC08) triggerSync 抛非 Error 对象（字符串） → error 转为 String()", async () => {
       mockTriggerSync = vi.fn(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-throw-literal
         throw "SERVICE_500";
       });
       render(<StorageManager />);

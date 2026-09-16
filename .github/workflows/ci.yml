@@ -8,7 +8,7 @@
 #   - 所有 Pull Request
 #
 # 阶段:
-#   1. lint     → TypeScript 类型检查
+#   1. quality  → Lint + TypeScript 类型检查 + 依赖审计（audit 严重漏洞门禁）
 #   2. test     → Vitest 单元测试 + 覆盖率报告
 #   3. build    → Vite 生产构建
 #
@@ -25,9 +25,46 @@ on:
 
 env:
   NODE_VERSION: "20"
-  PNPM_VERSION: "9"
+  PNPM_VERSION: "11"
 
 jobs:
+  # ============================================================
+  # 0. 质量门禁: Lint + 类型检查 + 依赖审计
+  # ============================================================
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      # 依赖审计门禁：critical 直接失败；high 允许（当前 extract-zip
+      # 修复版未发布，属 dev 工具链），待上游清零后可收紧为 --audit-level high
+      - name: Dependency audit (critical gate)
+        run: pnpm audit --audit-level critical
+
   # ============================================================
   # 1. 测试 + 覆盖率
   # ============================================================
@@ -104,7 +141,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: test
+    needs: [quality, test]
 
     steps:
       - name: Checkout

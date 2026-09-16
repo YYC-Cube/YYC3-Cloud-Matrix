@@ -89,7 +89,6 @@ export function createLocalStore<T extends { id: string }>(
   const {
     validator,
     debounceMs = 0,
-    // eslint-disable-next-line unused-imports/no-unused-vars
     maxCacheSize = 1000,
   } = options || {};
 

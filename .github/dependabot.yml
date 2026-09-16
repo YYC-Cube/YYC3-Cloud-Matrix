@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # npm 生态（pnpm）
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "type/deps"
+      - "priority/P2-medium"
+    commit-message:
+      prefix: "build"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "type/chore"
