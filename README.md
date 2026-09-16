@@ -550,11 +550,11 @@ graph TB
 
 ### 📋 环境要求 | Prerequisites
 
-| 依赖        | 版本要求               | 检查命令        | 安装指南                            |
-| ----------- | ---------------------- | --------------- | ----------------------------------- |
-| **Node.js** | ≥ 18.x (推荐 20.x LTS) | `node -v`       | [nodejs.org](https://nodejs.org/)   |
-| **pnpm**    | ≥ 8.x                  | `pnpm -v`       | `corepack enable pnpm`              |
-| **Git**     | 最新版                 | `git --version` | [git-scm.com](https://git-scm.com/) |
+| 依赖　　　　| 版本要求　　　　　　　 | 检查命令　　　　| 安装指南　　　　　　　　　　　　　　|
+| -------------| ------------------------| -----------------| -------------------------------------|
+| **Node.js** | ≥ 18.x (推荐 20.x LTS) | `node -v`　　　 | [nodejs.org](https://nodejs.org/)　 |
+| **pnpm**　　| ≥ 8.x　　　　　　　　　| `pnpm -v`　　　 | `corepack enable pnpm`　　　　　　　|
+| **Git**　　 | 最新版　　　　　　　　 | `git --version` | [git-scm.com](https://git-scm.com/) |
 
 ### ⚡ 5 分钟快速上手
 
