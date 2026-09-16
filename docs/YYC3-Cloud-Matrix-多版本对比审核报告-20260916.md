@@ -132,6 +132,10 @@ rm -rf ~/Downloads/YYC3-CloudPivot-Matrix-集成/YYC3-Cloud-Matrix
 | 4 | 🅲 LFS 启用 | `git lfs track "*.mp3" "*.mp4"`，音频/视频走 LFS 入库 | ✅ 完成 |
 | 5 | 🅲 资源清理 | 音乐目录内 `.DS_Store` 已清除 | ✅ 完成 |
 | 6 | 🅲 提交推送 | README 对齐 + 阶段15文档 + 审核报告 + 音乐资源（LFS）→ main | ✅ 完成 |
+| 7 | 🅲 依赖漏洞治理 | `pnpm audit` 专项：79 项（1c/44h/28m/6l）→ **2 项 high**；electron-builder 26.15.3 + overrides 迁移 pnpm-workspace.yaml（13 条新增）；tsc/77 测试/构建全绿 | ✅ 完成 |
+| 8 | 🅲 Git 标签 | `v3.4.1` 已打标推送；Topics 19 个、Labels 25 个落地 | ✅ 完成 |
+
+**依赖治理余量说明**：剩余 2 项 high 均为 `extract-zip<=2.0.1`（经 `@lhci/cli>lighthouse>puppeteer-core` 传递，属 dev 工具链非运行时产物），修复版 2.0.2 尚未在 npm 发布，待上游发布后 `pnpm update extract-zip` 即可清零。
 
 ```bash
 # 🅱 快照删除（需用户在本机终端手动执行，324M）
