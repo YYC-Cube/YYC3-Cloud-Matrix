@@ -10,16 +10,18 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegratedTerminal } from "../modules/dev/IntegratedTerminal";
 
 vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("../hooks/useTerminal", () => ({
+// 注意：组件实际从 src/app/modules/dev/hooks/useTerminal 导入，
+// vi.mock 路径必须与组件的导入解析路径一致，否则 mock 静默失效
+vi.mock("../modules/dev/hooks/useTerminal", () => ({
   useTerminal: () => ({
     history: [],
     inputValue: "",
