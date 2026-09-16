@@ -34,7 +34,9 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("../modules/dev/CodeEditor", () => ({
+// 注意：组件实际从 src/app/components/CodeEditor 导入 SQLEditor，
+// vi.mock 路径必须与组件的导入解析路径一致，否则 mock 静默失效
+vi.mock("../components/CodeEditor", () => ({
   SQLEditor: ({ value, onChange, onExecute }: any) => (
     <div>
       <textarea

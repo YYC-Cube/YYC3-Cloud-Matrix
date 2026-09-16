@@ -9,26 +9,26 @@
  * @tags: [component]
  */
 
-import React, { useState, useEffect, useContext } from "react";
 import {
   Activity,
-  Database,
-  Server,
-  CheckCircle2,
-  XCircle,
   AlertTriangle,
-  Clock,
-  Zap,
-  HardDrive,
-  RefreshCw,
   BarChart3,
+  CheckCircle2,
+  Clock,
+  Database,
+  HardDrive,
   List,
+  RefreshCw,
+  Server,
+  XCircle,
+  Zap,
 } from "lucide-react";
-import { GlassCard } from "../shared/GlassCard";
-import { ViewContext } from "../../lib/view-context";
+import { useContext, useEffect, useState } from "react";
 import { connectionManager } from "../../../database/ConnectionManager";
 import type { ConnectionInfo, HealthCheckResult, PoolStats } from "../../../database/types";
+import { ViewContext } from "../../lib/view-context";
 import { useDbConnSlice } from "../../store/slices/db-conn-slice";
+import { GlassCard } from "../shared/GlassCard";
 
 interface ConnectionMonitorProps {
   connectionId?: string;
@@ -47,7 +47,7 @@ export function ConnectionMonitorPanel({
   const [healthCheck, setHealthCheck] = useState<HealthCheckResult | null>(null);
   const [poolStats, setPoolStats] = useState<PoolStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [_showList, _setShowList] = useState(!propConnectionId);
+  const [showList, setShowList] = useState(!propConnectionId);
 
   useEffect(() => {
     const refreshData = async () => {
@@ -115,7 +115,7 @@ export function ConnectionMonitorPanel({
 
   const { connections } = useDbConnSlice();
 
-  if (!selectedConnectionId && _showList) {
+  if (!selectedConnectionId && showList) {
     return (
       <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -197,7 +197,10 @@ export function ConnectionMonitorPanel({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setSelectedConnectionId(null)}
+              onClick={() => {
+                setSelectedConnectionId(null);
+                setShowList(true);
+              }}
               className="p-2 rounded-lg bg-[rgba(0,100,150,0.1)] border border-[rgba(0,180,255,0.15)] hover:bg-[rgba(0,140,200,0.2)] transition-all"
             >
               <List className="w-4 h-4" />

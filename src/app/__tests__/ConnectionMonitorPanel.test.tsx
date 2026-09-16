@@ -179,19 +179,20 @@ describe("ConnectionMonitorPanel", () => {
   // ── 健康检查 ──
 
   describe("健康检查", () => {
-    it("renders health check card with latency, status, check time", () => {
+    it("renders health check card with latency, status, check time", async () => {
       render(<ConnectionMonitorPanel connectionId="conn-1" />);
-      expect(screen.getByText("健康检查")).toBeInTheDocument();
+      // healthCheck 为异步加载，卡片在 await 完成后渲染
+      expect(await screen.findByText("健康检查")).toBeInTheDocument();
       expect(screen.getByText("12ms")).toBeInTheDocument();
       expect(screen.getByText("健康")).toBeInTheDocument();
       expect(screen.getByText("延迟")).toBeInTheDocument();
       expect(screen.getByText("检查时间")).toBeInTheDocument();
     });
 
-    it("renders unhealthy status", () => {
+    it("renders unhealthy status", async () => {
       setupMocks(MOCK_CONNECTION, { ...MOCK_HEALTH, isHealthy: false, latency: 520 });
       render(<ConnectionMonitorPanel connectionId="conn-1" />);
-      expect(screen.getByText("异常")).toBeInTheDocument();
+      expect(await screen.findByText("异常")).toBeInTheDocument();
       expect(screen.getByText("520ms")).toBeInTheDocument();
     });
   });
@@ -199,9 +200,10 @@ describe("ConnectionMonitorPanel", () => {
   // ── 连接池统计 ──
 
   describe("连接池统计", () => {
-    it("renders pool stats card (total, active, idle, waiting)", () => {
+    it("renders pool stats card (total, active, idle, waiting)", async () => {
       render(<ConnectionMonitorPanel connectionId="conn-1" />);
-      expect(screen.getByText("连接池统计")).toBeInTheDocument();
+      // poolStats 在异步 healthCheck 之后设置，等待卡片出现
+      expect(await screen.findByText("连接池统计")).toBeInTheDocument();
       expect(screen.getByText("10")).toBeInTheDocument();
       expect(screen.getByText("4")).toBeInTheDocument();
       expect(screen.getByText("5")).toBeInTheDocument();

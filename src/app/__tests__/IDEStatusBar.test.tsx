@@ -31,7 +31,9 @@ vi.mock("../hooks/useI18n", () => ({
   }),
 }));
 
-vi.mock("../modules/dev/CodeEditor", () => ({
+// 注意：组件实际从 src/app/components/CodeEditor 导入 getLanguageLabel，
+// vi.mock 路径必须与组件的导入解析路径一致，否则 mock 静默失效
+vi.mock("../components/CodeEditor", () => ({
   getLanguageLabel: (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (ext === "ts" || ext === "tsx") {return "TypeScript";}
