@@ -109,7 +109,7 @@ flowchart LR
 
 > **修复记录（2026-09-16）**：13 处失败全部清零。核心根因为两类——① `vi.mock` 路径与组件实际导入解析路径不一致导致 mock 静默失效（CLITerminal / DatabaseConnectionPanel / IDEStatusBar / IntegratedTerminal 潜伏）；② 组件真实缺陷（ConnectionMonitorPanel 返回按钮）+ 异步渲染未等待（findByText）。本批 5 文件合计 **88/88 通过**。
 
-**建议**：全量套件存在个别测试文件挂起问题（worker 100% CPU），建议为 vitest 配置 `testTimeout` 与 `hookTimeout` 并排查挂起文件；作为独立 `type/bug` 专项 Issue 跟进（标签体系已就绪）。
+**建议**：~~全量套件存在个别测试文件挂起问题~~ ✅ 已定位并修复（2026-09-16）：根因为 `StorageSyncStatus.test.tsx` 的 useI18n mock 每次渲染返回新 `t` 引用，而组件 useEffect 依赖数组含 `t` → 微任务级无限渲染循环（worker 100% CPU）。稳定 `t` 引用后挂起解除，连带暴露 `navigator.onLine` 跨用例污染（补 beforeEach 恢复）。修复后全量 **289 文件 / 5063 用例 100% 通过（54.9s）**。
 
 ## 六、本轮变更清单（待提交）
 
@@ -133,10 +133,10 @@ flowchart LR
 ### 优先级 TOP 3
 
 1. ~~**[P1] 修复 13 处交互测试失败**~~ ✅ 已完成（2026-09-16，13→0，根因：mock 路径错位 + 组件返回按钮缺陷）
-2. **[P1] 排查全量测试挂起文件**（worker 100% CPU 卡死，补 testTimeout）— 预计半天
+2. ~~**[P1] 排查全量测试挂起文件**~~ ✅ 已完成（2026-09-16，StorageSyncStatus.test.tsx 不稳定 t 引用致无限渲染循环）
 3. **[P2] lint warnings 渐进收紧**（先 `prefer-const`/`no-empty` 全量 --fix）— 预计 1 小时机械操作
 
 ---
 **会话状态**：✅ 正常结束
-**验证基线**：lint 0E / tsc 0E / 5063-5063（13 处已修复） / build OK / audit 2h(dev-only)
-**下次衔接点**：全量测试挂起排查 或 阶段13目录更名（均已在本文档留痕）
+**验证基线**：lint 0E / tsc 0E / **5063-5063 全量 100%（54.9s，挂起已修复）** / build OK / audit 2h(dev-only)
+**下次衔接点**：lint warnings 渐进收紧 或 阶段13目录更名（均已在本文档留痕）

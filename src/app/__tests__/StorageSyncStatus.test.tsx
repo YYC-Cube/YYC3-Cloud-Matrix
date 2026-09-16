@@ -10,10 +10,10 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StorageSyncStatus } from "../modules/admin/StorageSyncStatus";
 import { storageManager } from "../services/storageManager";
 
@@ -32,16 +32,19 @@ const configState = {
   conflictResolution: "local" as const,
 };
 
-vi.mock("../hooks/useI18n", () => ({
-  useI18n: vi.fn(() => ({
-    t: (key: string, params?: Record<string, string>) => {
-      if (params) {
-        return key.replace(/\{(\w+)\}/g, (_, k) => params[k] || "");
-      }
-      return key;
-    },
-  })),
-}));
+// 注意：t 必须跨渲染保持同一引用。组件 useEffect 依赖数组含 t，
+// 若每次调用 useI18n 都返回新 t，会触发微任务级无限渲染循环（worker 100% CPU 挂起）
+vi.mock("../hooks/useI18n", () => {
+  const stableT = (key: string, params?: Record<string, string>) => {
+    if (params) {
+      return key.replace(/\{(\w+)\}/g, (_, k) => params[k] || "");
+    }
+    return key;
+  };
+  return {
+    useI18n: vi.fn(() => ({ t: stableT })),
+  };
+});
 
 vi.mock("../services/storageManager", () => ({
   storageManager: {
@@ -108,6 +111,11 @@ vi.mock("../components/ui/alert", () => ({
 describe("StorageSyncStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // 恢复 onLine（"shows offline queue alert" 用例会将其改为 false 且 jsdom navigator 跨用例共享）
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
     Object.assign(statusState, {
       connected: true,
       syncing: false,
