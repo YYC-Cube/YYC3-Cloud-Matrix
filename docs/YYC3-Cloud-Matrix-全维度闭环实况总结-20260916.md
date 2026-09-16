@@ -30,7 +30,7 @@ flowchart LR
 ### 2.1 处置结果
 
 | 项 | 处置 | 说明 |
-|-----|------|------|
+| ----- | ------ | ------ |
 | `src/imports/`（21 文件，1.2M） | **19 迁移 + 2 删除** | 全部为设计文档/临时粘贴/日志，**零代码引用**；已归位至 `docs/16-YYC3-CP-IM-设计资产-原始文档/` |
 | `feature-enhancements-1.md` | 删除 | 与 `feature-enhancements.md` md5 一致（`7af472fb…`） |
 | `feature-enhancements-2.md` | 删除 | 同上重复文件 |
@@ -48,6 +48,7 @@ docs/
 ```
 
 ⚠️ **待优化**（不阻断，建议后续）：
+
 - `docs/13-智能演进-优化阶段` 与 `11-智能演进-优化阶段` **目录同名**（内容不同：13 为音乐组件/文档同步机制），建议 13 更名为「智能演进-专项深化」类名称
 - `src/imports` 曾被 AI 工具作默认粘贴目标，建议 CI 增加 `src` 目录纯净性检查
 
@@ -62,7 +63,7 @@ flowchart LR
 ```
 
 | 变更 | 内容 |
-|------|------|
+| ------ | ------ |
 | 新增 quality 阶段 | `pnpm lint` + `pnpm type-check` + `pnpm audit --audit-level critical`（critical 拦截，high 因 extract-zip 上游未发布暂放行，已注释说明收紧路径） |
 | pnpm 版本对齐 | CI `PNPM_VERSION` 9 → **11**（与本地/lockfile 一致） |
 | 依赖串行 | build `needs: [quality, test]` 全门禁通过才构建 |
@@ -70,7 +71,7 @@ flowchart LR
 ### 3.2 新增合规配置
 
 | 文件 | 作用 |
-|------|------|
+| ------ | ------ |
 | `.github/dependabot.yml` | npm 周更（minor/patch 分组）+ GitHub Actions 周更，自动打 `type/deps`/`priority/P2-medium` 标签 |
 | `.github/workflows/pr-labeler.yml` | PR 自动打标：路径规则（module/docs/media/ci）+ 分支前缀（feat→type/feature 等） |
 | `.github/labeler.yml` | labeler v5 路径规则配置 |
@@ -79,7 +80,7 @@ flowchart LR
 ## 四、③ 漏洞扫描与修复
 
 | 项 | 结果 |
-|-----|------|
+| ----- | ------ |
 | 复测 `pnpm audit` | 维持 **2 high**（上轮治理后基线），critical/moderate/low 均为 0 |
 | 根因 | 均为 `extract-zip<=2.0.1`，经 `@lhci/cli→lighthouse→puppeteer-core` 传递；**npm 确认修复版 2.0.2 仍未发布** |
 | 风险定性 | dev 工具链（性能审计），不进构建产物与运行时，风险受控 |
@@ -88,7 +89,7 @@ flowchart LR
 ## 五、④ 全维度闭环验证
 
 | 维度 | 命令 | 结果 | 评级 |
-|------|------|------|------|
+| ------ | ------ | ------ | ------ |
 | 代码规范 | `pnpm lint` | **0 errors** / 6412 warnings（渐进收紧策略） | ✅ 门禁达成 |
 | 类型安全 | `tsc --noEmit` | **0 errors** | ✅ |
 | 单元测试 | `pnpm test:ci` | **5038/5063 通过**（99.74%），284/289 文件通过 | ✅（13 失败见下） |
@@ -99,13 +100,15 @@ flowchart LR
 ### 5.1 测试失败定性（13 处，均为存量问题，与本次变更无关）
 
 | 文件 | 失败数 | 定性 |
-|------|:---:|------|
-| `CLITerminal.test.tsx` | 6 | `fireEvent.keyDown` 模拟不触发组件回调——组件内部事件绑定方式与 jsdom 合成事件不兼容 |
-| `ConnectionMonitorPanel.test.tsx` | 4 | 同类交互模拟问题 |
-| `DatabaseConnectionPanel.test.tsx` | 2 | 同类 |
+| ------ | :---: | ------ |
+| `CLITerminal.test.tsx` | ~~6~~ ✅ 已修复 | **根因非事件模拟**：`vi.mock("../hooks/useTerminal")` 路径错位——组件实际从 `modules/dev/hooks/useTerminal` 导入，mock 从未生效；修正 mock 路径后 **14/14 通过** |
+| `ConnectionMonitorPanel.test.tsx` | 4 | 交互模拟问题（待专项） |
+| `DatabaseConnectionPanel.test.tsx` | 2 | 同类交互模拟问题 |
 | `IDEStatusBar.test.tsx` | 1 | 语言标签渲染断言（可能依赖 Monaco 真实环境） |
 
-**建议**：统一改用 `userEvent` 替代 `fireEvent`，或组件暴露 data-testid 驱动的回调；作为独立 `type/bug` 专项 Issue 跟进（标签体系已就绪）。
+> **修复记录**：CLITerminal 6 处失败于 2026-09-16 修复（mock 路径 `../hooks/useTerminal` → `../modules/dev/hooks/useTerminal`），剩余失败降为 **7 处 / 3 文件**。
+
+**建议**：剩余 7 处统一改用 `userEvent` 替代 `fireEvent`，或组件暴露 data-testid 驱动的回调；作为独立 `type/bug` 专项 Issue 跟进（标签体系已就绪）。
 
 ## 六、本轮变更清单（待提交）
 
@@ -119,7 +122,7 @@ flowchart LR
 ## 七、五维驱动评估与后续建议
 
 | 维度 | 本轮体现 | 后续建议 |
-|------|----------|----------|
+| ------ | ---------- | ---------- |
 | 时间 | lint 从完全不可用 → CI 门禁，防回归成本归零 | 测试失败 13 项专项修复（`type/bug` + P1） |
 | 空间 | src 目录纯净化，文档资产归位 16 阶段 | 阶段 13 目录更名消歧 |
 | 属性 | 0E lint + 0E tsc + 99.74% 测试通过率 | warnings 6412 → 按模块渐进恢复 error 级 |

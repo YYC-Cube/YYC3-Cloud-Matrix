@@ -31,7 +31,9 @@ vi.mock("../modules/shared/GlassCard", () => ({
 
 const defaultMockHistory: Array<{ id: string; input: string; output: string; status: "success" | "error" | "info" }> = [];
 
-vi.mock("../hooks/useTerminal", () => ({
+// 注意：CLITerminal 组件实际从 src/app/modules/dev/hooks/useTerminal 导入，
+// vi.mock 路径必须与组件的导入解析路径完全一致，否则 mock 不生效
+vi.mock("../modules/dev/hooks/useTerminal", () => ({
   useTerminal: () => ({
     history: defaultMockHistory,
     inputValue: "",
