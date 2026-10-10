@@ -19,6 +19,10 @@ export default defineConfig({
 
     setupFiles: ["src/app/__tests__/setup.ts"],
 
+    // junit 报告输出至 CI 上传的 artifact 目录（.github/workflows/ci.yml）
+    reporters: ["default", "junit"],
+    outputFile: { junit: "test-results/junit.xml" },
+
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "lcov", "json-summary"],

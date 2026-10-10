@@ -34,7 +34,8 @@ jobs:
   # ============================================================
   quality:
     name: Quality Gates
-    runs-on: ubuntu-latest
+    # pin 24.04 规避 ubuntu-latest 于 2026-10-19 自动迁移 Ubuntu 26（保持迁移时点可控）
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -71,7 +72,7 @@ jobs:
   # ============================================================
   test:
     name: Test & Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -140,7 +141,7 @@ jobs:
   # ============================================================
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [quality, test]
 
