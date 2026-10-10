@@ -99,7 +99,7 @@ describe('useModelSlice', () => {
 
       expect(added).toBeDefined();
       expect(added?.version).toBe('v1.0');
-      expect(added?.id).toMatch(/^dm-\d+$/);
+      expect(added?.id).toMatch(/^dm-/);
     });
 
     it('应该增加模型总数', () => {

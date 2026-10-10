@@ -11,6 +11,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { newId } from '../../lib/id';
 import type { UserRecord } from '../../types';
 
 const DEFAULT_USERS: UserRecord[] = [
@@ -33,7 +34,7 @@ export const useUserMgmtSlice = create<UserMgmtSlice>()(
   persist(
     (set, _get) => ({
       users: DEFAULT_USERS,
-      addUser: (user) => set((s) => ({ users: [...s.users, { ...user, id: `usr-${Date.now()}` }] })),
+      addUser: (user) => set((s) => ({ users: [...s.users, { ...user, id: newId('usr') }] })),
       updateUser: (id, updates) => set((s) => ({ users: s.users.map((u) => u.id === id ? { ...u, ...updates } : u) })),
       removeUser: (id) => set((s) => ({ users: s.users.filter((u) => u.id !== id) })),
       toggleLock: (id) => set((s) => ({ users: s.users.map((u) => u.id === id ? { ...u, locked: !u.locked } : u) })),

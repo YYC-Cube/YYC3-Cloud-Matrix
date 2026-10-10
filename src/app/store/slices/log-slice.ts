@@ -11,7 +11,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { StoredLogEntry, LogLevel } from '../../types';
+import { newId } from '../../lib/id';
+import type { LogLevel, StoredLogEntry } from '../../types';
 
 const DEFAULT_LOGS: StoredLogEntry[] = [
   { id: "log-001", timestamp: Date.now() - 120000, level: "info", source: "GPU-A100-01", message: "推理任务完成 #12847, 延迟 820ms" },
@@ -37,7 +38,7 @@ export const useLogSlice = create<LogSlice>()(
   persist(
     (set, get) => ({
       logs: DEFAULT_LOGS,
-      addLog: (entry) => set((s) => ({ logs: [...s.logs, { ...entry, id: `log-${Date.now()}` }] })),
+      addLog: (entry) => set((s) => ({ logs: [...s.logs, { ...entry, id: newId('log') }] })),
       updateLog: (id, updates) => set((s) => ({ logs: s.logs.map((l) => l.id === id ? { ...l, ...updates } : l) })),
       removeLog: (id) => set((s) => ({ logs: s.logs.filter((l) => l.id !== id) })),
       clearLogs: () => set({ logs: [] }),
