@@ -9,7 +9,7 @@
  * @tags: [e2e-test, git-panel, user-flow]
  */
 
-import { test, expect, Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test.describe("Git Panel E2E Tests", () => {
   test.beforeEach(async ({ page }) => {
@@ -151,6 +151,7 @@ test.describe("Performance E2E", () => {
     try {
       await expect(gitPanel.first()).toBeVisible({ timeout: 10000 });
     } catch {
+      // noop: Git 面板非硬性断言，不可见时仅跳过等待、继续测量加载耗时
     }
 
     const loadTime = Date.now() - startTime;

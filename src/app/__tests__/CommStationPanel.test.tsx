@@ -11,7 +11,7 @@
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as React from "react";
 
@@ -59,7 +59,6 @@ vi.mock("sonner", () => ({
 }));
 
 import { CommStationPanel } from "../modules/business/CommStationPanel";
-import { usePersistedList } from "../hooks/usePersistedState";
 
 // ─── Helpers ───────────────────────────────────────────────
 

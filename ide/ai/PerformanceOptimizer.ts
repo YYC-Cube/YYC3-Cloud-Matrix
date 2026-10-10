@@ -104,7 +104,7 @@ const PERF_RULES: PerfRule[] = [
     category: "render",
     impact: "medium",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       // Detect exported function components without React.memo
       const exportPattern =
@@ -223,7 +223,7 @@ const PERF_RULES: PerfRule[] = [
     category: "state",
     impact: "medium",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       const stateMatches = [...content.matchAll(/\buseState\s*[<(]/g)];
       if (stateMatches.length > 6) {
@@ -252,7 +252,7 @@ const PERF_RULES: PerfRule[] = [
     category: "state",
     impact: "high",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       // Detect patterns: useEffect that only sets state based on other state
       // e.g., useEffect(() => { setFilteredItems(items.filter(...)) }, [items])
@@ -282,7 +282,7 @@ const PERF_RULES: PerfRule[] = [
     category: "state",
     impact: "high",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       // Detect <SomeContext.Provider value={{ ... }}> — inline object
       const providerPattern = /\.Provider\s+value=\{\{/g;
@@ -321,7 +321,7 @@ const PERF_RULES: PerfRule[] = [
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (/(?:function|const)\s+[A-Z]\w*\s*[\(=]/.test(line))
+        if (/(?:function|const)\s+[A-Z]\w*\s*[(=]/.test(line))
           inComponent = true;
         if (!inComponent) continue;
 
@@ -337,7 +337,7 @@ const PERF_RULES: PerfRule[] = [
           // Check if inside return statement or render body
           const prevLines = lines.slice(Math.max(0, i - 5), i).join("\n");
           if (
-            /return\s*[\(\{]/.test(prevLines) ||
+            /return\s*[({]/.test(prevLines) ||
             /(?:const|let)\s+\w+\s*=/.test(line)
           ) {
             // Exclude if already in useMemo
@@ -371,7 +371,7 @@ const PERF_RULES: PerfRule[] = [
     category: "memoization",
     impact: "low",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       // Detect handlers defined as const inside component but not wrapped in useCallback
       const handlerPattern = /const\s+(handle\w+)\s*=\s*(?:async\s*)?\(/g;
@@ -537,7 +537,7 @@ const PERF_RULES: PerfRule[] = [
     category: "memory",
     impact: "high",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<PerfRule["check"]> = [];
       // Detect useEffect with addEventListener/setInterval/setTimeout but no return cleanup
       const effectBlocks = [

@@ -4,23 +4,22 @@
  * @version: 1.0.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
 import {
-  Key,
-  Plus,
-  Trash2,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Copy,
+  ExternalLink,
   Eye,
   EyeOff,
-  CheckCircle2,
-  XCircle,
-  ExternalLink,
-  Shield,
-  AlertTriangle,
-  Copy,
+  Key,
+  Plus,
   RefreshCw,
-  ChevronDown,
-  Settings,
+  Shield,
+  Trash2,
+  XCircle,
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiKeyVault, PROVIDERS, type APIKeyConfig, type ProviderId, type ProviderInfo } from './services/APIKeyVault';
 import { confirmDialog } from './stores/useConfirmStore';
 
@@ -29,11 +28,10 @@ interface APIKeyManagerPanelProps {
   onProviderChange?: (provider: ProviderId) => void;
 }
 
-export function APIKeyManagerPanel({ onClose, onProviderChange }: APIKeyManagerPanelProps) {
+export function APIKeyManagerPanel({ onClose: _onClose, onProviderChange }: APIKeyManagerPanelProps) {
   const [keys, setKeys] = useState<APIKeyConfig[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ProviderId | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingKey, setEditingKey] = useState<APIKeyConfig | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +41,7 @@ export function APIKeyManagerPanel({ onClose, onProviderChange }: APIKeyManagerP
     try {
       const allKeys = await apiKeyVault.listKeys();
       setKeys(allKeys);
-    } catch (err) {
+    } catch {
       setError('加载密钥失败');
     } finally {
       setLoading(false);
@@ -334,7 +332,7 @@ interface AddKeyModalProps {
   onSelectProvider: (provider: ProviderId) => void;
 }
 
-function AddKeyModal({ onClose, onSubmit, selectedProvider, onSelectProvider }: AddKeyModalProps) {
+function AddKeyModal({ onClose, onSubmit, selectedProvider }: AddKeyModalProps) {
   const [provider, setProvider] = useState<ProviderId>(selectedProvider || 'openai');
   const [apiKey, setApiKey] = useState('');
   const [name, setName] = useState('');

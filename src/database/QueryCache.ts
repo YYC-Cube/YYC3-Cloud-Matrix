@@ -11,7 +11,7 @@
 
 import type { QueryResult } from "./types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export interface CacheEntry<T = any> {
   key: string;
   result: QueryResult<T>;
@@ -68,7 +68,7 @@ export class QueryCache {
   /**
    * 生成缓存键
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   public generateKey(sql: string, params: any[] = []): string {
     const normalizedSql = sql.trim().replace(/\s+/g, " ");
     const paramsStr = JSON.stringify(params);
@@ -78,7 +78,7 @@ export class QueryCache {
   /**
    * 获取缓存
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   public get<T = any>(sql: string, params: any[] = []): QueryResult<T> | null {
     const key = this.generateKey(sql, params);
     const entry = this.cache.get(key);
@@ -114,14 +114,14 @@ export class QueryCache {
   /**
    * 设置缓存
    */
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   public set<T = any>(
     sql: string,
     result: QueryResult<T>,
     params: any[] = [],
     ttl?: number
   ): void {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
     const key = this.generateKey(sql, params);
     const size = this.calculateSize(result);
 
@@ -151,7 +151,7 @@ export class QueryCache {
   /**
    * 删除缓存
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   public delete(sql: string, params: any[] = []): boolean {
     const key = this.generateKey(sql, params);
     const deleted = this.cache.delete(key);

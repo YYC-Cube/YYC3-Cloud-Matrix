@@ -13,7 +13,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { useOfflineMode } from "../hooks/useOfflineMode";
-import { LOCALSTORAGE_KEYS } from "../lib/yyc3-storage";
 import { useOfflineSlice } from "../store/slices/offline-slice";
 
 describe("useOfflineMode", () => {
@@ -240,7 +239,7 @@ describe("useOfflineMode", () => {
   });
 
   it("should periodically save dashboard state", () => {
-    const { result } = renderHook(() => useOfflineMode());
+    renderHook(() => useOfflineMode());
 
     act(() => {
       vi.advanceTimersByTime(30000);

@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import React from "react";
 
 // Mock IndexedDB 操作（yyc3-storage）
 vi.mock("../lib/yyc3-storage", () => ({

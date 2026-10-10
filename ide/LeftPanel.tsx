@@ -136,18 +136,11 @@ export default function LeftPanel({ nodeId }: { nodeId: string }) {
     gitChanges,
   } = useFileStore();
   const {
-    models,
     activeModelId,
     activeModel,
-    setActiveModelId,
-    setShowSettings,
-    setShowModelSettingsV2,
     getActiveProvider,
     hasProviderKey,
     connectivityResults,
-    setConnectivityResult,
-    providers,
-    ollamaStatus,
   } = useModelRegistry();
 
   const { emit } = useWorkflowEventBus();
@@ -512,9 +505,6 @@ export default function LeftPanel({ nodeId }: { nodeId: string }) {
       openTabs,
       gitBranch,
       gitChanges,
-      updateFile,
-      createFile,
-      setActiveFile,
     ],
   );
 

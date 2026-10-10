@@ -126,7 +126,7 @@ export class IntentFeatureExtractor {
     ]);
 
     // 分词
-    const words = input.split(/\s+|[，。！？、；：""''（）【】\[\]{}]/);
+    const words = input.split(/\s+|[，。！？、；：""''（）【】[\]{}]/);
 
     // 过滤并收集关键词
     for (const word of words) {

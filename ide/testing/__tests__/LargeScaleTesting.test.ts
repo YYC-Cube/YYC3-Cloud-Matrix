@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: LargeScaleTesting.test.ts
  * @description: 大规模场景测试 - 性能、边界、兼容性测试
@@ -27,11 +26,9 @@ import { CompatibilityTestSuite } from '../CompatibilityTestSuite';
 // ================================================================
 
 describe('Performance Stress Testing', () => {
-  let performanceSuite: PerformanceTestSuite;
-
   beforeAll(() => {
     // 使用较小的配置进行测试
-    performanceSuite = new PerformanceTestSuite({
+    new PerformanceTestSuite({
       snapshotCount: 100, // 测试版本使用较小的数量
       consoleLogCount: 1000,
       concurrentOperations: 50,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/TaskInferenceEngine.test.ts
  * @description: TaskInferenceEngine 单元测试 — 覆盖 6 种模式匹配、边界条件、

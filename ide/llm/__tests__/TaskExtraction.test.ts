@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: llm/__tests__/TaskExtraction.test.ts
  * @description: 任务提取系统完整测试套件
@@ -543,7 +542,7 @@ describe('TaskExtractionEngine', () => {
       const largeText = Array(100).fill('TODO: 创建组件').join('\n');
       
       const startTime = Date.now();
-      const result = engine.extract(largeText);
+      engine.extract(largeText);
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成

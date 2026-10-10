@@ -152,7 +152,7 @@ export default function RAGChat({ nodeId }: { nodeId: string }) {
     if (activeModelId && activeModelId !== config.model) {
       setConfig(prev => ({ ...prev, model: activeModelId }));
     }
-  }, [activeModelId]);
+  }, [activeModelId, config.model]);
 
   // 本地模型选择变化时同步到全局状态
   const handleModelChange = useCallback((modelId: string) => {

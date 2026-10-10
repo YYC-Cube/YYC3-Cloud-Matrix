@@ -17,12 +17,12 @@
  */
 
 import type {
-  TelemetrySession,
-  TelemetryParticipant,
-  SessionType,
   ConnectionQuality,
   Message,
   MessageContent,
+  SessionType,
+  TelemetryParticipant,
+  TelemetrySession,
 } from "./ai-family.types";
 
 // ============================================================
@@ -63,7 +63,7 @@ export class AIFamilyTelemetryManager {
   private config: WebRTCConfig;
 
   // 事件回调
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(data?: unknown) => void>> = new Map();
 
   constructor(config?: Partial<WebRTCConfig>) {
     this.config = { ...DEFAULT_WEBRTC_CONFIG, ...config };
@@ -116,7 +116,7 @@ export class AIFamilyTelemetryManager {
     participant: Omit<TelemetryParticipant, "connectionQuality" | "joinedAt">
   ): Promise<TelemetrySession | null> {
     const session = this.sessions.get(sessionId);
-    if (!session || session.status === "ended") {return null;}
+    if (!session || session.status === "ended") { return null; }
 
     const newParticipant: TelemetryParticipant = {
       ...participant,
@@ -135,7 +135,7 @@ export class AIFamilyTelemetryManager {
 
   async leaveSession(sessionId: string, memberId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     session.participants = session.participants.filter((p) => p.memberId !== memberId);
 
@@ -148,7 +148,7 @@ export class AIFamilyTelemetryManager {
 
   async endSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     session.status = "ended";
     session.endedAt = Date.now();
@@ -349,10 +349,10 @@ export class AIFamilyTelemetryManager {
     state: RTCPeerConnectionState
   ): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
-    if (!participant) {return;}
+    if (!participant) { return; }
 
     switch (state) {
       case "connected":
@@ -445,7 +445,7 @@ export class AIFamilyTelemetryManager {
 
   startWhiteboard(sessionId: string, initiatorId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     session.collaboration.whiteboard = {
       isActive: true,
@@ -466,7 +466,7 @@ export class AIFamilyTelemetryManager {
 
   startScreenShare(sessionId: string, memberId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
     if (participant) {
@@ -478,7 +478,7 @@ export class AIFamilyTelemetryManager {
 
   stopScreenShareForParticipant(sessionId: string, memberId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
     if (participant) {
@@ -495,7 +495,7 @@ export class AIFamilyTelemetryManager {
     creatorId: string
   ): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     session.collaboration.poll = {
       question,
@@ -513,20 +513,20 @@ export class AIFamilyTelemetryManager {
     respondentId: string
   ): void {
     const session = this.sessions.get(sessionId);
-    if (!session?.collaboration.poll) {return;}
+    if (!session?.collaboration.poll) { return; }
 
     const poll = session.collaboration.poll;
     poll.responses[respondentId] = pollOptionId;
 
     const option = poll.options.find((o) => o.id === pollOptionId);
-    if (option) {option.votes++;}
+    if (option) { option.votes++; }
 
     this.emit("poll:responded", { sessionId, pollOptionId, respondentId });
   }
 
   raiseHand(sessionId: string, memberId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
     if (participant) {
@@ -537,7 +537,7 @@ export class AIFamilyTelemetryManager {
 
   toggleMute(sessionId: string, memberId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session || !this.localStream) {return;}
+    if (!session || !this.localStream) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
     if (participant) {
@@ -554,7 +554,7 @@ export class AIFamilyTelemetryManager {
 
   toggleVideo(sessionId: string, memberId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session || !this.localStream) {return;}
+    if (!session || !this.localStream) { return; }
 
     const participant = session.participants.find((p) => p.memberId === memberId);
     if (participant) {
@@ -575,7 +575,7 @@ export class AIFamilyTelemetryManager {
 
   async startRecording(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
-    if (!session || !this.localStream) {return;}
+    if (!session || !this.localStream) { return; }
 
     try {
       const mediaRecorder = new MediaRecorder(this.localStream, {
@@ -620,7 +620,7 @@ export class AIFamilyTelemetryManager {
 
   private handleRecordingComplete(sessionId: string, blob: Blob): void {
     const session = this.sessions.get(sessionId);
-    if (!session?.recording) {return;}
+    if (!session?.recording) { return; }
 
     session.recording.sizeBytes = blob.size;
     session.recording.durationSeconds = Math.floor((Date.now() - session.startedAt) / 1000);
@@ -641,7 +641,7 @@ export class AIFamilyTelemetryManager {
     connectionQualityDistribution: Record<ConnectionQuality, number>;
   } | null {
     const session = this.sessions.get(sessionId);
-    if (!session) {return null;}
+    if (!session) { return null; }
 
     const distribution: Record<string, number> = {
       excellent: 0,
@@ -698,7 +698,7 @@ export class AIFamilyTelemetryManager {
   // 事件系统
   // ============================================================
 
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (data?: unknown) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
@@ -707,7 +707,7 @@ export class AIFamilyTelemetryManager {
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data?: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);

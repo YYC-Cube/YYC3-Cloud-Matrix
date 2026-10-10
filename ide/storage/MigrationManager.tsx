@@ -11,7 +11,7 @@
  * @tags: migration,manager,ui,wizard
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import {
   Upload,
   ArrowRight,

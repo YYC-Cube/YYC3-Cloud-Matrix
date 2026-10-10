@@ -26,8 +26,6 @@ import {
   Info,
   Shield,
   Settings,
-  Eye,
-  EyeOff,
 } from 'lucide-react'
 import EncryptionService, {
   type EncryptionStrength,

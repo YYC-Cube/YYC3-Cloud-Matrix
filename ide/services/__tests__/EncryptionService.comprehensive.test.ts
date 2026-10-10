@@ -527,7 +527,7 @@ describe('EncryptionService - 密钥导入/导出', () => {
 
       global.URL.createObjectURL = mockCreateObjectURL;
       global.URL.revokeObjectURL = mockRevokeObjectURL;
-      global.document.createElement = vi.fn((tag: string) => ({
+      global.document.createElement = vi.fn((_tag: string) => ({
         click: mockClick,
         href: '',
         download: '',

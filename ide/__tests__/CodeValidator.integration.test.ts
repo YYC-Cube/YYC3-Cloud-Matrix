@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: CodeValidator.integration.test.ts
  * @description: CodeValidator 集成测试 - 测试从 LLM 响应到代码验证的完整流程
@@ -14,9 +13,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  parseCodeBlocks,
   validateCodeBlock,
-  validateCodeBlocks,
   parseAndValidateCodeBlocks,
 } from "../ai/CodeApplicator";
 import type { ParsedCodeBlock } from "../ai/CodeApplicator";

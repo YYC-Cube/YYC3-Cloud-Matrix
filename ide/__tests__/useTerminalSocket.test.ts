@@ -12,8 +12,8 @@
  * @tags: test,websocket,hook,unit-test
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTerminalSocket } from '../hooks/useTerminalSocket'
 
 // Mock WebSocket
@@ -23,31 +23,31 @@ class MockWebSocket {
   static OPEN = 1
   static CLOSING = 2
   static CLOSED = 3
-  
+
   url: string
   readyState: number = MockWebSocket.CONNECTING
   onopen: (() => void) | null = null
   onmessage: ((event: { data: string }) => void) | null = null
   onerror: ((event: Event) => void) | null = null
   onclose: ((event: { code: number; reason: string }) => void) | null = null
-  
+
   constructor(url: string) {
     this.url = url
     MockWebSocket.instances.push(this)
-    
+
     // 模拟异步连接
     setTimeout(() => {
       this.readyState = MockWebSocket.OPEN
       this.onopen?.()
     }, 10)
   }
-  
-  send(data: string) {
+
+  send(_data: string) {
     if (this.readyState !== MockWebSocket.OPEN) {
       throw new Error('WebSocket is not connected')
     }
   }
-  
+
   close(code?: number, reason?: string) {
     this.readyState = MockWebSocket.CLOSED
     this.onclose?.({ code: code || 1000, reason: reason || '' })
@@ -55,7 +55,7 @@ class MockWebSocket {
 }
 
 // 替换全局 WebSocket
-;(global as any).WebSocket = MockWebSocket
+; (global as any).WebSocket = MockWebSocket
 
 describe('useTerminalSocket Hook', () => {
   beforeEach(() => {
@@ -69,7 +69,7 @@ describe('useTerminalSocket Hook', () => {
   })
 
   it('应该自动建立 WebSocket 连接', () => {
-    const { result } = renderHook(() =>
+    renderHook(() =>
       useTerminalSocket({
         sessionId: 'test-session-1',
         autoReconnect: false,
@@ -256,8 +256,8 @@ describe('useTerminalSocket Hook', () => {
 
   it('应该在 sessionId 变化时重新连接', async () => {
     let sessionId = 'session-a'
-    
-    const { result, rerender } = renderHook(() =>
+
+    const { rerender } = renderHook(() =>
       useTerminalSocket({
         sessionId,
         autoReconnect: false,

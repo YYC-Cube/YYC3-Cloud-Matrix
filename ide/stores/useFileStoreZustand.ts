@@ -149,7 +149,8 @@ function simpleFormat(code: string, lang: string): string {
   const lines = code.split("\n");
   let indent = 0;
   const formatted: string[] = [];
-  const openers = /[{(\[]\\s*$/;
+  // \x5B 即字面 "["：直接写 [ 会使后续 ] 提前闭合字符类，故保留转义形式
+  const openers = /[{(\x5B]\\s*$/;
   const closers = /^\s*[})\]]/;
 
   for (const rawLine of lines) {

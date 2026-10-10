@@ -1,11 +1,10 @@
-// @ts-nocheck
 /**
  * @file: CodeValidator.test.ts
  * @description: CodeValidator 单元测试
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CodeValidator, ValidationResult, ParsedCodeBlock } from '../CodeValidator';
+import { CodeValidator, ParsedCodeBlock } from '../CodeValidator';
 
 describe('CodeValidator', () => {
   let validator: CodeValidator;

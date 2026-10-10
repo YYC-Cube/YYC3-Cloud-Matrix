@@ -138,7 +138,7 @@ export class MCPResourceManager {
     let hits = 0;
     let total = 0;
 
-    for (const [uri, cached] of this.cache.entries()) {
+    for (const [, cached] of this.cache.entries()) {
       total++;
       if (cached.expiresAt > now) {
         hits++;

@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MCPClient } from "../../lib/yyc3-core/mcp/client";
 import { StdioTransport, HTTPTransport } from "../../lib/yyc3-core/mcp/transport";
 import type { MCPMessage, MCPTransport } from "../../lib/yyc3-core/mcp/types";

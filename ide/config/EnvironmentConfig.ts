@@ -340,7 +340,7 @@ export const useEnvironmentStore = create<EnvironmentStore>()(
           }
 
           return { valid: false, message: '认证无效或已过期' }
-        } catch (error) {
+        } catch {
           return { valid: false, message: '无法验证认证状态' }
         }
       },

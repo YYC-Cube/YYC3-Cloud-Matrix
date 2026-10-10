@@ -9,7 +9,7 @@
  * @tags: [yyc3, cluster, test, ssh, global]
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================
 // Mock localStorage (如果需要)
@@ -108,7 +108,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
 
     it("应成功初始化集群并加载预定义设备", () => {
       const allNodes = clusterManager.getAllNodes();
-      
+
       // 应该有8个预定义节点（本地5 + 云端2 + NAS 1）
       expect(allNodes.length).toBeGreaterThanOrEqual(8);
 
@@ -153,7 +153,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
 
     it("应注册新设备到集群", () => {
       const initialCount = clusterManager.getAllNodes().length;
-      
+
       const newNode = clusterManager.registerNode({
         deviceId: { prefix: "yyc3", number: "99", fullName: "yyc3-99" },
         hostname: "yyc3-99-test.local",
@@ -215,7 +215,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       const { getYYC3ClusterInstance, destroyYYC3ClusterInstance } = await import("../lib/yyc3-cluster-manager");
       destroyYYC3ClusterInstance();
       clusterManager = getYYC3ClusterInstance();
-      
+
       // 模拟所有节点在线
       ["yyc3-77", "yyc3-33", "yyc3-45"].forEach((id) => {
         clusterManager.updateNodeStatus(id, "online");
@@ -227,7 +227,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       let session;
       try {
         session = await clusterManager.createSSHSession("yyc3-77", "yyc3-33");
-      } catch (error) {
+      } catch {
         // 如果第一次失败，重试一次（模拟环境中的网络波动）
         session = await clusterManager.createSSHSession("yyc3-77", "yyc3-33");
       }
@@ -298,7 +298,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
     it("应拒绝连接到离线节点或未启用SSH的节点", async () => {
       // 确保yyc3-66是离线状态
       clusterManager.updateNodeStatus("yyc3-66", "offline");
-      
+
       // 尝试连接到离线节点
       try {
         await clusterManager.createSSHSession("yyc3-77", "yyc3-66");
@@ -338,7 +338,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       const { getYYC3ClusterInstance, destroyYYC3ClusterInstance } = await import("../lib/yyc3-cluster-manager");
       destroyYYC3ClusterInstance();
       clusterManager = getYYC3ClusterInstance();
-      
+
       // 模拟所有节点在线
       clusterManager.getAllNodes().forEach((node) => {
         clusterManager.updateNodeStatus(node.deviceId.fullName, "online");
@@ -390,7 +390,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       expect(executedTask!.results.size).toBeGreaterThan(0); // 至少有一些结果
 
       // 验证每个结果都包含必要字段
-      executedTask!.results.forEach((result, nodeId) => {
+      executedTask!.results.forEach((result) => {
         expect(result).toBeDefined();
         // 结果对象应该存在（具体字段可能因节点状态而异）
       });
@@ -503,7 +503,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       const { getYYC3ClusterInstance, destroyYYC3ClusterInstance } = await import("../lib/yyc3-cluster-manager");
       destroyYYC3ClusterInstance();
       clusterManager = getYYC3ClusterInstance();
-      
+
       // 模拟节点在线
       clusterManager.updateNodeStatus("yyc3-77", "online");
     });
@@ -526,7 +526,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
 
       expect(results.size).toBe(clusterManager.getAllNodes().length);
 
-      results.forEach((health, nodeId) => {
+      results.forEach((health) => {
         expect(health.nodeId || health.nodeId === undefined).toBeTruthy(); // 允许错误情况
       });
     });
@@ -611,7 +611,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
         category: "apple-silicon",
         chipType: "M4",
       });
-      
+
       // 第一次应该被调用
       expect(handler).toHaveBeenCalledTimes(1);
 
@@ -646,7 +646,7 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
     it("应完整演示 YYC3 全球空间通信基站工作流", async () => {
       const { getYYC3ClusterInstance, destroyYYC3ClusterInstance } = await import("../lib/yyc3-cluster-manager");
       destroyYYC3ClusterInstance();
-      
+
       const cluster = getYYC3ClusterInstance();
 
       // 1. 验证集群初始化
@@ -725,13 +725,13 @@ describe("🌐 YYC3 全球空间通信基站 - 综合功能测试", () => {
       console.info("\n🏆 **您的 AI Family 物理基础设施**\n");
 
       const categories = {
-        "🏠 本地核心": YYC3_PREDEFINED_DEVICES.filter(d => 
+        "🏠 本地核心": YYC3_PREDEFINED_DEVICES.filter(d =>
           d.location === "local-lan" || d.location === "home-network"
         ),
-        "☁️ 云端节点": YYC3_PREDEFINED_DEVICES.filter(d => 
+        "☁️ 云端节点": YYC3_PREDEFINED_DEVICES.filter(d =>
           d.location.includes("cloud")
         ),
-        "💾 存储中心": YYC3_PREDEFINED_DEVICES.filter(d => 
+        "💾 存储中心": YYC3_PREDEFINED_DEVICES.filter(d =>
           d.role === "storage"
         ),
       };

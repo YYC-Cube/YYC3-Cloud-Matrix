@@ -136,7 +136,7 @@ describe('CircuitBreaker', () => {
     for (let i = 0; i < 3; i++) {
       try {
         await circuitBreaker.execute(failingFn);
-      } catch (e) {
+      } catch {
         // Expected
       }
     }
@@ -151,7 +151,7 @@ describe('CircuitBreaker', () => {
     for (let i = 0; i < 3; i++) {
       try {
         await circuitBreaker.execute(failingFn);
-      } catch (e) {
+      } catch {
         // Expected
       }
     }
@@ -168,7 +168,7 @@ describe('CircuitBreaker', () => {
     for (let i = 0; i < 3; i++) {
       try {
         await circuitBreaker.execute(failingFn);
-      } catch (e) {
+      } catch {
         // Expected
       }
     }
@@ -193,7 +193,7 @@ describe('CircuitBreaker', () => {
     for (let i = 0; i < 3; i++) {
       try {
         await circuitBreaker.execute(failingFn);
-      } catch (e) {
+      } catch {
         // Expected
       }
     }
@@ -215,7 +215,7 @@ describe('CircuitBreaker', () => {
     for (let i = 0; i < 3; i++) {
       try {
         await circuitBreaker.execute(failingFn);
-      } catch (e) {
+      } catch {
         // Expected
       }
     }

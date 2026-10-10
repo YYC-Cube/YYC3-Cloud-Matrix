@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import React from "react";
 import { zhCN, enUS } from "../i18n";
 
 /** 递归获取所有叶子节点 key */

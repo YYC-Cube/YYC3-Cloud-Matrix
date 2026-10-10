@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: llm/__tests__/Stage3Features.test.ts
  * @description: 任务3.3和3.4完整测试套件

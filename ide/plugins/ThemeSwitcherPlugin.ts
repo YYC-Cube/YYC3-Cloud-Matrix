@@ -208,7 +208,7 @@ function showThemeSelector(context: PluginContext) {
 /**
  * 获取当前主题
  */
-function getCurrentTheme(context: PluginContext): string {
+function getCurrentTheme(_context: PluginContext): string {
   return localStorage.getItem("yyc3-theme") || "default";
 }
 

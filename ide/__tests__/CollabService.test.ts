@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/CollabService.test.ts
  * @description: 实时协作服务测试 - 覆盖 Yjs CRDT 文档同步、感知光标、冲突解决
@@ -12,18 +11,9 @@
  * @tags: test,vitest,collaboration,yjs,crdt
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import * as Y from "yjs";
+import { beforeEach, describe, expect, it } from "vitest";
 import { Awareness } from "y-protocols/awareness";
-
-// Mock Yjs provider
-class MockProvider {
-  public sync = vi.fn();
-  public disconnect = vi.fn();
-  public connect = vi.fn();
-  public on = vi.fn();
-  public off = vi.fn();
-}
+import * as Y from "yjs";
 
 describe("CollabService - 实时协作服务", () => {
   let doc: Y.Doc;
@@ -266,9 +256,9 @@ describe("CollabService - 实时协作服务", () => {
 
     it("应用状态更新", () => {
       const doc2 = new Y.Doc();
-      
+
       text.insert(0, "Test");
-      
+
       const state = Y.encodeStateAsUpdate(doc);
       Y.applyUpdate(doc2, state);
 
@@ -280,14 +270,14 @@ describe("CollabService - 实时协作服务", () => {
       const doc2 = new Y.Doc();
 
       text.insert(0, "Initial");
-      
+
       // 初始同步
       const state1 = Y.encodeStateAsUpdate(doc);
       Y.applyUpdate(doc2, state1);
 
       // 增量更新
       text.insert(7, " Content");
-      
+
       const state2 = Y.encodeStateAsUpdate(doc);
       Y.applyUpdate(doc2, state2);
 
@@ -311,7 +301,7 @@ describe("CollabService - 实时协作服务", () => {
 
     it("事务监听", () => {
       const events: string[] = [];
-      
+
       doc.on("update", () => {
         events.push("update");
       });
@@ -377,7 +367,7 @@ describe("CollabService - 实时协作服务", () => {
   describe("性能测试", () => {
     it("大量插入操作", () => {
       const start = Date.now();
-      
+
       Y.transact(doc, () => {
         for (let i = 0; i < 1000; i++) {
           text.insert(text.length, `${i},`);
@@ -395,7 +385,7 @@ describe("CollabService - 实时协作服务", () => {
 
       const doc2 = new Y.Doc();
       const state = Y.encodeStateAsUpdate(doc);
-      
+
       const start = Date.now();
       Y.applyUpdate(doc2, state);
       const duration = Date.now() - start;
@@ -415,7 +405,7 @@ describe("CollabService - 实时协作服务", () => {
 
     it("删除超出范围的文本", () => {
       text.insert(0, "Hello");
-      
+
       // 删除超出范围应该不报错
       text.delete(5, 10);
       expect(text.toString()).toBe("Hello");
@@ -423,7 +413,7 @@ describe("CollabService - 实时协作服务", () => {
 
     it("负数索引", () => {
       text.insert(0, "Hello");
-      
+
       // 负数索引应该被处理
       expect(() => text.insert(-1, "X")).not.toThrow();
     });

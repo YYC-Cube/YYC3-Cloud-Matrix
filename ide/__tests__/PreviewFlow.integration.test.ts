@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: PreviewFlow.integration.test.ts
  * @description: 完整预览流程集成测试 - 测试编辑器到预览的完整工作流程
@@ -15,9 +14,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { usePreviewStore } from "../stores/usePreviewStore";
 import { useThemeStore } from "../stores/useThemeStore";
-import { PreviewModeController } from "../PreviewModeController";
-import { ZoomController } from "../preview/ZoomController";
-import { DeviceSimulatorEngine } from "../preview/DeviceSimulatorEngine";
 
 // ================================================================
 // Integration Tests - Complete Preview Flow
@@ -326,7 +322,7 @@ describe("Preview Flow Integration", () => {
     });
 
     it("should handle multiple errors gracefully", () => {
-      const { setPreviewError, clearPreviewError } = usePreviewStore.getState();
+      const { setPreviewError } = usePreviewStore.getState();
 
       setPreviewError("Error 1");
       setPreviewError("Error 2");

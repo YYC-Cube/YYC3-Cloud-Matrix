@@ -452,8 +452,6 @@ function ByFileView({
   goToDiagnostic,
   applyFix,
   handleAIFix,
-  fixableCountByRule,
-  applyFixAll,
 }: {
   diagnosticsByFile: Map<string, Diagnostic[]>;
   expandedFiles: Set<string>;

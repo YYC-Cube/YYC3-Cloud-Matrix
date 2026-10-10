@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ColorValidator.test.ts
  * @description: ColorValidator单元测试

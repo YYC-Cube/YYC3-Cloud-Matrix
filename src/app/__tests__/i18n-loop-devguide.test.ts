@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import React from "react";
 import zhCN from "../i18n/zh-CN";
 import enUS from "../i18n/en-US";
 

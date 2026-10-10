@@ -278,7 +278,7 @@ export class DatabaseAdapter {
       };
     } catch (error) {
       const _executionTime = Date.now() - startTime;
-      throw new Error(`Query failed: ${error}`);
+      throw new Error(`Query failed: ${error}`, { cause: error });
     }
   }
 

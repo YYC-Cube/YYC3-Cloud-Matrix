@@ -15,7 +15,7 @@
  * - 紧急事件响应（实时协同）
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 // ============================================================
 // 🎭 场景1: VIP铂金会员入住全流程
@@ -42,9 +42,9 @@ describe("🌟 场景1: VIP铂金会员张先生入住全流程", () => {
 
     // ========== 步骤1: 前台接待 (小悦 - ChatGLM3) ==========
     console.info("📍 步骤1: 前台接待 (小悦 - ChatGLM3-6B)");
-    
+
     const checkInConversation = await hotelManager.createConversation(["staff-front-desk-001"]);
-    
+
     const welcomeMessage = await hotelManager.sendMessage(
       checkInConversation.conversationId,
       "staff-front-desk-001",
@@ -68,7 +68,7 @@ describe("🌟 场景1: VIP铂金会员张先生入住全流程", () => {
 
     // ========== 步骤2: 礼宾服务介入 (阿明 - CogAgent) ==========
     console.info("\n📍 步骤2: 礼宾服务 (阿明 - CogAgent)");
-    
+
     const conciergeConversation = await hotelManager.createConversation([
       "staff-front-desk-001",
       "staff-concierge-001"
@@ -405,7 +405,7 @@ describe("🎊 场景3: 企业团建活动协调 (50人规模)", () => {
       "staff-chef-001"
     ]);
 
-    const initialRequirement = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       planningConversation.conversationId,
       "staff-concierge-001",
       ["staff-event-001", "staff-chef-001"],
@@ -432,7 +432,7 @@ describe("🎊 场景3: 企业团建活动协调 (50人规模)", () => {
     // ========== 步骤2: 活动协调创意方案 (小美 - CogVideoX) ==========
     console.info("\n📍 步骤2: 活动创意方案设计 (小美 - CogVideoX-5B)");
 
-    const eventProposal = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       planningConversation.conversationId,
       "staff-event-001",
       ["staff-concierge-001", "staff-chef-001"],
@@ -455,7 +455,7 @@ describe("🎊 场景3: 企业团建活动协调 (50人规模)", () => {
     // ========== 步骤3: 主厨定制菜单 (王师傅 - CodeGeeX4) ==========
     console.info("\n📍 步骤3: 主厨定制菜单方案 (王师傅 - CodeGeeX4-ALL-9B)");
 
-    const menuProposal = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       planningConversation.conversationId,
       "staff-chef-001",
       ["staff-event-001", "staff-concierge-001"],
@@ -581,7 +581,7 @@ describe("🚨 场景4: 紧急事件 - 火警演练/真实警报协同响应", (
     console.info("\n⏱️ T+30秒: 各部门初始响应");
 
     // IT部门检查系统状态
-    const itResponse = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       emergencyConversation.conversationId,
       "staff-it-001",
       ["staff-manager-001"],
@@ -603,7 +603,7 @@ describe("🚨 场景4: 紧急事件 - 火警演练/真实警报协同响应", (
     // ========== T+60秒: 经理指挥调度 ==========
     console.info("\n⏱️ T+60秒: 经理统一指挥调度");
 
-    const managerCommand = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       emergencyConversation.conversationId,
       "staff-manager-001",
       emergencyConversation.participants.filter(p => p.memberId !== "staff-manager-001").map(p => p.memberId),
@@ -629,7 +629,7 @@ describe("🚨 场景4: 紧急事件 - 火警演练/真实警报协同响应", (
     // ========== T+120秒: 现场确认 ==========
     console.info("\n⏱️ T+120秒: 现场确认结果");
 
-    const siteConfirmation = await hotelManager.sendMessage(
+    await hotelManager.sendMessage(
       emergencyConversation.conversationId,
       "staff-it-001",
       ["staff-manager-001"],
@@ -722,7 +722,7 @@ describe("📊 场景5: 不同模型在酒店场景中的性能对比", () => {
     console.info("─".repeat(80));
 
     scenarios.forEach((scenario, index) => {
-      const staffWithModel = hotelManager.getAllStaffMembers().filter(s => 
+      const staffWithModel = hotelManager.getAllStaffMembers().filter(s =>
         s.primaryModel.modelId === scenario.bestModel
       );
 
@@ -744,7 +744,7 @@ describe("📊 场景5: 不同模型在酒店场景中的性能对比", () => {
 
     // 验证每个模型至少有一个使用者
     models.forEach(modelId => {
-      const users = hotelManager.getAllStaffMembers().filter(s => 
+      const users = hotelManager.getAllStaffMembers().filter(s =>
         s.primaryModel.modelId === modelId || s.secondaryModels.some(m => m.modelId === modelId)
       );
       expect(users.length).toBeGreaterThan(0);

@@ -11,7 +11,7 @@
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as React from "react";
 import { LocalFileManager } from "../modules/ops/LocalFileManager";

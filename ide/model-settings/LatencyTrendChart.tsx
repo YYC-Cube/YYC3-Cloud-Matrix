@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，待上游修复
+ 
 /**
  * @file LatencyTrendChart.tsx
  * @description 延迟趋势图表组件 — 使用 recharts 展示模型延迟变化
@@ -19,7 +18,7 @@ export function LatencyTrendChart({ diagnostics }: { diagnostics: Record<string,
     const entries = Object.entries(diagnostics)
       .filter(([, d]) => d.timestamp && d.latency != null)
       .sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0))
-      .map(([key, d]) => ({
+      .map(([, d]) => ({
         name: d.modelName.length > 12 ? `${d.modelName.slice(0, 12)}…` : d.modelName,
         latency: d.latency || 0,
         status: d.status,
@@ -44,7 +43,8 @@ export function LatencyTrendChart({ diagnostics }: { diagnostics: Record<string,
           time: new Date(p.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         }))
     } catch { return [] }
-  }, [diagnostics]) // re-read when diagnostics change
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- diagnostics 变化作为刷新信号触发重新读取 localStorage 性能数据，diagnostics 本身不参与 memo 计算
+  }, [diagnostics])
 
   const data = perfData.length > 0 ? perfData : chartData
 

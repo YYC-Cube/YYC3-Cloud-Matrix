@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: P0-E2E.test.ts
  * @description: P0核心功能端到端测试 - 完整工作流测试
@@ -578,10 +577,10 @@ export function LoginForm() {
       expect(validationResult2.valid).toBe(true);
 
       // 6. 创建修复前后的快照
-      const snapshot1 = snapshotManager.createSnapshot("Before fix", [
+      snapshotManager.createSnapshot("Before fix", [
         { path: "src/Component.tsx", content: invalidCode },
       ]);
-      const snapshot2 = snapshotManager.createSnapshot("After fix", [
+      snapshotManager.createSnapshot("After fix", [
         { path: "src/Component.tsx", content: fixedCode },
       ]);
 

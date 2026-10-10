@@ -3,7 +3,7 @@
  * @description VersioningService 全面测试 - 文件版本管理、历史记录、版本对比
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { VersioningService } from '../VersioningService'
 
 describe('VersioningService - 单例模式', () => {
@@ -105,7 +105,7 @@ describe('VersioningService - 边界情况', () => {
     // createVersion需要path和content
     try {
       await service.createVersion('/test/file.ts', 'test content')
-    } catch (e) {
+    } catch {
       // 可能因为IndexedDB不可用而失败，这是预期的
     }
   })

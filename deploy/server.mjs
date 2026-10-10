@@ -139,7 +139,7 @@ function serveStatic(req, res) {
   
   // 安全: 防止路径遍历
   const safePath = path.normalize(urlPath).replace(/^(\.\.(\/|\\|$))+/, "");
-  let filePath = path.join(DIST_DIR, safePath);
+  const filePath = path.join(DIST_DIR, safePath);
 
   // 检查文件是否存在
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

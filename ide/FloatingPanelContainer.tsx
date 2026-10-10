@@ -17,7 +17,6 @@ import {
   X,
   Minus,
   Maximize2,
-  Minimize2,
   ArrowDownToLine,
   GripVertical,
 } from "lucide-react";

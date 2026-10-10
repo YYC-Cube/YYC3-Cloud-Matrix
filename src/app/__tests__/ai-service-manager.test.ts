@@ -137,7 +137,7 @@ describe("AIServiceManager", () => {
         }),
       }));
 
-      const [lowResult, highResult, normalResult] = await Promise.all([
+      const [, highResult] = await Promise.all([
         manager.sendRequest({
           model: mockModel,
           messages: [{ role: "user", content: "low" }],
@@ -271,7 +271,6 @@ describe("AIServiceManager", () => {
         temperature: 0.7,
       });
 
-      const stats = manager.getStats();
       const cancelled = manager.cancelRequest(
         Array.from((manager as unknown as { activeRequests: Map<string, unknown> }).activeRequests.keys())[0] || "unknown"
       );

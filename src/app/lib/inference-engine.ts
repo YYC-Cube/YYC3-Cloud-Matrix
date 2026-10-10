@@ -19,17 +19,17 @@
  */
 
 import type {
+  ChatRole,
+  GPUDeviceInfo,
+  InferenceBackendStatus,
   InferenceBackendType,
   InferenceConfig,
-  InferenceBackendStatus,
   ModelLoadProgress,
-  GPUDeviceInfo,
-  WebGPUPreset,
-  ChatRole,
   SDKChatResponse,
+  WebGPUPreset,
 } from "../types";
-import { getOllamaChatUrl } from "./ollama-url";
 import { getEnvConfig } from "./env-config";
+import { getOllamaChatUrl } from "./ollama-url";
 
 // ============================================================
 // 预置 WebGPU 模型
@@ -90,7 +90,7 @@ export const WEBGPU_PRESETS: WebGPUPreset[] = [
 let _cachedGPUInfo: GPUDeviceInfo | null = null;
 
 export async function detectGPU(): Promise<GPUDeviceInfo> {
-  if (_cachedGPUInfo) {return _cachedGPUInfo;}
+  if (_cachedGPUInfo) { return _cachedGPUInfo; }
 
   const info: GPUDeviceInfo = {
     available: false,
@@ -136,8 +136,8 @@ export class OllamaBackend {
   private _status: InferenceBackendStatus = "idle";
   private _abortController: AbortController | null = null;
 
-  get status(): InferenceBackendStatus {return this._status;}
-  get isReady(): boolean {return this._status === "ready" || this._status === "idle";}
+  get status(): InferenceBackendStatus { return this._status; }
+  get isReady(): boolean { return this._status === "ready" || this._status === "idle"; }
 
   async load(_modelId: string, _onProgress?: (p: ModelLoadProgress) => void): Promise<void> {
     this._status = "ready";
@@ -181,10 +181,10 @@ export class OllamaBackend {
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) {break;}
+            if (done) { break; }
             const chunk = decoder.decode(value, { stream: true });
             for (const line of chunk.split("\n")) {
-              if (!line.trim()) {continue;}
+              if (!line.trim()) { continue; }
               try {
                 const data = JSON.parse(line);
                 const text = data?.message?.content || "";
@@ -232,14 +232,14 @@ export class OllamaBackend {
       if (err instanceof Error && err.name === "AbortError") {
         throw err;
       }
-      throw new Error(`[OllamaBackend] ${(err as Error).message}`);
+      throw new Error(`[OllamaBackend] ${(err as Error).message}`, { cause: err });
     }
   }
 
   abort(): void {
     this._abortController?.abort();
     this._abortController = null;
-    if (this._status === "inferencing") {this._status = "ready";}
+    if (this._status === "inferencing") { this._status = "ready"; }
   }
 
   async unload(): Promise<void> {
@@ -258,9 +258,9 @@ export class WebGPUBackend {
   private _engine: unknown = null; // MLCEngine, lazy loaded
   private _currentModelId: string | null = null;
 
-  get status(): InferenceBackendStatus {return this._status;}
-  get isReady(): boolean {return this._status === "ready";}
-  get loadedModel(): string | null {return this._currentModelId;}
+  get status(): InferenceBackendStatus { return this._status; }
+  get isReady(): boolean { return this._status === "ready"; }
+  get loadedModel(): string | null { return this._currentModelId; }
 
   async load(modelId: string, onProgress?: (p: ModelLoadProgress) => void): Promise<void> {
     if (this._currentModelId === modelId && this._status === "ready") {
@@ -292,7 +292,7 @@ export class WebGPUBackend {
       this._status = "error";
       this._engine = null;
       this._currentModelId = null;
-      throw new Error(`[WebGPUBackend] 模型加载失败: ${(err as Error).message}`);
+      throw new Error(`[WebGPUBackend] 模型加载失败: ${(err as Error).message}`, { cause: err });
     }
   }
 
@@ -369,13 +369,13 @@ export class WebGPUBackend {
       }
     } catch (err: unknown) {
       this._status = "error";
-      throw new Error(`[WebGPUBackend] 推理失败: ${(err as Error).message}`);
+      throw new Error(`[WebGPUBackend] 推理失败: ${(err as Error).message}`, { cause: err });
     }
   }
 
   abort(): void {
     // WebLLM 没有原生 abort，标记状态
-    if (this._status === "inferencing") {this._status = "ready";}
+    if (this._status === "inferencing") { this._status = "ready"; }
   }
 
   async unload(): Promise<void> {
@@ -408,7 +408,7 @@ export class InferenceEngine {
   }
 
   /** 获取当前活跃后端 */
-  get activeBackend(): InferenceBackendType {return this._activeBackend;}
+  get activeBackend(): InferenceBackendType { return this._activeBackend; }
 
   /** 获取后端状态 */
   getBackendStatus(type: InferenceBackendType): InferenceBackendStatus {
@@ -416,7 +416,7 @@ export class InferenceEngine {
   }
 
   /** 获取 WebGPU 后端已加载的模型 */
-  get webgpuModel(): string | null {return this.webgpu.loadedModel;}
+  get webgpuModel(): string | null { return this.webgpu.loadedModel; }
 
   /** 切换后端 */
   async switchBackend(type: InferenceBackendType): Promise<void> {
@@ -474,7 +474,7 @@ export class InferenceEngine {
   /** 获取推荐的 WebGPU 模型 (基于 GPU 显存) */
   async getRecommendedModel(): Promise<WebGPUPreset | null> {
     const gpu = await detectGPU();
-    if (!gpu.available) {return null;}
+    if (!gpu.available) { return null; }
 
     // 按显存从小到大排序，选择能运行的最大模型
     const sorted = [...WEBGPU_PRESETS].sort((a, b) => a.minMemoryMB - b.minMemoryMB);

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ThemeAPI.test.ts
  * @description: 任务1.2主题系统完整API测试
@@ -16,9 +15,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ThemeAPI, setTheme, getTheme, setCustomColor, getCustomColors, resetTheme } from '../ThemeAPI';
 import { ThemeEventSystem } from '../ThemeEventSystem';
 import { ContrastValidator } from '../ContrastValidator';
-import { CSSVariableInjector } from '../CSSVariableInjector';
-import { ColorValidator } from '../ColorValidator';
-import { DesignTokenSystem } from '../DesignTokenSystem';
 
 describe('任务1.2: 主题系统完整API', () => {
   let themeAPI: ThemeAPI;

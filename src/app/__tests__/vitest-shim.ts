@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-// @ts-nocheck — Bun test infrastructure, not checked by tsc
+// @ts-nocheck -- legacy: strict-mode migration pending — Bun test infrastructure, not checked by tsc
 /**
  * @file: vitest-shim.ts
  * @description: Re-exports bun:test as vitest API with compatibility extensions

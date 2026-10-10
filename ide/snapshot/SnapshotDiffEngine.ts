@@ -16,7 +16,7 @@
 // 提供完整的快照比较和分析功能
 // ================================================================
 
-import { MyersDiff, type DiffResult, type DiffBlock } from './MyersDiff';
+import { MyersDiff, type DiffResult } from './MyersDiff';
 import type { Snapshot, SnapshotFile } from '../SnapshotManager';
 
 /**

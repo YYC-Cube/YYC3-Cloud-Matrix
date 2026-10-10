@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: IntentRecognition.test.ts
  * @description: 意图识别引擎完整测试套件
@@ -12,13 +11,12 @@
  * @tags: test,intent,recognition,llm
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   IntentType,
   IntentCategory,
   IntentPriority,
   EntityType,
-  ConflictSeverity,
 } from '../IntentTypes';
 import { IntentClassifier, getIntentClassifier } from '../IntentClassifier';
 import { IntentFeatureExtractor, getIntentFeatureExtractor } from '../IntentFeatureExtractor';
@@ -142,7 +140,6 @@ describe('IntentClassifier', () => {
     });
 
     it('应该移除模式', () => {
-      const initialPatterns = classifier.getPatterns();
       classifier.removePattern(IntentType.CREATE);
       const patterns = classifier.getPatterns();
       

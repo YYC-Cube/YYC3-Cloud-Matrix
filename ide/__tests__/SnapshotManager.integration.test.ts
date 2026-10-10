@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SnapshotManager.integration.test.ts
  * @description: SnapshotManager 集成测试 - 测试快照的创建、恢复、删除和比较流程
@@ -12,16 +11,15 @@
  * @tags: test,integration,snapshot,manager,restore
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { usePreviewStore } from "../stores/usePreviewStore";
-import { useFileStoreZustand } from "../stores/useFileStoreZustand";
-import { SnapshotManager } from "../SnapshotManager";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applySnapshotFiles,
   applySnapshotFilesSync,
   getCurrentFilesForSnapshot,
   validateSnapshotFiles,
 } from "../snapshotApplyHelper";
+import { useFileStoreZustand } from "../stores/useFileStoreZustand";
+import { usePreviewStore } from "../stores/usePreviewStore";
 
 // ================================================================
 // Integration Tests - SnapshotManager with usePreviewStore
@@ -104,7 +102,7 @@ describe("SnapshotManager Integration", () => {
     });
 
     it("should create snapshot with metadata", () => {
-      const { initSnapshotManager, createProjectSnapshot, getProjectSnapshot } =
+      const { initSnapshotManager, createProjectSnapshot } =
         usePreviewStore.getState();
 
       initSnapshotManager();
@@ -130,7 +128,7 @@ describe("SnapshotManager Integration", () => {
 
   describe("Restore Snapshot → File Update", () => {
     it("should restore snapshot and update files", async () => {
-      const { initSnapshotManager, createProjectSnapshot, listProjectSnapshots } =
+      const { initSnapshotManager, createProjectSnapshot } =
         usePreviewStore.getState();
 
       initSnapshotManager();
@@ -197,7 +195,7 @@ describe("SnapshotManager Integration", () => {
     });
 
     it("should handle file application errors gracefully", async () => {
-      const { initSnapshotManager, createProjectSnapshot } = usePreviewStore.getState();
+      const { initSnapshotManager } = usePreviewStore.getState();
 
       initSnapshotManager();
 
@@ -288,7 +286,7 @@ describe("SnapshotManager Integration", () => {
       // Verify remaining count
       const remaining = listProjectSnapshots();
       expect(remaining.length).toBe(2);
-      
+
       // Verify the remaining are the last two
       const remainingLabels = remaining.map(s => s.label).sort();
       expect(remainingLabels).toContain('版本3');

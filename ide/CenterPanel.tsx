@@ -12,45 +12,30 @@
  * @tags: files,file-tree,editor,tabs,monaco
  */
 
-import { useState, useCallback, lazy, Suspense, useRef, useEffect } from "react";
 import {
-  ChevronRight,
-  ChevronDown,
-  FileCode2,
-  FileJson,
-  FileText,
-  Folder,
-  FolderOpen,
-  Search,
-  X,
-  FilePlus,
-  FolderPlus,
-  RefreshCw,
-  Trash2,
-  Pencil,
   Check,
+  FileCode2,
+  FilePlus,
+  Folder,
+  FolderPlus,
+  Pencil,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
 } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { type FileNode } from "./fileData";
-import { PanelHeader } from "./PanelManager";
 import { useFileStore } from "./FileStore";
-import { useWorkflowEventBus } from "./WorkflowEventBus";
-const MonacoWrapper = lazy(() => import("./MonacoWrapper"));
+import { PanelHeader } from "./PanelManager";
 import TabBar from "./TabBar";
 import VirtualFileTree from "./VirtualFileTree";
+import { useWorkflowEventBus } from "./WorkflowEventBus";
+const MonacoWrapper = lazy(() => import("./MonacoWrapper"));
 
 interface CenterPanelProps {
   searchOpen: boolean;
   nodeId: string;
-}
-
-function getFileIcon(name: string) {
-  if (name.endsWith(".tsx") || name.endsWith(".ts"))
-    return <FileCode2 className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />;
-  if (name.endsWith(".json"))
-    return <FileJson className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />;
-  if (name.endsWith(".css"))
-    return <FileText className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />;
-  return <FileText className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />;
 }
 
 export default function CenterPanel({ searchOpen, nodeId }: CenterPanelProps) {
@@ -67,9 +52,6 @@ export default function CenterPanel({ searchOpen, nodeId }: CenterPanelProps) {
 
   const { emit } = useWorkflowEventBus();
 
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(["src", "src/app", "src/app/components"]),
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditor, setShowEditor] = useState(true);
   const fileTreeContainerRef = useRef<HTMLDivElement>(null);
@@ -92,15 +74,6 @@ export default function CenterPanel({ searchOpen, nodeId }: CenterPanelProps) {
     x: number;
     y: number;
   } | null>(null);
-
-  const toggleFolder = (path: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
 
   // 动态计算文件树高度
   useEffect(() => {
@@ -146,8 +119,6 @@ export default function CenterPanel({ searchOpen, nodeId }: CenterPanelProps) {
     }
     setNewFileDialog(null);
     setNewFileName("");
-    // Auto expand parent
-    setExpandedFolders((prev) => new Set([...prev, newFileDialog.parentPath]));
   };
 
   const handleRename = () => {
@@ -180,73 +151,6 @@ export default function CenterPanel({ searchOpen, nodeId }: CenterPanelProps) {
       type: node.type,
       x: e.clientX,
       y: e.clientY,
-    });
-  };
-
-  const renderTree = (nodes: FileNode[], depth: number = 0) => {
-    return nodes.map((node) => {
-      if (
-        searchQuery &&
-        node.type === "file" &&
-        !node.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return null;
-      }
-
-      const isExpanded = expandedFolders.has(node.path);
-      const isActive = node.path === activeFile;
-
-      if (node.type === "folder") {
-        const children = node.children
-          ? renderTree(node.children, depth + 1)
-          : null;
-        const hasVisibleChildren = children && children.some((c) => c !== null);
-
-        if (searchQuery && !hasVisibleChildren) return null;
-
-        return (
-          <div key={node.path}>
-            <button
-              onClick={() => toggleFolder(node.path)}
-              onContextMenu={(e) => handleContextMenu(e, node)}
-              className="w-full flex items-center gap-1.5 py-1 px-2 hover:bg-white/3 transition-colors rounded-sm group"
-              style={{ paddingLeft: `${depth * 12 + 8}px` }}
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-3 h-3 text-slate-600 flex-shrink-0" />
-              ) : (
-                <ChevronRight className="w-3 h-3 text-slate-600 flex-shrink-0" />
-              )}
-              {isExpanded ? (
-                <FolderOpen className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-              ) : (
-                <Folder className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-              )}
-              <span className="text-[0.72rem] text-slate-400 truncate">
-                {node.name}
-              </span>
-            </button>
-            {(isExpanded || searchQuery) && children}
-          </div>
-        );
-      }
-
-      return (
-        <button
-          key={node.path}
-          onClick={() => setActiveFile(node.path)}
-          onContextMenu={(e) => handleContextMenu(e, node)}
-          className={`w-full flex items-center gap-1.5 py-1 px-2 rounded-sm transition-colors ${
-            isActive
-              ? "bg-sky-900/30 text-sky-300"
-              : "hover:bg-white/3 text-slate-400"
-          }`}
-          style={{ paddingLeft: `${depth * 12 + 24}px` }}
-        >
-          {getFileIcon(node.name)}
-          <span className="text-[0.72rem] truncate">{node.name}</span>
-        </button>
-      );
     });
   };
 

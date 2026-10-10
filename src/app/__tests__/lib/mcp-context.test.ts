@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   MCPContextManager,
   getMCPContextManager,

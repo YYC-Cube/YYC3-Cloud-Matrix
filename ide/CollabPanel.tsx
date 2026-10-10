@@ -12,17 +12,17 @@
  * @tags: collaboration,realtime,users,panel
  */
 
-import { useState } from "react";
 import {
-  Users,
+  Clock,
   Edit3,
   Lock,
   MessageCircle,
-  Clock,
   Shield,
+  Users,
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { useState } from "react";
 import { PanelHeader } from "./PanelManager";
 
 interface CollabUser {
@@ -43,11 +43,6 @@ interface CollabEvent {
   file?: string;
   timestamp: string;
   type: "edit" | "cursor" | "join" | "leave" | "comment" | "conflict";
-}
-
-interface Permission {
-  userId: string;
-  role: "owner" | "editor" | "viewer";
 }
 
 const MOCK_USERS: CollabUser[] = [
@@ -154,7 +149,7 @@ export default function CollabPanel({ nodeId }: { nodeId: string }) {
     "users" | "activity" | "permissions"
   >("users");
   const [showCursors, setShowCursors] = useState(true);
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected] = useState(true);
 
   const onlineCount = users.filter((u) => u.status !== "offline").length;
   const editingCount = users.filter((u) => u.status === "editing").length;

@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { registerBuiltinAgents, BUILTIN_AGENT_CONFIGS } from "../../lib/mcp/mcp-tools-builtin";
 import { resetMCPServer, getMCPServer } from "../../lib/mcp/mcp-server";
 import { resetMCPContextManager } from "../../lib/mcp/mcp-context";

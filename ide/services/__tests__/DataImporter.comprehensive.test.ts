@@ -3,7 +3,7 @@
  * @description DataImporter 全面测试 - 数据导入功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { DataImporter } from '../DataImporter'
 
 describe('DataImporter - 静态方法', () => {
@@ -62,7 +62,7 @@ describe('DataImporter - 边界情况', () => {
       if (result1 && result2) {
         expect(result1).not.toBe(result2)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })

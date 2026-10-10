@@ -11,6 +11,7 @@
  * @tags: plugin,system,extension,dependency,lifecycle
  */
 
+import { logger } from "../services/Logger";
 import type {
   DependencyGraph,
   DependencyNode,
@@ -21,11 +22,10 @@ import type {
   PluginState,
 } from './PluginTypes';
 import {
-  PluginErrorCode,
   ExtensionPointType,
+  PluginErrorCode,
   PluginLifecycleStage,
 } from './PluginTypes';
-import { logger } from "../services/Logger";
 
 // ================================================================
 // 扩展点管理器
@@ -628,6 +628,7 @@ export class LifecycleManager {
     } catch (error) {
       throw new Error(
         `Activation hook failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }
@@ -650,6 +651,7 @@ export class LifecycleManager {
     } catch (error) {
       throw new Error(
         `Deactivation hook failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }

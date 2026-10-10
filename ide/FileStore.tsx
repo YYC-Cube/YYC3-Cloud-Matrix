@@ -14,12 +14,12 @@
 
 import React, {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  useMemo,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   debouncedSaveFiles,
@@ -162,7 +162,7 @@ function simpleFormat(code: string, lang: string): string {
   const lines = code.split("\n");
   let indent = 0;
   const formatted: string[] = [];
-  const openers = /[{(\[]\\s*$/;
+  const openers = /[{(\x5B]\\s*$/;
   const closers = /^\s*[})\]]/;
 
   for (const rawLine of lines) {
@@ -260,7 +260,7 @@ export function FileStoreProvider({ children, skipIdbLoad }: { children: React.R
         logger.warn("[IndexedDB] Failed to load files:", err);
         errorReporting.captureError(err, { category: "file_system" });
       });
-  }, []);
+  }, [skipIdbLoad]);
 
   // -- IndexedDB: Debounced auto-save on file content changes --
   const isInitialMount = useRef(true);

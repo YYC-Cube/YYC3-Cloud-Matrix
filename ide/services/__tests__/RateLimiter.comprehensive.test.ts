@@ -3,7 +3,7 @@
  * @description RateLimiter 全面测试 - 令牌桶、滑动窗口、熔断器
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   TokenBucketLimiter,
   SlidingWindowLimiter,

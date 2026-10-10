@@ -23,18 +23,12 @@ import {
 import { useFileStore } from "./FileStore";
 import {
   RefreshCw,
-  Maximize2,
-  Minimize2,
   Monitor,
   Smartphone,
   Tablet,
   TerminalSquare,
-  ExternalLink,
   Eye,
-  Loader2,
   AlertCircle,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 
 // ── Types ──

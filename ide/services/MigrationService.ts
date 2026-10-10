@@ -123,7 +123,7 @@ export class MigrationService {
         try {
           localStorage.setItem(key, String(value))
           result.imported.localStorage++
-        } catch (e) {
+        } catch {
           result.warnings.push(`导入 localStorage 键失败: ${key}`)
         }
       })
@@ -137,7 +137,7 @@ export class MigrationService {
           try {
             await db.put('files', file)
             result.imported.files++
-          } catch (e) {
+          } catch {
             result.warnings.push(`导入文件失败: ${file.path}`)
           }
         }
@@ -148,7 +148,7 @@ export class MigrationService {
           try {
             await db.put('projects', project)
             result.imported.projects++
-          } catch (e) {
+          } catch {
             result.warnings.push(`导入项目失败: ${project.id}`)
           }
         }
@@ -159,7 +159,7 @@ export class MigrationService {
           try {
             await db.put('snapshots', snapshot)
             result.imported.snapshots++
-          } catch (e) {
+          } catch {
             result.warnings.push(`导入快照失败: ${snapshot.id}`)
           }
         }
@@ -188,7 +188,7 @@ export class MigrationService {
         try {
           localStorage.setItem(key, JSON.stringify(value))
           result.imported.localStorage++
-        } catch (e) {
+        } catch {
           result.warnings.push(`导入 VSCode 设置失败: ${key}`)
         }
       })
@@ -207,7 +207,7 @@ export class MigrationService {
         localStorage.setItem('yyc3-keybindings', JSON.stringify(yyc3Keybindings))
         result.imported.localStorage++
         result.warnings.push('VSCode 快捷键已转换为 YYC³ 格式')
-      } catch (e) {
+      } catch {
         result.warnings.push('导入 VSCode 快捷键失败')
       }
     }
@@ -243,14 +243,14 @@ export class MigrationService {
           try {
             localStorage.setItem(key, value)
             result.imported.localStorage++
-          } catch (e) {
+          } catch {
             result.warnings.push(`导入数据失败: ${key}`)
           }
         })
 
         result.warnings.push('通用数据已转换为 YYC³ 格式')
       }
-    } catch (e) {
+    } catch {
       result.errors.push('无法解析通用数据格式')
       result.success = false
     }

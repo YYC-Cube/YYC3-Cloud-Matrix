@@ -14,12 +14,6 @@
 
 import { Cpu, Server } from "lucide-react";
 
-/**
- * 图标组件类型 — 解决 React 19 与 Lucide 类型兼容性
- * @description 使用 unknown + 断言绕过 ForwardRefExoticComponent 检查
- */
-type IconComponent = React.ComponentType<{ className?: string }>;
-
 export interface ModelDef {
   id: string;
   name: string;
@@ -33,7 +27,7 @@ export interface ProviderDef {
   name: string;
   shortName: string;
   /** 图标组件 — eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   icon: any;
   color: string;
   colorBg: string;

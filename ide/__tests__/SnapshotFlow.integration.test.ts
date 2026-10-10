@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SnapshotFlow.integration.test.ts
  * @description: 快照恢复流程集成测试 - 测试快照的创建、恢复、比较、删除和视图同步
@@ -12,12 +11,12 @@
  * @tags: test,integration,snapshot-flow,restore,compare
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { usePreviewStore } from "../stores/usePreviewStore";
-import { useFileStoreZustand } from "../stores/useFileStoreZustand";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SnapshotManager } from "../SnapshotManager";
-import { SnapshotViewController } from "../snapshot/SnapshotViewController";
 import { BoundaryExceptionHandler } from "../exception/BoundaryExceptionHandler";
+import { SnapshotViewController } from "../snapshot/SnapshotViewController";
+import { useFileStoreZustand } from "../stores/useFileStoreZustand";
+import { usePreviewStore } from "../stores/usePreviewStore";
 
 // ================================================================
 // Integration Tests - Complete Snapshot Flow
@@ -366,7 +365,7 @@ describe("Snapshot Flow Integration", () => {
 
   describe("Boundary Condition Handling", () => {
     it("should handle large file snapshot", () => {
-      const { createProjectSnapshot, listProjectSnapshots } = usePreviewStore.getState();
+      const { createProjectSnapshot } = usePreviewStore.getState();
 
       const largeContent = "x".repeat(1000000);
       const files = [{ path: "large.ts", content: largeContent }];
@@ -379,7 +378,7 @@ describe("Snapshot Flow Integration", () => {
     });
 
     it("should handle empty snapshot", () => {
-      const { createProjectSnapshot, listProjectSnapshots } = usePreviewStore.getState();
+      const { createProjectSnapshot } = usePreviewStore.getState();
 
       const snapshot = createProjectSnapshot("空快照", []);
 
@@ -388,7 +387,7 @@ describe("Snapshot Flow Integration", () => {
     });
 
     it("should handle concurrent snapshot operations", async () => {
-      const { createProjectSnapshot, restoreProjectSnapshot } = usePreviewStore.getState();
+      const { createProjectSnapshot } = usePreviewStore.getState();
 
       const files = [{ path: "test.ts", content: "test" }];
 
@@ -497,7 +496,7 @@ describe("Snapshot Flow Integration", () => {
       });
 
       // Initialize zoom controller
-      const zoomController = initZoomController();
+      initZoomController();
 
       // Restore snapshot
       const restoreResult = await restoreProjectSnapshot((snapshot as any).id);

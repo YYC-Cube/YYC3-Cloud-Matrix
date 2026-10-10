@@ -275,7 +275,7 @@ export class ScrollSyncEngine {
         element.scrollLeft = x;
         element.scrollTop = y;
       }
-    } catch (error) {
+    } catch {
       // 降级处理：直接设置scrollLeft和scrollTop
       element.scrollLeft = x;
       element.scrollTop = y;

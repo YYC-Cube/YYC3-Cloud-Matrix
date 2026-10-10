@@ -40,8 +40,8 @@
 //   - events: 监听/发射事件
 // ================================================================
 
-import type { PluginManifest, PluginInstance } from "./types";
 import { logger } from "./services/Logger";
+import type { PluginInstance, PluginManifest } from "./types";
 
 // ── Plugin Market Types ──
 
@@ -353,9 +353,9 @@ export class PluginManager {
       editor: {
         getActiveFile: () => null, // Wired to FileStore at integration time
         getFileContent: () => null,
-        setFileContent: () => {},
+        setFileContent: () => { },
         getSelectedText: () => null,
-        openFile: () => {},
+        openFile: () => { },
         listFiles: () => [],
       },
       ui: {
@@ -467,7 +467,7 @@ export class PluginManager {
     const plugins = await this.fetchMarketPlugins();
     const lowerQuery = query.toLowerCase();
 
-    return plugins.filter(plugin => 
+    return plugins.filter(plugin =>
       plugin.manifest.name.toLowerCase().includes(lowerQuery) ||
       plugin.manifest.description.toLowerCase().includes(lowerQuery) ||
       plugin.manifest.author.toLowerCase().includes(lowerQuery) ||
@@ -515,7 +515,7 @@ export class PluginManager {
       const manifest = marketItem.manifest;
 
       if (manifest.dependencies) {
-        for (const [depId, depVersion] of Object.entries(manifest.dependencies)) {
+        for (const [depId, _depVersion] of Object.entries(manifest.dependencies)) {
           if (!this.installedPlugins.has(depId)) {
             logger.warn('Installing dependency: ${depId}@${depVersion}');
             const depResult = await this.installPlugin(depId);
@@ -636,7 +636,7 @@ export class PluginManager {
   private findDependents(pluginId: string): string[] {
     const dependents: string[] = [];
 
-    for (const [id, installed] of this.installedPlugins) {
+    for (const [id] of this.installedPlugins) {
       const plugin = this.plugins.get(id);
       if (plugin?.manifest.dependencies?.[pluginId]) {
         dependents.push(id);

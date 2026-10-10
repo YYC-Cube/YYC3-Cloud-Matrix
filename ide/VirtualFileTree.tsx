@@ -192,7 +192,7 @@ function TreeNodeRow({
   const { node, depth, isExpanded } = item;
   const isActive = node.path === activeFile;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (_e: React.MouseEvent) => {
     if (node.type === "folder") {
       handleToggle(node.path);
     } else {

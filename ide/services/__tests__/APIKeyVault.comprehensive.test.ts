@@ -3,7 +3,7 @@
  * @description APIKeyVault 全面测试 - API密钥管理、提供商验证
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { apiKeyVault, PROVIDERS } from '../APIKeyVault'
 
 describe('APIKeyVault - PROVIDERS常量', () => {

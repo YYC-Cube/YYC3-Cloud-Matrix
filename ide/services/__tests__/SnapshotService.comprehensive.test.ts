@@ -3,7 +3,7 @@
  * @description SnapshotService 全面测试 - 快照创建、对比、恢复功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { SnapshotService } from '../SnapshotService'
 
 describe('SnapshotService - 单例模式', () => {
@@ -113,7 +113,7 @@ describe('SnapshotService - 边界情况', () => {
     // createSnapshot需要projectId和label
     try {
       await service.createSnapshot('test-project', 'Test Label')
-    } catch (e) {
+    } catch {
       // 可能因为IndexedDB不可用而失败，这是预期的
     }
   })

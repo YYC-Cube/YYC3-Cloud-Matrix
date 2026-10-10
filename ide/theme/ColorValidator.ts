@@ -474,8 +474,8 @@ export class ColorValidator {
     const wcagAA = ratio >= 4.5; // 普通文本
     const wcagAAA = ratio >= 7; // 高对比度
 
-    // 建议
-    let suggestion = "";
+    // 建议（下方 if/else 分支全覆盖，必然被赋值）
+    let suggestion: string;
     if (!wcagAA) {
       suggestion = `Contrast ratio ${ratio.toFixed(2)} does not meet WCAG AA (4.5:1)`;
     } else if (!wcagAAA) {

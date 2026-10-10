@@ -11,8 +11,7 @@
  * @tags: integration-test,e2e,testing
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { act } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock optional dependencies
 vi.mock('pg', () => ({
@@ -53,10 +52,10 @@ vi.mock('sql.js', () => ({
 }));
 
 // ── Services ──
-import { TokenBucketLimiter, SlidingWindowLimiter, CircuitBreaker } from '../services/RateLimiter';
-import { OptimisticUpdateManager } from '../services/OptimisticUpdateManager';
-import { StorageManager } from '../services/StorageManager';
 import { ChunkedFileHandler } from '../services/ChunkedFileHandler';
+import { OptimisticUpdateManager } from '../services/OptimisticUpdateManager';
+import { CircuitBreaker, TokenBucketLimiter } from '../services/RateLimiter';
+import { StorageManager } from '../services/StorageManager';
 import { useFileStoreZustand } from '../stores/useFileStoreZustand';
 
 // Mock ResizeObserver for XTerminal components
@@ -119,12 +118,12 @@ describe('Integration: File Operations with Rate Limiting', () => {
 // ── Integration Test: Optimistic Updates with Storage ──
 
 describe('Integration: Optimistic Updates with Storage', () => {
-  let storageManager: StorageManager;
   let optimisticManager: OptimisticUpdateManager;
   let mockState: Record<string, unknown>;
 
   beforeEach(() => {
-    storageManager = new StorageManager({
+    // 独立构造实例以触发初始化副作用（本组用例不直接引用它）
+    new StorageManager({
       warningThreshold: 80,
       criticalThreshold: 95,
       autoCleanup: false,
@@ -360,7 +359,7 @@ async function retryWithBackoff<T>(
 describe('Integration: Full Workflow', () => {
   it('should handle complete file operation workflow', async () => {
     const rateLimiter = new TokenBucketLimiter({ maxRequests: 100, windowMs: 60000 });
-    const circuitBreaker = new CircuitBreaker({
+    new CircuitBreaker({
       failureThreshold: 5,
       successThreshold: 2,
       timeout: 10000,

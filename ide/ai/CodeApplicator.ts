@@ -166,7 +166,7 @@ function extractFilepath(content: string): string | null {
 
 function extractFilepathFromContext(
   text: string,
-  language: string,
+  _language: string,
 ): string | null {
   // Look for patterns like "文件: src/..." or "File: src/..." or "`src/...`"
   const patterns = [

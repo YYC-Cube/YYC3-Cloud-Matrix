@@ -16,22 +16,22 @@
  */
 
 import type {
-  YYC3ClusterNode,
-  YYC3ClusterTopology,
+  ClusterStatistics,
+  CommandExecution,
+  DistributedTask,
+  FileTransferRecord,
+  NASStorageConfig,
+  NodeStatus,
   SSHConfiguration,
   SSHSession,
-  DistributedTask,
-  CommandExecution,
-  FileTransferRecord,
-  NodeStatus,
-  ClusterStatistics,
-  NASStorageConfig,
+  YYC3ClusterNode,
+  YYC3ClusterTopology,
 } from "./yyc3-cluster.types";
 import {
-  isValidYYC3DeviceID,
+  CONNECTION_TIMEOUT_MS,
   generateYYC3NodeId,
   HEARTBEAT_INTERVAL_MS,
-  CONNECTION_TIMEOUT_MS,
+  isValidYYC3DeviceID,
   MAX_RETRY_ATTEMPTS,
 } from "./yyc3-cluster.types";
 
@@ -401,9 +401,9 @@ export class YYC3ClusterManager {
   private activeSessions: Map<string, SSHSession> = new Map();
   private taskQueue: DistributedTask[] = [];
   private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
-  
+
   // 事件回调
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(data?: unknown) => void>> = new Map();
 
   constructor() {
     this.topology = this.initializeCluster();
@@ -503,7 +503,7 @@ export class YYC3ClusterManager {
 
   private calculateRegionDistribution(nodes: Map<string, YYC3ClusterNode>) {
     const regions = new Map<string, { nodeCount: number; nodes: string[] }>();
-    
+
     nodes.forEach((node) => {
       if (!regions.has(node.location)) {
         regions.set(node.location, { nodeCount: 0, nodes: [] });
@@ -523,7 +523,7 @@ export class YYC3ClusterManager {
 
   private calculateInitialStatistics(nodes: Map<string, YYC3ClusterNode>): ClusterStatistics {
     let totalCPU = 0, totalMemory = 0, totalStorage = 0;
-    
+
     nodes.forEach((node) => {
       totalCPU += node.specs.cpu.cores;
       totalMemory += node.specs.memory.totalGB;
@@ -644,7 +644,7 @@ export class YYC3ClusterManager {
 
   updateNodeStatus(deviceId: string, status: NodeStatus): void {
     const node = this.topology.nodes.get(deviceId);
-    if (!node) {return;}
+    if (!node) { return; }
 
     const previousStatus = node.status;
     node.status = status;
@@ -655,7 +655,7 @@ export class YYC3ClusterManager {
 
     if (previousStatus !== status) {
       this.emit(`node:status:${status}`, node);
-      
+
       if (status === "offline") {
         this.emit("node:disconnected", node);
       } else if (previousStatus === "offline" && status === "online") {
@@ -708,12 +708,12 @@ export class YYC3ClusterManager {
     try {
       // 模拟SSH连接建立
       await this.simulateSSHConnection(targetNode.ssh);
-      
+
       session.status = "authenticated";
       session.status = "active";
       targetNode.ssh.lastConnectedAt = Date.now();
       targetNode.ssh.connectionCount++;
-      
+
       this.emit("session:connected", session);
       return session;
     } catch (error) {
@@ -747,7 +747,7 @@ export class YYC3ClusterManager {
     try {
       // 模拟命令执行
       const result = await this.simulateCommandExecution(command, options?.timeout);
-      
+
       execution.completedAt = Date.now();
       execution.durationMs = execution.completedAt - startTime;
       execution.exitCode = result.exitCode;
@@ -826,7 +826,7 @@ export class YYC3ClusterManager {
 
   closeSSHSession(sessionId: string): void {
     const session = this.activeSessions.get(sessionId);
-    if (!session) {return;}
+    if (!session) { return; }
 
     session.disconnectedAt = Date.now();
     session.durationSeconds = Math.floor((Date.now() - session.connectedAt) / 1000);
@@ -898,7 +898,7 @@ export class YYC3ClusterManager {
 
   async executeTask(taskId: string): Promise<void> {
     const taskIndex = this.taskQueue.findIndex((t) => t.taskId === taskId);
-    if (taskIndex === -1) {throw new Error(`Task not found: ${taskId}`);}
+    if (taskIndex === -1) { throw new Error(`Task not found: ${taskId}`); }
 
     const task = this.taskQueue[taskIndex];
     task.status = "running";
@@ -921,7 +921,7 @@ export class YYC3ClusterManager {
         try {
           // 创建SSH会话并执行任务
           const session = await this.createSSHSession("yyc3-77", nodeId); // 从本机发起
-          
+
           let result: { nodeId: string; success: boolean; output?: string; executionTimeMs: number };
           switch (task.taskType) {
             case "shell-command": {
@@ -1005,7 +1005,7 @@ export class YYC3ClusterManager {
   // 健康检查
   // ============================================================
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   async performHealthCheck(nodeId: string): Promise<any> {
     const node = this.topology.nodes.get(nodeId);
     if (!node) {
@@ -1103,7 +1103,7 @@ export class YYC3ClusterManager {
 
   getNASConfiguration(): NASStorageConfig | null {
     const nasNode = this.topology.nodes.get("yyc3-45");
-    if (!nasNode) {return null;}
+    if (!nasNode) { return null; }
 
     return {
       nodeId: nasNode.deviceId.fullName,
@@ -1176,7 +1176,7 @@ export class YYC3ClusterManager {
   // 事件系统
   // ============================================================
 
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (data?: unknown) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
@@ -1185,7 +1185,7 @@ export class YYC3ClusterManager {
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data?: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);
@@ -1272,7 +1272,7 @@ export class YYC3ClusterManager {
 
   destroy(): void {
     this.stopHeartbeatMonitor();
-    
+
     // 关闭所有活跃会话
     this.activeSessions.forEach((session) => {
       this.closeSSHSession(session.sessionId);

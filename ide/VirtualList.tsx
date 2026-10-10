@@ -10,7 +10,7 @@
  * @tags: react,virtual-scroll,performance,list
  */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
 import { List, useListRef, type RowComponentProps } from "react-window";
 
 export interface VirtualListProps<T> {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: UIComponents.smoke.test.tsx
  * @description: UI组件冒烟测试 - 最基本的渲染测试
@@ -12,7 +11,7 @@
  * @tags: test,ui,smoke
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 describe("UI Components - Smoke Test", () => {
   it("should import PreviewModeControl without errors", async () => {

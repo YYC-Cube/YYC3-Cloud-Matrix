@@ -408,12 +408,10 @@ class ErrorReportingService {
     if (Math.random() > this.config.sampleRate) return null;
 
     // 处理不同类型的错误对象
-    let err: Error;
     let errorMessage: string;
     let errorStack: string | undefined;
 
     if (error instanceof Error) {
-      err = error;
       errorMessage = error.message;
       errorStack = error.stack;
     } else if (error instanceof Event) {
@@ -423,22 +421,18 @@ class ErrorReportingService {
         : 'unknown target';
       errorMessage = `Event: ${error.type} - ${targetInfo}`;
       errorStack = undefined;
-      err = new Error(errorMessage);
     } else if (error instanceof Worker) {
       // 处理 Worker 对象
       errorMessage = `Worker error: ${error.toString()}`;
       errorStack = undefined;
-      err = new Error(errorMessage);
     } else if (typeof error === 'object' && error !== null) {
       // 处理普通对象
       errorMessage = JSON.stringify(error);
       errorStack = undefined;
-      err = new Error(errorMessage);
     } else {
       // 处理其他类型
       errorMessage = String(error);
       errorStack = undefined;
-      err = new Error(errorMessage);
     }
 
     const fingerprint = generateFingerprint(errorMessage, errorStack);

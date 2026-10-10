@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SystemPromptBuilder.integration.test.ts
  * @description: SystemPromptBuilder 集成测试 - 测试从用户输入到系统提示词构建的完整流程
@@ -20,10 +19,8 @@ import {
   type UserIntent,
 } from "../ai/SystemPromptBuilder";
 import {
-  collectContext,
   compressContext,
   type ProjectContext,
-  type ContextCollectorInput,
   estimateTokens,
 } from "../ai/ContextCollector";
 
@@ -487,7 +484,7 @@ export default function App() {
         ...mockContext,
         activeFile: {
           path: "src/test-special.tsx",
-          content: `const special = "测试\n\t\r特殊字符'\"{}[]<>";`,
+          content: `const special = "测试\n\t\r特殊字符'"{}[]<>";`,
           language: "tsx",
         },
       };

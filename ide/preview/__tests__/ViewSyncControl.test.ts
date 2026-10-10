@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ViewSyncControl.test.ts
  * @description: 视图同步控制系统测试套件
@@ -556,7 +555,7 @@ describe('ViewStatePersistence', () => {
         1.5
       );
       
-      const state2 = persistence.saveState(
+      persistence.saveState(
         '/test/file.ts',
         { x: 20, y: 30, ratioX: 0.2, ratioY: 0.3 },
         1.6

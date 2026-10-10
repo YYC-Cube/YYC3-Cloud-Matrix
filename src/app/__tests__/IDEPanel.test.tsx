@@ -22,9 +22,9 @@
  * - 导航跳转
  */
 
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockNavigate = vi.fn() as any;
 
@@ -40,7 +40,6 @@ vi.mock("../modules/shared/Layout", () => ({
 }));
 
 // Mock IDELayout component with tab state handling
-let currentTab = "monitor";
 const { useState } = React;
 
 vi.mock("../modules/dev/ide/IDELayout", () => ({
@@ -49,7 +48,6 @@ vi.mock("../modules/dev/ide/IDELayout", () => ({
 
     // Sync with external tab state for testing
     (globalThis as any)._setIDETab = setActiveTab;
-    currentTab = activeTab;
 
     return (
       <div data-testid="ide-layout">

@@ -539,7 +539,6 @@ export const useProviderSlice = create<ProviderSlice>()(
             }
           }
           state.configuredModels = autoPresets;
-          needsUpdate = true;
         } else if (needsUpdate) {
           state.configuredModels = updated;
         }

@@ -39,8 +39,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -325,7 +323,7 @@ export default function APIKeySettings() {
         setPerf(ldPerf());
       }
     }
-  }, [testRes, models]);
+  }, [testRes, models, perf]);
 
   const doTest = async (model: AIModel) => {
     if (testId) return;

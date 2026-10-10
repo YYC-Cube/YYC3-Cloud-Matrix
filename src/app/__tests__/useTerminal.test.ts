@@ -41,7 +41,7 @@ vi.mock("../lib/env-config", () => ({
   exportEnvConfig: vi.fn(() => JSON.stringify({ SYSTEM_NAME: "CP-IM Cloud" }, null, 2)),
 }));
 
-import { env, getEnvConfig, setEnvConfig, resetEnvConfig, exportEnvConfig } from "../lib/env-config";
+import { getEnvConfig, setEnvConfig, resetEnvConfig, exportEnvConfig } from "../lib/env-config";
 
 describe("useTerminal", () => {
   beforeEach(() => {

@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import { TerminalSquare, Plus, X, ChevronDown, Maximize2 } from 'lucide-react'
+import { TerminalSquare, Plus, X, ChevronDown } from 'lucide-react'
 import Terminal from './Terminal'
 import { PanelHeader } from './PanelManager'
 import { logger } from "./services/Logger";
@@ -28,7 +28,7 @@ const DEFAULT_SESSIONS: TerminalSession[] = [
 
 export default function TerminalPanel({ nodeId }: TerminalPanelProps) {
   const [sessions] = useState<TerminalSession[]>(DEFAULT_SESSIONS)
-  const [activeSessionId, setActiveSessionId] = useState('terminal-1')
+  const [activeSessionId] = useState('terminal-1')
   const [showSessionMenu, setShowSessionMenu] = useState(false)
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0]

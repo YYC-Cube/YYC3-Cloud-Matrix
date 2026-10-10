@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SnapshotDiff.test.ts
  * @description: 快照比较功能完整测试套件
@@ -13,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { MyersDiff, type DiffResult } from '../MyersDiff';
+import { MyersDiff } from '../MyersDiff';
 import { SnapshotDiffEngine, type SnapshotDiffResult } from '../SnapshotDiffEngine';
 import type { Snapshot, SnapshotFile } from '../../SnapshotManager';
 
@@ -166,7 +165,7 @@ describe('任务2.2: 快照比较功能', () => {
       }
 
       const start = performance.now();
-      const result = diff.diff(oldLines.join('\n'), newLines.join('\n'), { maxLines: 10000 });
+      diff.diff(oldLines.join('\n'), newLines.join('\n'), { maxLines: 10000 });
       const end = performance.now();
 
       // 应该快速完成（放宽到500ms）

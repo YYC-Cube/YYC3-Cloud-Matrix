@@ -102,11 +102,13 @@ export default function PerformancePanel({ nodeId }: { nodeId: string }) {
     });
   }, [fileContents]);
 
-  // Auto-analyze on first render
+  // Auto-analyze on first render（ref 读取最新回调，保持 mount-only 语义）
+  const runAnalysisRef = useRef(runAnalysis);
+  runAnalysisRef.current = runAnalysis;
   useEffect(() => {
-    analysisTimer.current = setTimeout(runAnalysis, 800);
+    analysisTimer.current = setTimeout(() => runAnalysisRef.current(), 800);
     return () => clearTimeout(analysisTimer.current);
-  }, []);  
+  }, []);
 
   // Filtered suggestions
   const filteredSuggestions = useMemo(() => {

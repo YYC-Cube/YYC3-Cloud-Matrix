@@ -3,7 +3,7 @@
  * @description SanitizerService 全面测试 - XSS防护、URL验证、HTML转义
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { sanitizer } from '../Sanitizer'
 
 describe('SanitizerService - 基础消毒功能', () => {

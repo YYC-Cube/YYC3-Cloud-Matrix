@@ -14,7 +14,7 @@
 // SnapshotViewController - Snapshot view management and synchronization
 // ================================================================
 
-import { ZoomController, type ZoomState } from "../preview/ZoomController";
+import { ZoomController } from "../preview/ZoomController";
 
 /**
  * 视图位置
@@ -323,7 +323,7 @@ export class SnapshotViewController {
   /**
    * 同步缩放级别
    */
-  private syncZoomLevel(sourceViewId: string, previousZoom: number): void {
+  private syncZoomLevel(sourceViewId: string, _previousZoom: number): void {
     const sourceView = this.views.get(sourceViewId);
     if (!sourceView) {
       return;

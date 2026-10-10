@@ -13,7 +13,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   DisasterRecovery,
   createDisasterRecovery,
-  type DisasterScenario,
 } from "../../lib/disaster-recovery";
 
 describe("DisasterRecovery", () => {

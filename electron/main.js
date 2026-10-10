@@ -11,11 +11,11 @@ function createWindow() {
   console.log('=== Creating main window ===');
   console.log('__dirname:', __dirname);
   console.log('process.cwd():', process.cwd());
-  
+
   const htmlPath = path.join(__dirname, './dist/index.html');
   console.log('HTML path:', htmlPath);
   console.log('HTML path exists:', fs.existsSync(htmlPath));
-  
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -121,10 +121,10 @@ function createTray() {
 
 function init() {
   console.log('=== App initializing ===');
-  
+
   if (app.requestSingleInstanceLock()) {
     console.log('=== Single instance lock acquired ===');
-    
+
     app.on('second-instance', () => {
       console.log('=== Second instance detected ===');
       if (mainWindow) {

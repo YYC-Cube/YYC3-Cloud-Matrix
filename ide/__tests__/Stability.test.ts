@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: Stability.test.ts
  * @description: 稳定性和边界情况测试
@@ -12,7 +11,7 @@
  * @tags: test,stability,boundary,error
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   ErrorHandler,
   ErrorType,
@@ -492,8 +491,9 @@ describe("BoundaryHandler", () => {
 
 describe("集成测试", () => {
   it("应该正确处理完整的错误流程", async () => {
-    const errorHandler = ErrorHandler.getInstance();
-    const boundaryHandler = BoundaryHandler.getInstance();
+    // 确保单例完成初始化
+    ErrorHandler.getInstance();
+    BoundaryHandler.getInstance();
 
     // 模拟文件处理流程
     const processFile = async (content: string, filename: string) => {

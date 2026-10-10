@@ -108,8 +108,6 @@ export function FamilyMusic() {
   const { musicWorks, removeMusicWork } = useFamilySettingsSlice();
   const [playlist, setPlaylist] = useState<MusicTrack[]>(MUSIC_LIBRARY);
 
-  const [showAnthemPlayer, setShowAnthemPlayer] = useState(false);
-  const [showUploadZone, setShowUploadZone] = useState(false);
   const [showAddTracks, setShowAddTracks] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAnthemModal, setShowAnthemModal] = useState(false);

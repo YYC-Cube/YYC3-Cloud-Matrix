@@ -11,7 +11,7 @@
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { StateSyncManager, createStateSyncManager, StateChange } from "../lib/state-sync-manager";
+import { StateSyncManager, createStateSyncManager } from "../lib/state-sync-manager";
 
 interface TestItem {
   id: string;

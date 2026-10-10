@@ -165,7 +165,7 @@ export function AIAssistant({ isMobile }: AIAssistantProps) {
 
   // Connection test state
   const [connTestStatus, setConnTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
-  const [connTestResult, setConnTestResult] = useState<string>("");
+  const [, setConnTestResult] = useState<string>("");
   const [connTestTime, setConnTestTime] = useState<number>(0);
   const [connTestSteps, setConnTestSteps] = useState<Array<{ label: string; status: string; detail: string; latencyMs?: number }>>([]);
 

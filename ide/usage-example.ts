@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+
 /**
  * @file: usage-example.ts
  * @description: IDE 标准规范使用示例 — 展示如何在项目中集成和使用
@@ -11,35 +11,18 @@
 // ================================================================
 
 import {
-  // 核心接口
-  IDisposable,
+  APP_VERSION,
+  // 常量
+  BRAND_NAME,
+  // DI 系统
+  DIContainer,
   IEventBus,
   ILogger,
   ISubscription,
-
-  // DI 系统
-  DIContainer,
-  ServiceToken,
-  Lifecycle,
-  TOKENS,
-
-  // 配置系统
-  ConfigManager,
-  createYYC3ConfigManager,
-  DEFAULT_CONFIG,
-
-  // 应用工厂
-  AppFactory,
-  initializeApp,
-  getService,
-
-  // 常量
-  BRAND_NAME,
-  APP_VERSION,
   SERVER_PORT,
-
-  // 类型
-  type YYC3AppConfig,
+  ServiceToken,
+  createYYC3ConfigManager,
+  initializeApp,
 } from '../docs/YYC3-团队通用-标准规范/ide';
 
 // ================================================================
@@ -81,7 +64,7 @@ async function exampleInitializeApp() {
 // 示例 3: 使用 DI 容器
 // ================================================================
 
-function exampleDIContainer() {
+async async function exampleDIContainer() {
   console.log('\n=== 示例 3: 使用 DI 容器 ===');
 
   // 创建容器
@@ -174,13 +157,15 @@ function exampleEventBus() {
   // 从工厂导入 SimpleEventBus
   // 注意：这里我们手动创建一个简单实现用于演示
   class DemoEventBus implements IEventBus {
-    private listeners = new Map<string, Set<Function>>();
+    // (event: never) => void 为任意事件处理函数的父类型，便于异构 handler 存取
+    private listeners = new Map<string, Set<(event: never) => void>>();
     private isDisposed = false;
 
     publish<T>(eventType: string, event: T): void {
       const handlers = this.listeners.get(eventType);
       if (handlers) {
-        handlers.forEach(handler => handler(event));
+        // 存入时均为对应事件类型的 handler，还原其签名后调用
+        handlers.forEach(handler => (handler as (e: T) => void)(event));
       }
     }
 
@@ -188,7 +173,7 @@ function exampleEventBus() {
       if (!this.listeners.has(eventType)) {
         this.listeners.set(eventType, new Set());
       }
-      this.listeners.get(eventType)!.add(handler as Function);
+      this.listeners.get(eventType)!.add(handler);
 
       let isActive = true;
       return {
@@ -228,12 +213,12 @@ function exampleEventBus() {
 
   const eventBus = new DemoEventBus();
 
-  // 订阅事件
+  // 订阅事件（sub2 仅演示多订阅者注册，解绑无意义）
   const sub1 = eventBus.subscribe('user:login', (data: any) => {
     console.log(`👤 用户登录: ${data.userId}`);
   });
 
-  const sub2 = eventBus.subscribe('user:login', (data: any) => {
+  eventBus.subscribe('user:login', (data: any) => {
     console.log(`📊 记录登录日志: ${data.timestamp}`);
   });
 
@@ -303,9 +288,9 @@ function exampleLoggerSystem() {
       return this.level;
     }
 
-    onLog(callback: (entry: any) => void): ISubscription {
+    onLog(_callback: (entry: any) => void): ISubscription {
       // 简化实现
-      return { isActive: true, dispose: () => {}, unsubscribe: () => {} };
+      return { isActive: true, dispose: () => { }, unsubscribe: () => { } };
     }
 
     private shouldLog(level: LogLevel): boolean {

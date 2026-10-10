@@ -150,7 +150,7 @@ const OptimizedComponent = React.memo(
   /**
    * 内存优化建议
    */
-  private suggestMemoryOptimization(bottleneck: PerformanceBottleneck): OptimizationSuggestion {
+  private suggestMemoryOptimization(_bottleneck: PerformanceBottleneck): OptimizationSuggestion {
     return {
       type: OptimizationType.CACHE,
       title: '优化内存使用',
@@ -185,7 +185,7 @@ const objectPool = {
   /**
    * 网络优化建议
    */
-  private suggestNetworkOptimization(bottleneck: PerformanceBottleneck): OptimizationSuggestion {
+  private suggestNetworkOptimization(_bottleneck: PerformanceBottleneck): OptimizationSuggestion {
     return {
       type: OptimizationType.LAZY_LOAD,
       title: '实现懒加载和缓存',
@@ -214,7 +214,7 @@ const cachedFetch = async (url) => {
   /**
    * CPU优化建议
    */
-  private suggestCPUOptimization(bottleneck: PerformanceBottleneck): OptimizationSuggestion {
+  private suggestCPUOptimization(_bottleneck: PerformanceBottleneck): OptimizationSuggestion {
     return {
       type: OptimizationType.WEB_WORKER,
       title: '使用Web Worker',

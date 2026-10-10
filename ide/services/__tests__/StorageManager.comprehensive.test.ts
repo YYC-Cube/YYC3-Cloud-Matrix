@@ -54,7 +54,7 @@ describe('StorageManager - 存储信息获取', () => {
         expect(quota).toHaveProperty('available')
         expect(quota).toHaveProperty('usagePercentage')
       }
-    } catch (e) {
+    } catch {
       // 浏览器API不可用时可能抛出异常
     }
   })
@@ -65,7 +65,7 @@ describe('StorageManager - 存储信息获取', () => {
     try {
       const warning = await manager.checkStorage()
       expect(warning === null || typeof warning === 'object').toBe(true)
-    } catch (e) {
+    } catch {
       // 可能抛出异常
     }
   })
@@ -120,7 +120,7 @@ describe('StorageManager - 清理功能', () => {
         expect(result).toHaveProperty('removedItems')
         expect(Array.isArray(result.errors)).toBe(true)
       }
-    } catch (e) {
+    } catch {
       // 可能抛出异常
     }
   })
@@ -197,7 +197,7 @@ describe('StorageManager - 边界情况', () => {
     try {
       const canStore = await mgr.canStore(1024)
       expect(typeof canStore).toBe('boolean')
-    } catch (e) {
+    } catch {
       // 可能抛出异常
     }
   })
@@ -208,7 +208,7 @@ describe('StorageManager - 边界情况', () => {
     try {
       const breakdown = await mgr.getStorageBreakdown()
       expect(typeof breakdown).toBe('object')
-    } catch (e) {
+    } catch {
       // 可能抛出异常
     }
   })

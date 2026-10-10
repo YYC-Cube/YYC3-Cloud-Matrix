@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: DiffPreviewModal.tsx
  * @description: AI 代码变更差异预览模态框，显示 CodeApplicationPlan 的所有代码块，
@@ -18,12 +17,10 @@ import {
   X,
   Check,
   CheckCheck,
-  FileCode2,
   FilePlus,
   FileEdit,
   ChevronDown,
   ChevronRight,
-  Eye,
   Ban,
   AlertTriangle,
   Sparkles,
@@ -128,7 +125,7 @@ export default function DiffPreviewModal({
   // Stats
   const addedLines = useMemo(() => {
     let count = 0;
-    for (const [fp, d] of Object.entries(decisions)) {
+    for (const [, d] of Object.entries(decisions)) {
       if (d.accepted) {
         count += d.diff.filter((l) => l.type === "added").length;
       }
@@ -138,7 +135,7 @@ export default function DiffPreviewModal({
 
   const removedLines = useMemo(() => {
     let count = 0;
-    for (const [fp, d] of Object.entries(decisions)) {
+    for (const [, d] of Object.entries(decisions)) {
       if (d.accepted) {
         count += d.diff.filter((l) => l.type === "removed").length;
       }

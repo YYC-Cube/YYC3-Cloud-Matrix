@@ -201,9 +201,9 @@ export default function TerminalSidebar({
         y: window.innerHeight - DEFAULT_FLOAT_HEIGHT - 100,
       })
     } else if (pos === 'bottom') {
-      setSize(prev => ({ width: 0, height: DEFAULT_DOCK_HEIGHT }))
+      setSize({ width: 0, height: DEFAULT_DOCK_HEIGHT })
     } else {
-      setSize(prev => ({ width: DEFAULT_DOCK_WIDTH, height: 0 }))
+      setSize({ width: DEFAULT_DOCK_WIDTH, height: 0 })
     }
     setMinimized(false)
   }, [])

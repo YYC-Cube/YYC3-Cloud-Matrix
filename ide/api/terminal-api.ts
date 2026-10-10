@@ -10,11 +10,11 @@
  * @license: MIT
  */
 
-import { spawn, type ChildProcess } from 'child_process'
-import type { Plugin, ViteDevServer } from 'vite'
-import { WebSocketServer, WebSocket } from 'ws'
+import { spawn, type ChildProcess } from 'child_process';
+import type { Plugin } from 'vite';
+import { WebSocket, WebSocketServer } from 'ws';
 import { logger } from "../services/Logger";
-import { validateExecRequest, validateSessionId, safeJSONParse, validateWSMessage, formatValidationResponse } from './input-validator';
+import { formatValidationResponse, safeJSONParse, validateExecRequest, validateSessionId, validateWSMessage } from './input-validator';
 
 interface TerminalSession {
   id: string
@@ -100,15 +100,12 @@ function jsonResponse(res: any, statusCode: number, data: any) {
 }
 
 export function createTerminalAPI(): Plugin {
-  let server: ViteDevServer | null = null
   let wss: WebSocketServer | null = null
   let upgradeHandler: ((request: any, socket: any, head: any) => void) | null = null
 
   return {
     name: 'yyc3-terminal-api',
     configureServer(viteServer) {
-      server = viteServer
-
       // 创建 WebSocket 服务器
       wss = new WebSocketServer({ noServer: true })
 
@@ -301,7 +298,7 @@ export function createTerminalAPI(): Plugin {
                   exitCode: 0,
                   cwd: process.cwd()
                 })
-              } catch (err) {
+              } catch {
                 jsonResponse(res, 200, {
                   output: `cd: ${targetDir}: No such file or directory`,
                   exitCode: 1,
@@ -424,7 +421,7 @@ export function createTerminalAPI(): Plugin {
             logger.info('会话终止: ${sessionId}');
 
             jsonResponse(res, 200, { success: true })
-          } catch (err) {
+          } catch {
             jsonResponse(res, 400, { error: '无效的请求格式' })
           }
         })
@@ -517,7 +514,7 @@ export function createTerminalAPI(): Plugin {
               cwd: session.cwd,
             }))
             ws.send(JSON.stringify({ type: 'exit', code: 0 }))
-          } catch (err) {
+          } catch {
             ws.send(JSON.stringify({
               type: 'output',
               data: `cd: ${targetDir}: No such file or directory\n`,

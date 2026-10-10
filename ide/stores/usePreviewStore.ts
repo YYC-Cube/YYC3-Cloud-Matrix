@@ -472,7 +472,7 @@ export const usePreviewStore = create<PreviewState>()(
             diffs.push({ path, status: "unchanged" });
           }
           return { diffs, ...comparison };
-        } catch (e: any) {
+        } catch {
           return null;
         }
       },

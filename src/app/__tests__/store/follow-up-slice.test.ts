@@ -321,14 +321,14 @@ describe('useFollowUpSlice', () => {
           notes: '开始执行任务',
         });
 
-        let updated = useFollowUpSlice.getState().followUps.find(f => f.id === newFu.id);
+        const updated = useFollowUpSlice.getState().followUps.find(f => f.id === newFu.id);
         expect(updated?.status).toBe('in_progress');
         expect(updated?.notes).toBe('开始执行任务');
 
         // 3. 完成待办事项
         useFollowUpSlice.getState().completeFollowUp(newFu.id);
 
-        let completed = useFollowUpSlice.getState().followUps.find(f => f.id === newFu.id);
+        const completed = useFollowUpSlice.getState().followUps.find(f => f.id === newFu.id);
         expect(completed?.status).toBe('completed');
         expect(completed?.completedAt).toBeDefined();
       }

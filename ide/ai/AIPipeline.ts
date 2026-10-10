@@ -14,19 +14,15 @@
 
 import {
   collectContext,
-  compressContext,
   type ContextCollectorInput,
   type ProjectContext,
 } from "./ContextCollector";
 import {
   detectIntent,
-  buildSystemPrompt,
   buildChatMessages,
   type UserIntent,
-  type LLMReadyMessage,
 } from "./SystemPromptBuilder";
 import {
-  parseCodeBlocks,
   applyCodeToFiles,
   parseAndValidateCodeBlocks,
   generateSimpleDiff,

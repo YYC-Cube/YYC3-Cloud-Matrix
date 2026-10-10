@@ -8,32 +8,24 @@
  * @license: MIT
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Layout,
-  Columns2,
-  Columns3,
-  Columns4,
   Grid2X2,
   Grid3X3,
   RotateCcw,
   Check,
   ChevronDown,
-  Monitor,
   Code2,
   Bot,
   Terminal,
-  FileSearch,
   Shield,
-  TestTube,
-  Zap,
   FolderOpen,
   Save,
   X,
   MessageSquare,
   Users,
   Sparkles,
-  Settings,
 } from 'lucide-react'
 import {
   usePanelManager,
@@ -43,9 +35,6 @@ import { loadJSON, saveJSON } from './constants/storage-keys'
 import type { PanelId } from './types/index'
 
 const SK_PANEL_PRESETS = 'yyc3_panel_presets_v3'
-
-type ColumnCount = 1 | 2 | 3 | 4
-type ScreenCount = 4 | 6 | 8
 
 interface PanelGroup {
   id: string

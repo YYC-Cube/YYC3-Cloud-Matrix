@@ -15,10 +15,8 @@ import {
   PerformanceReport,
   PerformanceMetric,
   PerformanceBottleneck,
-  OptimizationSuggestion,
   PerformanceLevel,
   MetricType,
-  PerformanceStats,
 } from './PerformanceTypes';
 import { PerformanceOptimizer } from './PerformanceOptimizer';
 

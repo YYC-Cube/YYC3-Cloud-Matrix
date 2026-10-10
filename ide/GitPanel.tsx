@@ -24,7 +24,6 @@ import {
   ChevronDown,
   ChevronRight,
   FileCode2,
-  FileText,
   Upload,
   Download,
   History,
@@ -81,7 +80,6 @@ export default function GitPanel({ nodeId }: { nodeId: string }) {
   const [commitMessage, setCommitMessage] = useState("");
   const [showStaged, setShowStaged] = useState(true);
   const [showUnstaged, setShowUnstaged] = useState(true);
-  const [showLog, setShowLog] = useState(true);
   const [activeTab, setActiveTab] = useState<"changes" | "log">("changes");
 
   const stagedFiles = gitChanges.filter((c) => c.staged);

@@ -383,7 +383,7 @@ export class AIDegradationService {
   }
 
   private async runHealthCheck(): Promise<void> {
-    for (const [providerId, entry] of this.providers) {
+    for (const [, entry] of this.providers) {
       if (!this.isProviderConfigured(entry.config)) continue;
 
       const modelId = entry.health.modelId || this.selectModel(entry.config);

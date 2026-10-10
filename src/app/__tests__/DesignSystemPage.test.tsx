@@ -21,7 +21,7 @@
  * - 区域切换
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { DesignSystemPage } from "../modules/dev/design-system/DesignSystemPage";

@@ -21,7 +21,6 @@ import {
   type Diagnostic,
   type DiagnosticSeverity,
   type DiagnosticCategory,
-  type AutoFix,
 } from "../ai/ErrorAnalyzer";
 import { useFileStore } from "../FileStore";
 import { useWorkflowEventBus } from "../WorkflowEventBus";

@@ -11,11 +11,6 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Mock Electron API
-const mockIpcRenderer = {
-  invoke: vi.fn(),
-};
-
 // Mock window object
 (global as any).window = {
   yyc3: {

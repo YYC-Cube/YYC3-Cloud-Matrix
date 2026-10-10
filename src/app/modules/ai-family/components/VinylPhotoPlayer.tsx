@@ -285,7 +285,7 @@ interface MVPlayerOverlayProps {
 
 export function MVPlayerOverlay({
   isOpen, onClose, videoUrl, trackTitle,
-  isPlaying: _externalIsPlaying, currentTime, duration, onSeek, formatTime,
+  isPlaying: _externalIsPlaying, currentTime: _currentTime, duration, onSeek: _onSeek, formatTime,
 }: MVPlayerOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

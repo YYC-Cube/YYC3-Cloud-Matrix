@@ -14,7 +14,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { ConnectionStatus } from "../modules/shared/ConnectionStatus";
-import type { ConnectionState } from "../types";
 
 describe("ConnectionStatus", () => {
   const mockOnReconnect = vi.fn();

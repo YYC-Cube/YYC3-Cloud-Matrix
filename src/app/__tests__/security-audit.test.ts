@@ -10,7 +10,7 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { SecurityAuditor, createSecurityAuditor, getSecurityAuditor } from "../lib/security-audit";
 
 describe("SecurityAuditor", () => {

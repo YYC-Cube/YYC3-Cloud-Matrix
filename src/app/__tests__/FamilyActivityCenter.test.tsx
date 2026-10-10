@@ -359,7 +359,6 @@ describe("FamilyActivityCenter", () => {
         const idx = s.textContent?.trim();
         const card = s.closest('[data-testid="yyc3-glass-card"]');
         if (!card || !idx) return;
-        const fullNameEl = card.querySelector("span"); // 第 2 个 span（姓名）不是序号，直接搜索「元启·天枢」等全名
         const fullNameEl2 = card.querySelectorAll("span")[1];
         rankRowMember[idx] = fullNameEl2?.textContent || "";
       });

@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useNetworkSlice } from '../../store/slices/network-slice';
-import type { WifiNetwork, WifiAutoReconnectSettings } from '../../types';
+import type { WifiNetwork } from '../../types';
 
 describe('useNetworkSlice', () => {
   beforeEach(() => {

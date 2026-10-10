@@ -11,7 +11,7 @@
  * @tags: test,performance,monitor,unit
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PerformanceMonitor } from '../PerformanceMonitor'
 
 describe('PerformanceMonitor', () => {

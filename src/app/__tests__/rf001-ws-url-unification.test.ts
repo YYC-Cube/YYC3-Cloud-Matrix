@@ -23,7 +23,6 @@ Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import React from "react";
 
 describe("RF-001: WebSocket URL 三源统一", () => {
   beforeEach(() => {

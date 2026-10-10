@@ -18,7 +18,6 @@ import {
   Bell,
   Check,
   CheckCheck,
-  GitPullRequest,
   AlertTriangle,
   Info,
   Users,

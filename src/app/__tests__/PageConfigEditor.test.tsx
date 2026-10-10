@@ -10,12 +10,12 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
-import { PageConfigEditor } from "../modules/admin/PageConfigEditor";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePageConfigById } from "../hooks/usePageConfig";
+import { PageConfigEditor } from "../modules/admin/PageConfigEditor";
 
 const mockUpdateConfig = vi.fn();
 const mockResetConfig = vi.fn();
@@ -76,7 +76,7 @@ vi.mock("../config", () => ({
 }));
 
 vi.mock("../components/ui/button", () => ({
-  Button: ({ children, onClick, disabled, variant, size }: {
+  Button: ({ children, onClick, disabled, variant, size: _size }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
@@ -117,7 +117,7 @@ vi.mock("../components/ui/switch", () => ({
 }));
 
 vi.mock("../components/ui/select", () => ({
-  Select: ({ children, value, onValueChange, disabled }: {
+  Select: ({ children, value, onValueChange: _onValueChange, disabled: _disabled }: {
     children: React.ReactNode;
     value?: string;
     onValueChange?: (value: string) => void;

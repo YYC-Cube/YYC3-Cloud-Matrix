@@ -12,15 +12,15 @@
  * @tags: xterm,terminal,websocket,pty,theme
  */
 
-import { useRef, useEffect, useState } from 'react'
-import { Terminal } from '@xterm/xterm'
+import type { FitAddon as FitAddonType } from '@xterm/addon-fit'
 import { FitAddon } from '@xterm/addon-fit'
-import { WebLinksAddon } from '@xterm/addon-web-links'
 import { SearchAddon } from '@xterm/addon-search'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
+import { WebLinksAddon } from '@xterm/addon-web-links'
 import type { ITheme } from '@xterm/xterm'
-import type { FitAddon as FitAddonType } from '@xterm/addon-fit'
-import { logger } from "./services/Logger";
+import { Terminal } from '@xterm/xterm'
+import { useEffect, useRef, useState } from 'react'
+import { logger } from "./services/Logger"
 
 interface XTerminalProps {
   sessionId: string
@@ -53,18 +53,24 @@ export function XTerminal({
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
+  // 配置与回调的 ref 镜像：终端实例仅在 sessionId 变化时初始化，运行期始终读取最新 props
+  const propsRef = useRef({ theme, fontFamily, fontSize, cursorBlink, onData, onResize, onTitleChange })
+  propsRef.current = { theme, fontFamily, fontSize, cursorBlink, onData, onResize, onTitleChange }
+
   // 初始化 Terminal 实例
   useEffect(() => {
     if (!containerRef.current || terminalRef.current) return
+
+    const cfg = propsRef.current
 
     logger.info('初始化实例 (Session: ${sessionId})');
 
     // 创建 Terminal 实例
     const term = new Terminal({
-      theme: theme || getDefaultTheme(),
-      fontFamily,
-      fontSize,
-      cursorBlink,
+      theme: cfg.theme || getDefaultTheme(),
+      fontFamily: cfg.fontFamily,
+      fontSize: cfg.fontSize,
+      cursorBlink: cfg.cursorBlink,
       allowProposedApi: true,
       scrollback: 5000,
       tabStopWidth: 4,
@@ -104,22 +110,22 @@ export function XTerminal({
 
     // 用户输入事件
     term.onData((data) => {
-      if (onData) {
-        onData(data)
+      if (cfg.onData) {
+        cfg.onData(data)
       }
     })
 
     // 终端尺寸变化事件
     term.onResize(({ cols, rows }) => {
-      if (onResize) {
-        onResize({ cols, rows })
+      if (cfg.onResize) {
+        cfg.onResize({ cols, rows })
       }
     })
 
     // 标题变化事件
     term.onTitleChange((title) => {
-      if (onTitleChange) {
-        onTitleChange(title)
+      if (cfg.onTitleChange) {
+        cfg.onTitleChange(title)
       }
     })
 
@@ -151,7 +157,7 @@ export function XTerminal({
         if (fitAddonRef.current && terminalRef.current) {
           try {
             fitAddonRef.current.fit()
-          } catch (e) {
+          } catch {
             // 忽略容器不可见时的错误
           }
         }

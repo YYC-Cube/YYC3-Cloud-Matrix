@@ -72,7 +72,7 @@ import { FamilyPhone } from "../modules/ai-family/components/FamilyPhone";
 // ──────────────────────────────────────────────────────────────────
 
 import {
-  Ear, Brain, Eye, Star, Network, Shield, Scale, Lightbulb,
+  Ear, Brain, Network, Shield, Lightbulb,
 } from "lucide-react";
 
 function seedStores() {

@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import React from "react";
 import type {
   SecurityTab,
   ScanStatus,
@@ -19,8 +18,6 @@ import type {
   CSPResult,
   CookieResult,
   SensitiveDataResult,
-  PerformanceResult,
-  MemoryResult,
   WebVital,
   DeviceInfo,
   NetworkInfo,

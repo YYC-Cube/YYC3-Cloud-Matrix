@@ -27,10 +27,9 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useI18n } from "../hooks/useI18n";
 import { useModelProvider } from "../hooks/useModelProvider";
-import type { ConfiguredModel } from "../types";
 import { GlassCard } from "../modules/shared/GlassCard";
+import type { ConfiguredModel } from "../types";
 
 const STATUS_CONFIG = {
   active: { color: "#00ff88", bg: "rgba(0,255,136,0.1)", icon: CheckCircle, label: "已激活" },
@@ -44,7 +43,6 @@ interface UnifiedModelManagerProps {
 }
 
 export function UnifiedModelManager({ compact = false, showHeader = true }: UnifiedModelManagerProps) {
-  const { t } = useI18n();
   const {
     providers,
     configuredModels,

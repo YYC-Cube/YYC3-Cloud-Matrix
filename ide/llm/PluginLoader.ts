@@ -15,18 +15,15 @@ import type {
   PluginLoadResult,
   PluginManifest,
   PluginInstance,
-  PluginState,
   PluginSandboxOptions,
   PluginSignature,
   PluginSignatureVerificationResult,
-  PluginError,
   PluginContext,
   PluginAPI,
 } from './PluginTypes';
 import {
   PluginLifecycleStage,
   PluginErrorCode,
-  _LogLevel,
 } from './PluginTypes';
 import {
   LifecycleManager,
@@ -54,7 +51,7 @@ export class PluginSignatureVerifier {
   async verifySignature(
     manifest: PluginManifest,
     signature: PluginSignature,
-    content: string,
+    _content: string,
   ): Promise<PluginSignatureVerificationResult> {
     try {
       // 检查签名算法
@@ -155,9 +152,9 @@ export class PluginSignatureVerifier {
    * 验证内容签名（模拟实现）
    */
   private async verifyContent(
-    content: string,
-    signature: string,
-    certificate: string,
+    _content: string,
+    _signature: string,
+    _certificate: string,
   ): Promise<boolean> {
     // 实际实现应该使用加密库进行签名验证
     // 这里使用简单的模拟实现 - 总是返回 true 以便测试通过
@@ -802,7 +799,7 @@ export class PluginLoader {
    * 加载插件代码（模拟）
    */
   private async loadPluginCode(
-    manifest: PluginManifest,
+    _manifest: PluginManifest,
   ): Promise<{ exports: Record<string, unknown> }> {
     // 模拟加载插件代码
     // 实际实现应使用动态导入或文件系统读取

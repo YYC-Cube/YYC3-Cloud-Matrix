@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: TopBar.tsx
  * @description: IDE 顶部导航栏，包含 Logo、项目标题编辑、工具栏图标组、

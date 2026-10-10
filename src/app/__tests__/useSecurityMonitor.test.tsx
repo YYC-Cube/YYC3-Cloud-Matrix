@@ -16,8 +16,7 @@
  * Hook 测试: useSecurityMonitor
  */
 
-import React from "react";
-import { renderHook, act, cleanup } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useSecurityMonitor } from "../hooks/useSecurityMonitor";
 

@@ -1,4 +1,3 @@
-import { logger } from "../services/Logger";
 /**
  * @file: ai/ErrorAnalyzer.ts
  * @description: 静态错误分析引擎，对 FileStore 中的文件执行 25+ 条规则检测，
@@ -224,7 +223,7 @@ const RULES: AnalysisRule[] = [
     category: "react",
     severity: "error",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<AnalysisRule["check"]> = [];
       // Detect .map() calls that return JSX without key
       const mapBlocks = [
@@ -286,7 +285,7 @@ const RULES: AnalysisRule[] = [
     category: "hooks",
     severity: "warning",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<AnalysisRule["check"]> = [];
       // Find hooks with empty dependency arrays that reference external variables
       const hookPattern =
@@ -382,7 +381,7 @@ const RULES: AnalysisRule[] = [
     category: "react",
     severity: "hint",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<AnalysisRule["check"]> = [];
       // Detect <React.Fragment> or <> with single child
       const fragPattern =
@@ -470,7 +469,7 @@ const RULES: AnalysisRule[] = [
     category: "performance",
     severity: "warning",
     fileExtensions: [".tsx", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<AnalysisRule["check"]> = [];
       // Detect large array literals inside return/JSX
       const returnIdx = content.indexOf("return (");
@@ -767,7 +766,7 @@ const RULES: AnalysisRule[] = [
         if (trimmed.startsWith("//") || trimmed.startsWith("*")) return;
         // Detect potential API keys / tokens
         if (
-          /(?:api[_-]?key|secret|token|password|auth)\s*[:=]\s*['"][A-Za-z0-9_\-]{20,}['"]/i.test(
+          /(?:api[_-]?key|secret|token|password|auth)\s*[:=]\s*['"][A-Za-z0-9_-]{20,}['"]/i.test(
             line,
           )
         ) {
@@ -792,7 +791,7 @@ const RULES: AnalysisRule[] = [
     category: "best-practice",
     severity: "warning",
     fileExtensions: [".ts", ".tsx", ".js", ".jsx"],
-    check: (_fp, content, lines) => {
+    check: (_fp, content, _lines) => {
       const results: ReturnType<AnalysisRule["check"]> = [];
       const matches = [
         ...content.matchAll(/catch\s*(?:\([^)]*\))?\s*\{\s*(?:\/\*[\s\S]*?\*\/\s*)?\}/g),

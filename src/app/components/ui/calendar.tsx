@@ -71,13 +71,13 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+        IconLeft: ({ className, ...props }: any) => (  
           <ChevronLeft className={cn("size-4", className)} {...props} />
         ),
-        IconRight: ({ className, ...props }: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+        IconRight: ({ className, ...props }: any) => (  
           <ChevronRight className={cn("size-4", className)} {...props} />
         ),
-      } as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+      } as any}  
       {...props}
     />
   );

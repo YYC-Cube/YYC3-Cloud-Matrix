@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ZoomController.test.ts
  * @description: ZoomController单元测试

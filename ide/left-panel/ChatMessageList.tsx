@@ -40,7 +40,7 @@ export interface ChatMessageListProps {
 export default function ChatMessageList({
   messages,
   isStreaming,
-  activeFile,
+  _activeFile,
   onApplyCode,
   onInsertCode,
 }: ChatMessageListProps) {

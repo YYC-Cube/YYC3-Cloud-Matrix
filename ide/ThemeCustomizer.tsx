@@ -33,7 +33,6 @@ import {
   Moon,
   Save,
   Trash2,
-  Plus,
   History,
   Contrast,
   CheckCircle2,
@@ -1519,7 +1518,7 @@ function ManageTab({
       } else {
         toastError("导入失败：JSON 格式不正确或缺少必要字段");
       }
-    } catch (error) {
+    } catch {
       toastError("导入失败：JSON 格式错误");
     }
   }, [exampleJson, onImport]);

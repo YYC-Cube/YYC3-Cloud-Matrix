@@ -17,7 +17,6 @@ import {
   DEFAULT_SHADOW,
   DEFAULT_BRANDING,
   type ThemeColors,
-  type ThemePreset,
   type ThemeTypography,
   type ThemeShadow,
   type BrandingConfig,

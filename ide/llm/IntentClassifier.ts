@@ -238,7 +238,6 @@ export class IntentClassifier {
    * 分类意图
    */
   classify(input: string): IntentCandidate[] {
-    const startTime = Date.now();
     const candidates: IntentCandidate[] = [];
 
     // 遍历所有模式

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ThemeSystem.test.ts
  * @description: 主题系统完整测试 - CSS变量注入、颜色验证、Design Token
@@ -17,23 +16,18 @@ import {
   CSSVariableInjector, 
   batchUpdateCSSVariables,
   setCSSVariable,
-  getCSSVariable,
-  type ThemeType,
-  type BatchUpdateResult
+  getCSSVariable
 } from '../CSSVariableInjector';
 import {
   ColorValidator,
   validateColor,
   calculateContrast,
-  validateContrast,
-  type ColorValidationResult,
-  type ContrastResult
+  validateContrast
 } from '../ColorValidator';
 import {
   DesignTokenSystem,
   getToken,
   setToken,
-  type TokenType,
   type DesignToken
 } from '../DesignTokenSystem';
 

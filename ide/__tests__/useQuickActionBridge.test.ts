@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/useQuickActionBridge.test.ts
  * @description: QuickActionBridge Store 单元测试 — 覆盖 dispatch/consume/clear 生命周期、

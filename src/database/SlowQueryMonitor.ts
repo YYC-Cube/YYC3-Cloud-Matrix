@@ -76,7 +76,7 @@ export class SlowQueryMonitor {
   /**
    * 监控查询
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   public async monitorQuery<T = any>(
     query: string,
     executeFn: () => Promise<QueryResult<T>>

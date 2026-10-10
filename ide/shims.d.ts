@@ -45,6 +45,8 @@ declare module 'idb' {
   }
 
   interface IDBPObjectStore<T = IDBDatabase> {
+    /** 幻型参数：标记 store 所属的数据库类型 */
+    readonly __db?: T;
     name: string;
     keyPath: string | string[];
     indexNames: DOMStringList;
@@ -122,7 +124,7 @@ declare module 'file-saver' {
 // ── react-window (v2 兼容 — 匹配 VirtualList 实际使用) ──
 
 declare module 'react-window' {
-  import type { CSSProperties, ReactNode } from 'react';
+  import type { CSSProperties } from 'react';
 
   interface ListChildComponentProps {
     index: number;
@@ -269,16 +271,16 @@ declare module 'agent:types' {
 // ── agent:orchestrator — 编排器 ──
 
 declare module 'agent:orchestrator' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AgentRole = _AgentRole;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentResult {
     taskId: string; agent: AgentRole; status: _AgentResultStatus;
     output: Record<string, unknown>; metrics: _AgentMetrics; suggestions?: string[];
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface TaskDefinition { id: string; title: string; description: string; type: string }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentContext { projectId: string; sessionId: string; conversationId: string; taskDescription: string }
 
   export interface OrchestratorConfig {
@@ -314,21 +316,21 @@ declare module 'agent:orchestrator' {
 // ── agent:planner — 规划智能体 ──
 
 declare module 'agent:planner' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AgentRole = _AgentRole;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentTask {
     id: string; type: string; description: string;
     priority: string; status: string; input: _AgentInput;
     dependencies: string[]; constraints: _AgentConstraints;
     metadata: _AgentMetadata; createdAt: number;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentResult {
     taskId: string; agent: AgentRole; status: _AgentResultStatus;
     output: Record<string, unknown>; metrics: _AgentMetrics; suggestions?: string[];
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentContext { projectId: string; sessionId: string; conversationId: string; taskDescription: string }
 
   export class PlannerAgent {
@@ -342,21 +344,21 @@ declare module 'agent:planner' {
 // ── agent:coder — 编码智能体 ──
 
 declare module 'agent:coder' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AgentRole = _AgentRole;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentTask {
     id: string; type: string; description: string;
     priority: string; status: string; input: _AgentInput;
     dependencies: string[]; constraints: _AgentConstraints;
     metadata: _AgentMetadata; createdAt: number;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentResult {
     taskId: string; agent: AgentRole; status: _AgentResultStatus;
     output: Record<string, unknown>; metrics: _AgentMetrics; suggestions?: string[];
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentContext { projectId: string; sessionId: string; conversationId: string; taskDescription: string }
 
   export class CoderAgent {
@@ -370,21 +372,21 @@ declare module 'agent:coder' {
 // ── agent:tester — 测试智能体 ──
 
 declare module 'agent:tester' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AgentRole = _AgentRole;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentTask {
     id: string; type: string; description: string;
     priority: string; status: string; input: _AgentInput;
     dependencies: string[]; constraints: _AgentConstraints;
     metadata: _AgentMetadata; createdAt: number;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentResult {
     taskId: string; agent: AgentRole; status: _AgentResultStatus;
     output: Record<string, unknown>; metrics: _AgentMetrics; suggestions?: string[];
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentContext { projectId: string; sessionId: string; conversationId: string; taskDescription: string }
 
   export class TesterAgent {
@@ -398,21 +400,21 @@ declare module 'agent:tester' {
 // ── agent:reviewer — 审查智能体 ──
 
 declare module 'agent:reviewer' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AgentRole = _AgentRole;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentTask {
     id: string; type: string; description: string;
     priority: string; status: string; input: _AgentInput;
     dependencies: string[]; constraints: _AgentConstraints;
     metadata: _AgentMetadata; createdAt: number;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentResult {
     taskId: string; agent: AgentRole; status: _AgentResultStatus;
     output: Record<string, unknown>; metrics: _AgentMetrics; suggestions?: string[];
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   interface AgentContext { projectId: string; sessionId: string; conversationId: string; taskDescription: string }
 
   export class ReviewerAgent {

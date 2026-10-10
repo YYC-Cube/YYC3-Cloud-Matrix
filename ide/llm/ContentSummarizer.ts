@@ -91,7 +91,7 @@ export class ContentSummarizer {
   /**
    * 生成接口摘要
    */
-  private summarizeInterface(segment: CodeSegment, config: CompressionConfig): SummaryResult {
+  private summarizeInterface(segment: CodeSegment, _config: CompressionConfig): SummaryResult {
     const signature = segment.content.trim();
     const description = this.extractDescription(segment.content);
     const dependencies: string[] = [];
@@ -111,7 +111,7 @@ export class ContentSummarizer {
   /**
    * 生成类型摘要
    */
-  private summarizeType(segment: CodeSegment, config: CompressionConfig): SummaryResult {
+  private summarizeType(segment: CodeSegment, _config: CompressionConfig): SummaryResult {
     const signature = segment.content.trim();
     const description = this.extractDescription(segment.content);
     const dependencies: string[] = [];
@@ -131,7 +131,7 @@ export class ContentSummarizer {
   /**
    * 生成导入摘要
    */
-  private summarizeImport(segment: CodeSegment, config: CompressionConfig): SummaryResult {
+  private summarizeImport(segment: CodeSegment, _config: CompressionConfig): SummaryResult {
     const signature = segment.content.trim();
     const description = 'Import statement';
     const dependencies = this.extractImportDependencies(segment.content);
@@ -151,7 +151,7 @@ export class ContentSummarizer {
   /**
    * 生成测试摘要
    */
-  private summarizeTest(segment: CodeSegment, config: CompressionConfig): SummaryResult {
+  private summarizeTest(segment: CodeSegment, _config: CompressionConfig): SummaryResult {
     const signature = this.extractTestSignature(segment.content);
     const description = this.extractTestDescription(segment.content);
     const dependencies: string[] = [];
@@ -171,7 +171,7 @@ export class ContentSummarizer {
   /**
    * 生成通用摘要
    */
-  private summarizeGeneric(segment: CodeSegment, config: CompressionConfig): SummaryResult {
+  private summarizeGeneric(segment: CodeSegment, _config: CompressionConfig): SummaryResult {
     const signature = segment.content.substring(0, 100).trim();
     const description = 'Code segment';
     const dependencies: string[] = [];

@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import React from "react";
 import { toNodeData } from "../types";
 import type {
   AppUser,

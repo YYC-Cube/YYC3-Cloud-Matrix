@@ -80,7 +80,7 @@ export class ImageProcessor {
       }
     ]
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const response = await this.authManager.chat(messages as any, {
       model: this.defaultModel,
       maxTokens: options.maxTokens || 1000,

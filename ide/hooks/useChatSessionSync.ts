@@ -20,7 +20,6 @@ import { useWorkspaceStore } from "../stores/useWorkspaceStore";
 import {
   listSessions as listChatSessions,
   loadMessages,
-  type ChatSession,
   type PersistedMessage,
 } from "../ChatHistoryStore";
 
@@ -112,11 +111,16 @@ export function useChatSessionSync(
 
   // Sync ChatHistoryStore sessions → SessionStore on mount
   useEffect(() => {
+    // 仅挂载时执行一次性导入：通过 getState 读取快照，避免将订阅值纳入依赖导致重复导入
+    const { sessions: currentSessions, createSession: create } =
+      useSessionStore.getState();
+    const workspaceId = useWorkspaceStore.getState().activeWorkspaceId;
+
     const chatSessions = listChatSessions("ide");
     if (chatSessions.length === 0) return;
 
     const existingNames = new Set(
-      sessions.filter((s) => s.type === "ai-chat").map((s) => s.name),
+      currentSessions.filter((s) => s.type === "ai-chat").map((s) => s.name),
     );
 
     for (const cs of chatSessions) {
@@ -127,15 +131,13 @@ export function useChatSessionSync(
           content: m.content,
         }));
 
-        createSession(
+        create(
           cs.title || cs.id,
           "ai-chat",
-          activeWorkspaceId || "default",
+          workspaceId || "default",
           { aiMessages },
         );
       }
     }
-    // Only run on mount
-     
   }, []);
 }

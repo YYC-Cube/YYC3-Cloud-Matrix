@@ -1,4 +1,3 @@
-import { logger } from "./services/Logger";
 /**
  * @file: CodeValidator.ts
  * @description: 代码验证器，检查生成代码的质量和安全性

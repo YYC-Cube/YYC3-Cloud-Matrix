@@ -11,24 +11,21 @@
  * @tags: performance,monitor,ui,panel
  */
 
-import React, { useState, useEffect } from 'react'
 import {
   Activity,
   AlertTriangle,
-  BarChart3,
-  Clock,
   Database,
   HardDrive,
   RefreshCw,
   Settings,
   TrendingUp,
-  X,
 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import PerformanceMonitor, {
-  type StorageStats,
-  type PerformanceReport,
-  type PerformanceAlert,
   type MonitorConfig,
+  type PerformanceAlert,
+  type PerformanceReport,
+  type StorageStats,
 } from '../services/PerformanceMonitor'
 
 type Period = 'hour' | 'day' | 'week' | 'month'
@@ -44,13 +41,10 @@ export function PerformanceMonitorPanel() {
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const monitor = PerformanceMonitor.getInstance()
+  // PerformanceMonitor 为单例，用 useMemo 固定引用避免每次渲染触发 effect 重跑
+  const monitor = useMemo(() => PerformanceMonitor.getInstance(), [])
 
-  useEffect(() => {
-    loadData()
-  }, [selectedPeriod])
-
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setIsLoading(true)
     try {
       setStorageStats(monitor.getStorageStats())
@@ -60,7 +54,11 @@ export function PerformanceMonitorPanel() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [monitor, selectedPeriod])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleToggleMonitoring = () => {
     if (isMonitoring) {
@@ -133,11 +131,10 @@ export function PerformanceMonitorPanel() {
           </button>
           <button
             onClick={handleToggleMonitoring}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              isMonitoring
+            className={`px-4 py-2 rounded-lg transition-colors ${isMonitoring
                 ? 'bg-emerald-500/20 text-emerald-400'
                 : 'bg-blue-500/20 text-blue-400'
-            }`}
+              }`}
           >
             {isMonitoring ? '监控中' : '开始监控'}
           </button>
@@ -149,11 +146,10 @@ export function PerformanceMonitorPanel() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              activeTab === tab.id
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === tab.id
                 ? 'bg-blue-500/20 text-blue-400'
                 : 'bg-white/[0.03] text-gray-400 hover:bg-white/[0.06]'
-            }`}
+              }`}
           >
             <tab.icon className="w-4 h-4" />
             <span className="text-sm font-medium">{tab.label}</span>
@@ -183,13 +179,12 @@ export function PerformanceMonitorPanel() {
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-700 overflow-hidden">
                   <div
-                    className={`h-full transition-all ${
-                      storageStats.localStorage.percentage > 90
+                    className={`h-full transition-all ${storageStats.localStorage.percentage > 90
                         ? 'bg-red-500'
                         : storageStats.localStorage.percentage > 70
-                        ? 'bg-amber-500'
-                        : 'bg-blue-500'
-                    }`}
+                          ? 'bg-amber-500'
+                          : 'bg-blue-500'
+                      }`}
                     style={{ width: `${Math.min(storageStats.localStorage.percentage, 100)}%` }}
                   />
                 </div>
@@ -214,13 +209,12 @@ export function PerformanceMonitorPanel() {
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-700 overflow-hidden">
                   <div
-                    className={`h-full transition-all ${
-                      storageStats.indexedDB.percentage > 90
+                    className={`h-full transition-all ${storageStats.indexedDB.percentage > 90
                         ? 'bg-red-500'
                         : storageStats.indexedDB.percentage > 70
-                        ? 'bg-amber-500'
-                        : 'bg-purple-500'
-                    }`}
+                          ? 'bg-amber-500'
+                          : 'bg-purple-500'
+                      }`}
                     style={{ width: `${Math.min(storageStats.indexedDB.percentage, 100)}%` }}
                   />
                 </div>
@@ -268,11 +262,10 @@ export function PerformanceMonitorPanel() {
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                  selectedPeriod === period
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedPeriod === period
                     ? 'bg-blue-500/20 text-blue-400'
                     : 'bg-white/[0.03] text-gray-400 hover:bg-white/[0.06]'
-                }`}
+                  }`}
               >
                 {period === 'hour' && '最近1小时'}
                 {period === 'day' && '最近24小时'}
@@ -391,14 +384,12 @@ export function PerformanceMonitorPanel() {
                 </div>
                 <button
                   onClick={() => handleUpdateConfig({ enabled: !config.enabled })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
-                    config.enabled ? 'bg-blue-500' : 'bg-gray-700'
-                  }`}
+                  className={`w-12 h-6 rounded-full transition-colors ${config.enabled ? 'bg-blue-500' : 'bg-gray-700'
+                    }`}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                      config.enabled ? 'translate-x-6' : 'translate-x-0.5'
-                    }`}
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${config.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
                   />
                 </button>
               </div>

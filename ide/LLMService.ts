@@ -594,7 +594,6 @@ export async function resilientChatCompletion(
   const service = getAIDegradationService();
 
   if (options?.onDegradation) {
-    const origOnDegradation = service.getState;
     const unsub = service.subscribe((state) => {
       if (state.switchCount > 0 && state.lastSwitchAt) {
         options.onDegradation?.(

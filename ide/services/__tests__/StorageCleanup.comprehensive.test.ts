@@ -3,7 +3,7 @@
  * @description StorageCleanup 全面测试 - 存储清理功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { StorageCleanup } from '../StorageCleanup'
 
 describe('StorageCleanup - 静态方法', () => {
@@ -54,7 +54,7 @@ describe('StorageCleanup - 配置选项', () => {
         expect(result.cleanedProjects).toBe(0)
         expect(result.cleanedSnapshots).toBe(0)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -66,7 +66,7 @@ describe('StorageCleanup - 配置选项', () => {
       if (result) {
         expect(typeof result.success).toBe('boolean')
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -88,7 +88,7 @@ describe('StorageCleanup - 配置选项', () => {
       if (result) {
         expect(result).toBeDefined()
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -104,7 +104,7 @@ describe('StorageCleanup - 边界情况', () => {
       if (result1 && result2) {
         expect(result1).not.toBe(result2)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -118,7 +118,7 @@ describe('StorageCleanup - 边界情况', () => {
           expect(typeof error).toBe('string')
         })
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -130,7 +130,7 @@ describe('StorageCleanup - 边界情况', () => {
       if (result) {
         expect(result.freedSpace).toBeGreaterThanOrEqual(0)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })

@@ -140,7 +140,7 @@ export const useModelStoreZustand = create<
   ModelStoreState & ModelStoreActions
 >()(
   persist(
-    immer((set, get) => ({
+    immer((set, _get) => ({
       // ── Initial state ──
       activeModelId: "",
       customModels: [],

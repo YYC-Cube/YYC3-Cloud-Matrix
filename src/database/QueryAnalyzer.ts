@@ -167,7 +167,7 @@ export class QueryAnalyzer {
       };
     } catch (error) {
       const _executionTime = Date.now() - startTime;
-      throw new Error(`Query execution failed: ${error}`);
+      throw new Error(`Query execution failed: ${error}`, { cause: error });
     }
   }
 

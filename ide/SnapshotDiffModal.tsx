@@ -170,7 +170,7 @@ function SnapshotDiffModalInner({
   const diffLines = useMemo(() => {
     if (!leftSnap || !rightSnap) return [];
     return computeLineDiff(leftSnap.code, rightSnap.code);
-  }, [leftSnap?.code, rightSnap?.code]);
+  }, [leftSnap, rightSnap]);
 
   const stats = useMemo(() => computeStats(diffLines), [diffLines]);
 

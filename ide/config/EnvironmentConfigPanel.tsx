@@ -32,15 +32,12 @@ import {
   RotateCcw,
   Wifi,
   WifiOff,
-  Key,
   Lock,
   Unlock,
   AlertCircle,
   CheckCircle2,
-  Clock,
   Settings,
   ExternalLink,
-  Copy,
   TestTube,
 } from 'lucide-react'
 import {
@@ -48,7 +45,7 @@ import {
   type AuthMethod,
   getActiveGateway,
 } from './EnvironmentConfig'
-import { toastSuccess, toastError, toastWarning } from '../stores/useToastStore'
+import { toastSuccess, toastError } from '../stores/useToastStore'
 import { confirmDialog } from '../stores/useConfirmStore'
 import { usePromptStore } from '../stores/usePromptStore'
 
@@ -161,8 +158,10 @@ export default function EnvironmentConfigPanel() {
 
   // ── 心跳同步 ──
   useEffect(() => {
-    if (store.heartbeat.enabled && !store.heartbeat.hostIp) {
-      store.syncHostInfo()
+    // 通过 getState 读取最新快照，避免将整个 store 对象纳入依赖导致频繁重跑
+    const s = useEnvironmentStore.getState()
+    if (s.heartbeat.enabled && !s.heartbeat.hostIp) {
+      s.syncHostInfo()
     }
   }, [store.heartbeat.enabled])
 

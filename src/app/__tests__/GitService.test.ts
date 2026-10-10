@@ -10,19 +10,14 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GitService,
-  getGitService,
   createGitService,
+  getGitService,
 } from "../lib/GitService";
-import type {
-  GitFileChange,
-  GitCommitInfo,
-  GitBranchInfo,
-  GitStatus,
-  GitServiceConfig,
-} from "../lib/GitService";
+
+
 
 describe("GitService", () => {
   let gitService: GitService;
@@ -30,8 +25,8 @@ describe("GitService", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     // Mock console methods to reduce noise
-    vi.spyOn(console, "log").mockImplementation(() => {});
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => { });
+    vi.spyOn(console, "error").mockImplementation(() => { });
 
     // Mock localStorage
     const localStorageMock = {
@@ -134,7 +129,7 @@ describe("GitService", () => {
     it("should force refresh status when requested", async () => {
       await gitService.initialize();
 
-      const status1 = await gitService.getStatus();
+      await gitService.getStatus();
       const status2 = await gitService.getStatus(true);
 
       expect(status2).toBeDefined();
@@ -215,7 +210,7 @@ describe("GitService", () => {
     it("should force refresh commits when requested", async () => {
       await gitService.initialize();
 
-      const commits1 = await gitService.getCommits(10, 0, false);
+      await gitService.getCommits(10, 0, false);
       const commits2 = await gitService.getCommits(10, 0, true);
 
       expect(commits2).toBeDefined();
@@ -518,7 +513,7 @@ describe("GitService", () => {
 
       await service.initialize();
 
-      const status1 = await service.getStatus();
+      await service.getStatus();
       const status2 = await service.getStatus();
 
       expect(status2).toBeDefined();
@@ -688,8 +683,8 @@ describe("GitService Edge Cases", () => {
   let gitService: GitService;
 
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => {});
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => { });
+    vi.spyOn(console, "error").mockImplementation(() => { });
 
     const localStorageMock = {
       getItem: vi.fn(() => null),
@@ -755,7 +750,7 @@ describe("GitService Edge Cases", () => {
     // Get initial state
     const initialStatus = await gitService.getStatus();
     const initialCommits = await gitService.getCommits();
-    const initialBranches = await gitService.getBranches();
+    await gitService.getBranches();
 
     // Perform operations
     await gitService.stageAllFiles();

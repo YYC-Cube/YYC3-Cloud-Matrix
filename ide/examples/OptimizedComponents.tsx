@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: examples/OptimizedComponents.tsx
  * @description: Zustand Store 优化使用示例，展示细粒度订阅的最佳实践
@@ -14,37 +13,24 @@
 
 import React from "react";
 import {
-  useFileContent,
   useActiveFilePath,
-  useFileActions,
-  _useGeneralSettings,
-  useThemeSettings,
-  useAgents,
-  useModelConnectivity,
   useActiveModelId,
-  useTasks,
+  useAgents,
+  useFileActions,
+  useFileContent,
+  useModelConnectivity,
   useTaskActions,
+  useTasks,
+  useThemeSettings,
 } from "../stores/optimizedHooks";
 import { useFileStoreZustand } from "../stores/useFileStoreZustand";
-import { useSettingsStore } from "../stores/useSettingsStore";
 import { useModelStoreZustand } from "../stores/useModelStoreZustand";
+import { useSettingsStore } from "../stores/useSettingsStore";
 
 // ===== 文件编辑器示例 =====
 
 /**
- * ❌ 错误示例：订阅整个 fileContents
- * eslint-disable-next-line react-hooks/rules-of-hooks
- */
-
-function BadFileEditorExample() {
-  const { fileContents, activeFile } = useFileStoreZustand();
-  const content = fileContents[activeFile];
-
-  return <div>{content}</div>;
-}
-
-/**
- * ✅ 正确示例：仅订阅需要的文件内容
+ * ✅ 正确示例：仅订阅需要的文件内容（避免订阅整个 fileContents 导致的级联重渲染）
  */
 function OptimizedFileEditor() {
   // 仅订阅当前文件内容
@@ -74,19 +60,7 @@ function OptimizedFileEditor() {
 // ===== 主题设置面板示例 =====
 
 /**
- * ❌ 错误示例：订阅整个 settings 对象
- */
-
-function BadThemePanelExample() {
-  const { settings } = useSettingsStore();
-  const theme = settings.general.theme;
-  const fontSize = settings.general.editorFontSize;
-
-  return <div>Theme: {theme}, Size: {fontSize}</div>;
-}
-
-/**
- * ✅ 正确示例：仅订阅主题相关设置
+ * ✅ 正确示例：仅订阅主题相关设置（避免订阅整个 settings 对象）
  */
 function OptimizedThemePanel() {
   const { theme, editorFont, editorFontSize } = useThemeSettings();
@@ -128,28 +102,11 @@ function OptimizedThemePanel() {
 // ===== 代理列表示例 =====
 
 /**
- * ❌ 错误示例：订阅整个 settings 对象来获取代理列表
- */
-
-function BadAgentListExample() {
-  const { settings } = useSettingsStore();
-  const agents = settings.agents;
-
-  return (
-    <ul>
-      {agents.map((agent) => (
-        <li key={agent.id}>{agent.name}</li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * ✅ 正确示例：仅订阅代理列表
+ * ✅ 正确示例：仅订阅代理列表（避免订阅整个 settings 对象）
  */
 function OptimizedAgentList() {
   const agents = useAgents();
-  const { updateAgent, removeAgent } = useSettingsStore();
+  const { removeAgent } = useSettingsStore();
 
   return (
     <ul className="agent-list">
@@ -307,14 +264,8 @@ function StoreSizeIndicator() {
 // ===== 导出 =====
 
 export {
-  OptimizedFileEditor,
-  OptimizedThemePanel,
-  OptimizedAgentList,
-  ModelStatusIndicator,
-  ModelSelector,
-  TodoTaskList,
-  TaskItem,
-  PerformanceMonitor,
+  ModelSelector, ModelStatusIndicator, OptimizedAgentList, OptimizedFileEditor,
+  OptimizedThemePanel, PerformanceMonitor, TaskItem, TodoTaskList
 };
 
 /**

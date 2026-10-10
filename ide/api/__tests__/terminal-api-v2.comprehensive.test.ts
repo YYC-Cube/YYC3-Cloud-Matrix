@@ -3,7 +3,7 @@
  * @description 终端API V2全面测试 - WebSocket + PTY
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 // Mock Logger
 vi.mock('../services/Logger', () => ({

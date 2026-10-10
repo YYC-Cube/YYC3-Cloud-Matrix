@@ -357,7 +357,7 @@ describe("usePerformanceMonitor", () => {
         throw new Error("QuotaExceededError");
       });
 
-      const { result } = renderHook(() => usePerformanceMonitor());
+      renderHook(() => usePerformanceMonitor());
 
       expect(() => {
         act(() => {

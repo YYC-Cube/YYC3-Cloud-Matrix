@@ -33,7 +33,7 @@ class MockWebSocket {
     }, 10);
   }
 
-  send(data: string): void {
+  send(_data: string): void {
     // Mock send
   }
 

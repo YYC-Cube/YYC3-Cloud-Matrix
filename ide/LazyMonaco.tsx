@@ -12,8 +12,8 @@
  * @tags: lazy-loading,monaco,performance,code-split,preload
  */
 
-import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 const MonacoWrapperLazy = lazy(() => import("./MonacoWrapper"));
 
@@ -97,15 +97,7 @@ function MonacoLoading() {
 }
 
 export function LazyMonacoWrapper(props: React.ComponentProps<typeof MonacoWrapperLazy>) {
-  const [preloadedModule, setPreloadedModule] = useState<typeof import("./MonacoWrapper") | null>(null);
-
-  const triggerPreload = useCallback(() => {
-    if (!preloaded) {
-      preloadMonaco().then((mod) => {
-        setPreloadedModule(mod);
-      });
-    }
-  }, []);
+  const [preloadedModule] = useState<typeof import("./MonacoWrapper") | null>(null);
 
   useEffect(() => {
     schedulePreload(1500);

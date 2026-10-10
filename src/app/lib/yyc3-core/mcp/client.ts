@@ -152,7 +152,7 @@ export class MCPClient extends EventEmitter<MCPClientEvents> {
   /**
    * 发送请求
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private async request(method: string, params: Record<string, unknown>): Promise<any> {
     const id = ++this.messageId
     const message: MCPMessage = {

@@ -17,9 +17,7 @@ import {
   findAvailableProvider,
   getChatEndpoint,
   buildHeaders,
-  type ProviderConfig,
 } from "../LLMService";
-import { logger } from "../services/Logger";
 
 interface CompletionCache {
   prefix: string;

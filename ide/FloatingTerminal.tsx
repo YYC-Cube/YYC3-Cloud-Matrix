@@ -7,13 +7,12 @@
  * @license: MIT
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import {
   Terminal as TerminalIcon,
   X,
   Minus,
   Maximize2,
-  Minimize2,
   GripVertical,
 } from 'lucide-react'
 import Terminal from './Terminal'

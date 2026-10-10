@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { SkillManager } from "../../lib/yyc3-core/skills/manager";
 import {
   ReasoningSkill,
@@ -19,7 +19,7 @@ import {
   AnalysisSkill,
   analysisHandler,
 } from "../../lib/yyc3-core/skills/builtin";
-import type { ExecutionContext, SkillExecutionResult } from "../../lib/yyc3-core/skills/types";
+import type { ExecutionContext } from "../../lib/yyc3-core/skills/types";
 
 function createMockContext(): ExecutionContext {
   return {

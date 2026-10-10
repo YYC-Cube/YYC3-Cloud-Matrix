@@ -18,7 +18,6 @@ import {
   IntentSuggestion,
   IntentPriority,
   ConflictSeverity,
-  _IntentCategory,
 } from './IntentTypes';
 
 /**

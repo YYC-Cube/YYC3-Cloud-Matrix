@@ -9,7 +9,7 @@
  * @tags: [audit-test, data-integrity, model-unification]
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================
 // Mock Setup
@@ -323,8 +323,6 @@ describe("🤖 模型供应商管理 - CRUD 完整性审核", () => {
   });
 
   it("应支持自定义供应商的数据结构", async () => {
-    const { BUILTIN_PROVIDERS } = await import("../hooks/useModelProvider");
-
     // Simulate custom provider structure
     const customProvider = {
       id: `custom-test-${Date.now()}`,
@@ -724,7 +722,7 @@ describe("⚠️ 边界条件与异常处理 - 安全性审核", () => {
 
     // Query performance should be acceptable
     const startQuery = performance.now();
-    const highGpu = nodeStore.getAll().filter(n => n.gpu > 90);
+    nodeStore.getAll().filter(n => n.gpu > 90);
     const queryTime = performance.now() - startQuery;
 
     expect(queryTime).toBeLessThan(100); // Should complete within 100ms

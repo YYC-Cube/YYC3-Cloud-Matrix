@@ -308,7 +308,7 @@ export class CodeValidatorOptimized {
   /**
    * 最佳实践检查（优化版）
    */
-  private checkBestPractices(content: string, language: string): { warnings: string[]; suggestions: string[] } {
+  private checkBestPractices(content: string, _language: string): { warnings: string[]; suggestions: string[] } {
     const warnings: string[] = [];
     const suggestions: string[] = [];
 

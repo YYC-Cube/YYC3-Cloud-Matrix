@@ -141,7 +141,7 @@ export const useQuickActionsStore = create<
   QuickActionsState & QuickActionsActions
 >()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // ── State ──
       currentContext: null,
       activeActionId: null,

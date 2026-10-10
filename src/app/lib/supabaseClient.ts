@@ -28,7 +28,7 @@ import type { AppSession, AppUser } from "../types";
 // 预设用户（本地闭环系统：admin + developer 两种角色）
 // 安全设计：密码从环境变量读取，未配置时使用随机生成值（需通过UI设置）
 // 用户数据归用户 — 所有凭据均可在 SystemSettings 界面中修改
-// @ts-ignore - Vite env
+// @ts-expect-error - Vite env
 const env = import.meta.env;
 const getDefaultPassword = (email: string): string => {
   const envMap: Record<string, string | undefined> = {

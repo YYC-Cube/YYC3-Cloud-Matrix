@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: PluginSystem.test.ts
  * @description: 插件系统测试 - 测试插件加载、API、隔离等
@@ -12,29 +11,24 @@
  * @tags: plugin,test,loader,api,sandbox
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ================================================================
 // 类型导入
 // ================================================================
 
 import type {
-  PluginManifest,
-  PluginInstance,
-  PluginState,
-  PluginDependency,
-  PluginSandboxOptions,
-  PluginSignature,
   ExtensionPoint,
   PluginContribution,
+  PluginDependency,
+  PluginManifest,
+  PluginSandboxOptions,
+  PluginSignature,
 } from '../PluginTypes';
 import {
-  PluginLifecycleStage,
-  PluginErrorCode,
-  PluginCategory,
-  PluginPermission,
   ExtensionPointType,
-  LogLevel,
+  PluginErrorCode,
+  PluginLifecycleStage,
 } from '../PluginTypes';
 
 // ================================================================
@@ -42,24 +36,24 @@ import {
 // ================================================================
 
 import {
-  ExtensionPointManager,
   DependencyManager,
+  ExtensionPointManager,
   LifecycleManager,
   initializeDefaultExtensionPoints,
 } from '../PluginSystemDesign';
 
 import {
-  PluginSignatureVerifier,
-  PluginSandbox,
   PluginLoader,
+  PluginSandbox,
+  PluginSignatureVerifier,
 } from '../PluginLoader';
 
 import {
-  EventBus,
-  CommandRegistry,
-  PluginStorage,
   AIProviderManager,
+  CommandRegistry,
+  EventBus,
   PluginAPIFactory,
+  PluginStorage,
 } from '../PluginAPIManager';
 
 // ================================================================
@@ -535,7 +529,6 @@ describe('PluginSandbox', () => {
 
     // 在 JSDOM 环境中，Function 构造函数无法正确处理异步代码
     // 因此我们测试同步代码的超时
-    const code = 'while(true) {}';
 
     // 由于无限循环会导致测试挂起，我们使用一个长时间运行的同步操作
     // 实际上，在沙箱环境中，同步代码会立即执行，不会触发超时
@@ -798,8 +791,8 @@ describe('CommandRegistry', () => {
   });
 
   it('应该能够获取所有命令', () => {
-    registry.register('command1', () => {});
-    registry.register('command2', () => {});
+    registry.register('command1', () => { });
+    registry.register('command2', () => { });
 
     const commands = registry.getAll();
 
@@ -808,7 +801,7 @@ describe('CommandRegistry', () => {
   });
 
   it('应该能够检查命令是否存在', () => {
-    registry.register('test.command', () => {});
+    registry.register('test.command', () => { });
 
     expect(registry.has('test.command')).toBe(true);
     expect(registry.has('nonexistent.command')).toBe(false);
@@ -1019,7 +1012,7 @@ describe('PluginAPIFactory', () => {
     const api = factory.createAPI('test.plugin');
 
     api.storage.set('key1', 'value1');
-    api.commands.registerCommand('cmd1', () => {});
+    api.commands.registerCommand('cmd1', () => { });
 
     factory.clear();
 
@@ -1095,8 +1088,6 @@ describe('Plugin System Integration', () => {
       extensionPointManager,
       verifySignatures: false,
     });
-
-    const apiFactory = new PluginAPIFactory();
 
     // 创建依赖插件
     const dependencyManifest = createTestManifest('dependency.plugin');

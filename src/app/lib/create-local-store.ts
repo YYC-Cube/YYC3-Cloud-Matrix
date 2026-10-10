@@ -89,7 +89,6 @@ export function createLocalStore<T extends { id: string }>(
   const {
     validator,
     debounceMs = 0,
-    maxCacheSize = 1000,
   } = options || {};
 
   // ============================================================

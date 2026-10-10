@@ -50,6 +50,11 @@ class MockWebSocket {
   simulateError() {
     if (this.onerror) { this.onerror(); }
   }
+
+  // 记录最近创建的实例，供测试断言使用（经参数传递，避免 this 别名）
+  static capture(instance: MockWebSocket): void {
+    mockWSInstance = instance;
+  }
 }
 
 let mockWSInstance: MockWebSocket | null = null;
@@ -68,7 +73,7 @@ describe("useWebSocketData", () => {
     (globalThis as any).WebSocket = class extends MockWebSocket {
       constructor(url: string) {
         super(url);
-        mockWSInstance = this;
+        MockWebSocket.capture(this);
       }
     };
   });

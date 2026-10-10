@@ -198,7 +198,7 @@ export class PostgreSQLConnector extends DatabaseConnector {
       }
 
       // Tauri/Node: Use native driver
-      // @ts-ignore
+      // @ts-expect-error -- pg native driver binding
       const { Pool } = await import('pg');
       this.pool = new Pool({
         host: this.config.host,
@@ -401,7 +401,7 @@ export class MySQLConnector extends DatabaseConnector {
         return false;
       }
 
-      // @ts-ignore
+      // @ts-expect-error -- pg native driver binding
       const mysql = await import('mysql2/promise');
       this.pool = mysql.createPool({
         host: this.config.host,
@@ -573,7 +573,7 @@ export class SQLiteConnector extends DatabaseConnector {
 
       // Browser: Use sql.js
       if (typeof window !== 'undefined') {
-        // @ts-ignore
+        // @ts-expect-error -- pg native driver binding
         const initSqlJs = (await import('sql.js')).default;
         const SQL = await initSqlJs({
           locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
@@ -584,7 +584,7 @@ export class SQLiteConnector extends DatabaseConnector {
       }
 
       // Node/Tauri: Use better-sqlite3
-      // @ts-ignore
+      // @ts-expect-error -- pg native driver binding
       const Database = (await import('better-sqlite3')).default;
       this.db = new Database(this.config.database);
       this.connected = true;

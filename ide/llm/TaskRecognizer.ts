@@ -310,7 +310,7 @@ export class TaskRecognizer {
     // 过滤代码行
     const codePatterns = [
       /^(import|export|const|let|var|function|class|interface|type)\s/,
-      /^[{}()\[\];,]*$/,
+      /^[{}()[\];,]*$/,
       /^(\/\/|\/\*|\*|<!--)/,
     ];
 

@@ -38,7 +38,7 @@ export class CompressionStrategyDesigner {
   /**
    * 分析代码内容，识别代码段
    */
-  analyzeCode(content: string, language?: string): CodeSegment[] {
+  analyzeCode(content: string, _language?: string): CodeSegment[] {
     const segments: CodeSegment[] = [];
     const lines = content.split('\n');
 

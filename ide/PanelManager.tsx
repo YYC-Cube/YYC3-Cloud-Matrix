@@ -13,34 +13,34 @@
  * @tags: panels,layout,dnd,split,merge,persistence,swap,replace,pin,lock,float,wave3
  */
 
-import React, {
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-  createContext,
-  useContext,
-  useEffect,
-} from "react";
-import { useDrag, useDrop } from "react-dnd";
 import {
+  Columns3,
+  ExternalLink,
   GripVertical,
+  Lock,
   Maximize2,
   Minimize2,
+  Pin,
+  RotateCcw,
   SplitSquareHorizontal,
   SplitSquareVertical,
-  X,
-  Columns3,
-  RotateCcw,
-  Pin,
-  Lock,
   Unlock,
-  ExternalLink,
+  X,
 } from "lucide-react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useDrag, useDrop } from "react-dnd";
 import { SK_PANEL_LAYOUT } from "./constants/storage-keys";
-import { usePanelPinStore } from "./stores/usePanelPinStore";
-import { useFloatingPanelStore } from "./stores/useFloatingPanelStore";
 import { errorReporting } from "./services/ErrorReportingService";
+import { useFloatingPanelStore } from "./stores/useFloatingPanelStore";
+import { usePanelPinStore } from "./stores/usePanelPinStore";
 import type { PanelId } from "./types/index";
 
 // Re-export PanelId for backward compatibility
@@ -282,9 +282,8 @@ export function PanelHeader({
 
   return (
     <div
-      className={`flex items-center gap-0 px-1 py-0 border-b border-[var(--ide-border-dim)] bg-[var(--ide-bg-dark)] flex-shrink-0 ${
-        isDragging ? "opacity-40" : ""
-      } ${pinned ? "border-l-2 border-l-[var(--ide-accent-solid)]" : ""}`}
+      className={`flex items-center gap-0 px-1 py-0 border-b border-[var(--ide-border-dim)] bg-[var(--ide-bg-dark)] flex-shrink-0 ${isDragging ? "opacity-40" : ""
+        } ${pinned ? "border-l-2 border-l-[var(--ide-accent-solid)]" : ""}`}
     >
       {/* Drag handle */}
       <div
@@ -567,7 +566,8 @@ function SplitContainer({ node, renderPanel }: SplitContainerProps) {
   const childIds = children.map((c) => c.id).join(",");
   useEffect(() => {
     setSizes(children.map((c) => c.size || 100 / children.length));
-  }, [childIds]);  
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 以 childIds 派生串为刷新信号重置尺寸；children 数组引用随父渲染变化，纳入会在无关重渲染时错误重置用户手动调整的尺寸
+  }, [childIds]);
 
   const handleResizeStart = useCallback(
     (index: number, e: React.MouseEvent) => {
@@ -638,15 +638,14 @@ function SplitContainer({ node, renderPanel }: SplitContainerProps) {
                 `${sizes[i] || 100 / children.length}%`,
               [isHorizontal ? "minWidth" : "minHeight"]: "60px",
             }}
-            className={`relative overflow-hidden ${
-              isHorizontal
-                ? i < children.length - 1
-                  ? "border-r border-dashed border-[var(--ide-border-dim)]"
-                  : ""
-                : i < children.length - 1
-                  ? "border-b border-dashed border-[var(--ide-border-dim)]"
-                  : ""
-            }`}
+            className={`relative overflow-hidden ${isHorizontal
+              ? i < children.length - 1
+                ? "border-r border-dashed border-[var(--ide-border-dim)]"
+                : ""
+              : i < children.length - 1
+                ? "border-b border-dashed border-[var(--ide-border-dim)]"
+                : ""
+              }`}
           >
             <LayoutRenderer node={child} renderPanel={renderPanel} />
           </div>
@@ -654,11 +653,10 @@ function SplitContainer({ node, renderPanel }: SplitContainerProps) {
           {i < children.length - 1 && (
             <div
               onMouseDown={(e) => handleResizeStart(i, e)}
-              className={`flex-shrink-0 z-10 ${
-                isHorizontal
-                  ? "w-[3px] cursor-col-resize hover:bg-[var(--ide-accent-solid)]/40"
-                  : "h-[3px] cursor-row-resize hover:bg-[var(--ide-accent-solid)]/40"
-              } bg-[var(--ide-border-subtle)] transition-colors`}
+              className={`flex-shrink-0 z-10 ${isHorizontal
+                ? "w-[3px] cursor-col-resize hover:bg-[var(--ide-accent-solid)]/40"
+                : "h-[3px] cursor-row-resize hover:bg-[var(--ide-accent-solid)]/40"
+                } bg-[var(--ide-border-subtle)] transition-colors`}
             />
           )}
         </div>
@@ -757,7 +755,7 @@ export function PanelManagerProvider({
         return clone;
       });
     },
-    [],
+    [setLayout],
   );
 
   const mergePanel = useCallback(
@@ -801,7 +799,7 @@ export function PanelManagerProvider({
         return clone;
       });
     },
-    [],
+    [setLayout],
   );
 
   const removePanel = useCallback(
@@ -815,7 +813,7 @@ export function PanelManagerProvider({
       setLayout((prev) => removeNodeFromTree(prev, nodeId));
       if (maximizedPanel === nodeId) setMaximizedPanel(null);
     },
-    [maximizedPanel],
+    [maximizedPanel, setLayout],
   );
 
   const resetLayout = useCallback(() => {
@@ -830,7 +828,7 @@ export function PanelManagerProvider({
     try {
       localStorage.removeItem(LAYOUT_STORAGE_KEY);
     } catch { /* empty */ }
-  }, [initialLayout]);
+  }, [initialLayout, setLayout]);
 
   const openPanel = useCallback((panelId: PanelId) => {
     errorReporting.addBreadcrumb({
@@ -859,7 +857,7 @@ export function PanelManagerProvider({
       ];
       return clone;
     });
-  }, []);
+  }, [setLayout]);
 
   const swapPanels = useCallback((nodeIdA: string, nodeIdB: string) => {
     errorReporting.addBreadcrumb({
@@ -880,7 +878,7 @@ export function PanelManagerProvider({
       nodeB.panelId = tempPanelId;
       return clone;
     });
-  }, []);
+  }, [setLayout]);
 
   const replacePanel = useCallback((nodeId: string, newPanelId: PanelId) => {
     errorReporting.addBreadcrumb({
@@ -897,7 +895,7 @@ export function PanelManagerProvider({
       node.panelId = newPanelId;
       return clone;
     });
-  }, []);
+  }, [setLayout]);
 
   const ctx = useMemo(
     () => ({
@@ -916,6 +914,7 @@ export function PanelManagerProvider({
     }),
     [
       layout,
+      setLayout,
       splitPanel,
       mergePanel,
       removePanel,

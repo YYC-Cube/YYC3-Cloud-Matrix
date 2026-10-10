@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: stores/__tests__/useSettingsStore.test.ts
  * @description: Settings Store 单元测试 — 覆盖 CRUD、深层搜索、导入导出、重置等核心功能

@@ -290,8 +290,8 @@ export class MyersDiff {
    */
   private mergeAndAddCharDiffs(
     blocks: DiffBlock[],
-    oldLines: string[],
-    newLines: string[]
+    _oldLines: string[],
+    _newLines: string[]
   ): void {
     let i = 0;
     while (i < blocks.length - 1) {

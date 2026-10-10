@@ -5,7 +5,7 @@
  * @version: v1.0.0
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { useFileStoreZustand } from '../stores/useFileStoreZustand';
 

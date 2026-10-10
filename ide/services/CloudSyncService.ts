@@ -157,7 +157,7 @@ export class CloudSyncService {
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
+        throw new Error('Request timeout', { cause: error });
       }
       if (retryCount < retryAttempts && !error.message.includes('Authentication')) {
         await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));

@@ -3,7 +3,7 @@
  * @description StorageMonitor 全面测试 - 存储监控功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { storageMonitor, startMonitoring, stopMonitoring, getStorageUsage } from '../StorageMonitor'
 
 describe('StorageMonitor - 基本功能', () => {
@@ -41,7 +41,7 @@ describe('StorageMonitor - 监控控制', () => {
       if (usage) {
         expect(usage).toBeDefined()
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })

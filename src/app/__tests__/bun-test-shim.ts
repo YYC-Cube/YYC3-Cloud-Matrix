@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-// @ts-nocheck — Bun test infrastructure, not checked by tsc
+// @ts-nocheck -- legacy: strict-mode migration pending — Bun test infrastructure, not checked by tsc
 /**
  * @file: bun-test-shim.ts
  * @description: Vitest → bun:test compatibility shim + jsdom DOM environment
@@ -28,10 +28,14 @@
 // 0. jsdom DOM environment (must be first)
 // ============================================================
 
+// Runtime conditional requires (jsdom / vitest / fake-indexeddb) — CJS only
+import { createRequire } from "node:module";
+const nodeRequire = createRequire(import.meta.url);
+
 // Only create jsdom if document doesn't already exist
 if (typeof globalThis.document === "undefined") {
   try {
-    const { JSDOM } = require("jsdom") as typeof import("jsdom");
+    const { JSDOM } = nodeRequire("jsdom") as typeof import("jsdom");
     const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
       url: "http://localhost",
       pretendToBeVisual: true,
@@ -103,19 +107,19 @@ if (typeof globalThis.document === "undefined") {
           matches: false,
           media: query,
           onchange: null,
-          addListener: () => {},
-          removeListener: () => {},
-          addEventListener: () => {},
-          removeEventListener: () => {},
+          addListener: () => { },
+          removeListener: () => { },
+          addEventListener: () => { },
+          removeEventListener: () => { },
           dispatchEvent: () => false,
         }),
       });
     }
 
     // scrollTo/scrollIntoView
-    if (!dom.window.scrollTo) {dom.window.scrollTo = () => {};}
-    if (!dom.window.scrollBy) {dom.window.scrollBy = () => {};}
-  } catch (e) {
+    if (!dom.window.scrollTo) { dom.window.scrollTo = () => { }; }
+    if (!dom.window.scrollBy) { dom.window.scrollBy = () => { }; }
+  } catch {
     // jsdom not available — provide minimal fallbacks
     console.warn("[bun-test-shim] jsdom not available, DOM tests will fail");
   }
@@ -126,14 +130,14 @@ if (typeof globalThis.document === "undefined") {
 // ============================================================
 
 import {
-  describe,
-  it,
-  test,
-  expect,
-  beforeEach,
+  afterAll,
   afterEach,
   beforeAll,
-  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  test,
   vi,
 } from "bun:test";
 
@@ -152,7 +156,7 @@ Object.assign(globalThis, { describe, it, test, expect, beforeEach, afterEach, b
 
 // Monkey-patch the vitest module so `import { vi } from "vitest"` gets enhanced vi
 try {
-  const vitestModule = require("vitest") as any;
+  const vitestModule = nodeRequire("vitest") as any;
   if (vitestModule && typeof vitestModule === "object") {
     // The vitest module may export vi as a getter — override it
     for (const key of Object.keys(vitestCompatMethods)) {
@@ -174,30 +178,28 @@ if (typeof globalThis.requestAnimationFrame === "undefined") {
 }
 
 if (typeof globalThis.ResizeObserver === "undefined") {
-  // @ts-ignore
   globalThis.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() { }
+    unobserve() { }
+    disconnect() { }
   };
 }
 
 if (typeof globalThis.IntersectionObserver === "undefined") {
-  // @ts-ignore
   globalThis.IntersectionObserver = class IntersectionObserver {
     readonly root = null;
     readonly rootMargin = "";
     readonly thresholds: number[] = [];
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() { }
+    unobserve() { }
+    disconnect() { }
     takeRecords() { return []; }
   };
 }
 
 if (typeof globalThis.indexedDB === "undefined") {
   try {
-    const { IDBFactory } = require("fake-indexeddb");
+    const { IDBFactory } = nodeRequire("fake-indexeddb");
     globalThis.indexedDB = new IDBFactory();
   } catch { /* skip */ }
 }
@@ -217,4 +219,4 @@ if (typeof globalThis.localStorage === "undefined") {
   Object.defineProperty(globalThis, "sessionStorage", { value: new StorageMock(), writable: true });
 }
 
-export {};
+export { };

@@ -12,9 +12,9 @@
  * @tags: test,terminal,api,unit-test
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createTerminalAPIv2 } from '../api/terminal-api-v2'
 import type { Plugin, ViteDevServer } from 'vite'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createTerminalAPIv2 } from '../api/terminal-api-v2'
 
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>()
@@ -48,7 +48,7 @@ vi.mock('ws', async (importOriginal) => {
   }
 })
 
-vi.mock('node-pty', async (importOriginal) => {
+vi.mock('node-pty', async () => {
   return {
     spawn: vi.fn().mockImplementation(() => ({
       write: vi.fn(),
@@ -84,7 +84,7 @@ describe('Terminal API V2 - Security', () => {
       '> /dev/sda1',
     ]
 
-    dangerousCommands.forEach(cmd => {
+    dangerousCommands.forEach(() => {
       // 这里需要测试 isCommandSafe 函数
       // 由于函数是模块内部的，我们通过实际调用 API 来验证
       expect(true).toBe(true) // 占位符：实际测试需要暴露函数或集成测试
@@ -104,7 +104,7 @@ describe('Terminal API V2 - Security', () => {
       'cat package.json',
     ]
 
-    safeCommands.forEach(cmd => {
+    safeCommands.forEach(() => {
       expect(true).toBe(true) // 占位符
     })
   })
@@ -168,7 +168,7 @@ describe('Terminal API V2 - WebSocket Handling', () => {
     // 验证 resize 消息格式和处理逻辑
     const resizeMessage = JSON.stringify({ type: 'resize', cols: 120, rows: 40 })
     const parsed = JSON.parse(resizeMessage)
-    
+
     expect(parsed.type).toBe('resize')
     expect(parsed.cols).toBe(120)
     expect(parsed.rows).toBe(40)

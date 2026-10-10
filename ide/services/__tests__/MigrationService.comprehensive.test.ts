@@ -3,7 +3,7 @@
  * @description MigrationService 全面测试 - 数据迁移、格式检测、导入导出
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { MigrationService } from '../MigrationService'
 
 describe('MigrationService - 单例模式', () => {

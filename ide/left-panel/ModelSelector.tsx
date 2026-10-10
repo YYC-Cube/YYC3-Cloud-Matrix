@@ -17,11 +17,8 @@ import { useState, useMemo } from "react";
 import {
   Cloud,
   Server,
-  Sparkles,
-  Settings2,
 } from "lucide-react";
 import type { ProviderId } from "../LLMService";
-import { BUILTIN_PROVIDERS } from "../constants/providers";
 
 // ── Provider visual config：从 providers.ts 动态生成 ──
 

@@ -20,13 +20,10 @@ import {
   ChevronDown,
   Layout,
   Columns3,
-  Rows3,
   Monitor,
-  Code2,
   Bot,
   X,
   Check,
-  Pencil,
 } from "lucide-react";
 import {
   usePanelManager,

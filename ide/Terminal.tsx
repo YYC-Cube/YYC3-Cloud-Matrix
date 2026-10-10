@@ -13,48 +13,39 @@
  * @tags: terminal,xterm,shell,pty,websocket,tabs,panel,real-execution
  */
 
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import {
-  Terminal as TerminalIcon,
-  Plus,
-  X,
-  Trash2,
-  Maximize2,
-  Minimize2,
-  Play,
-  CornerDownLeft,
-  Clipboard,
-  Zap,
-  GripHorizontal,
+  Cpu,
+  Download,
+  FileDiff,
   GitBranch,
   GitCommit,
-  GitPullRequest,
-  Upload,
-  Download,
-  Search,
-  FileDiff,
-  ChevronRight,
-  ChevronDown,
-  Cpu,
-  Shield,
   Loader2,
+  Maximize2,
+  Minimize2,
   Monitor,
+  Plus,
   Power,
+  Search,
+  Shield,
+  Terminal as TerminalIcon,
+  Upload,
   Wifi,
   WifiOff,
+  X,
+  Zap,
 } from 'lucide-react'
-import { useWorkflowEventBus } from './WorkflowEventBus'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFileStore } from './FileStore'
-import { XTerminal, getDefaultTheme, getLightTheme } from './XTerminal'
-import { useTerminalSocket } from './hooks/useTerminalSocket'
-import { convertIDEToXtermTheme } from './utils/xterm-theme'
+import { useWorkflowEventBus } from './WorkflowEventBus'
+import { XTerminal, getDefaultTheme } from './XTerminal'
 import {
   executeCommand as registryExecuteCommand,
   getCompletions as registryGetCompletions,
   type CommandContext,
   type CommandOutput,
 } from './ai/CommandRegistry'
-import { logger } from "./services/Logger";
+import { useTerminalSocket } from './hooks/useTerminalSocket'
+import { logger } from "./services/Logger"
 
 interface TerminalProps {
   height: number
@@ -184,7 +175,7 @@ export default function Terminal({
     maxReconnectAttempts: 5,
     reconnectDelay: 3000,
 
-    onMessage: (data) => {
+    onMessage: (_data) => {
       // 接收 PTY 输出时自动滚动到底部
       if (scrollRef.current) {
         const scrollElement = scrollRef.current
@@ -224,7 +215,7 @@ export default function Terminal({
       })
     },
 
-    onError: (error) => {
+    onError: (_error) => {
       logger.warn('WebSocket 连接失败，切换到模拟模式');
       // 立即切换到模拟模式
       setTerminals(prev => {
@@ -262,19 +253,21 @@ export default function Terminal({
 
       return () => cancelAnimationFrame(rafId)
     }
-  }, [session?.mode, session?.id, visible])
+  }, [session?.mode, session?.id, session?.xtermConnected, visible, activeTerminal, wsConnect])
 
-  // ── Legacy Mode: Session Management ──
-  useEffect(() => {
-    if (
-      (session?.mode === 'legacy-real' || session?.mode === 'legacy-sim') &&
-      !session?.apiSessionId &&
-      session?.mode === 'legacy-real' &&
-      visible
-    ) {
-      createLegacyRealSession()
-    }
-  }, [activeTerminal, visible, session?.mode])
+  // ── Output Entry Helper ──
+  const addOutputEntry = useCallback(
+    (entry: TerminalEntry) => {
+      setTerminals((prev) => {
+        const next = [...prev]
+        const s = { ...next[activeTerminal] }
+        s.history = [...s.history, entry]
+        next[activeTerminal] = s
+        return next
+      })
+    },
+    [activeTerminal],
+  )
 
   const createLegacyRealSession = useCallback(async () => {
     try {
@@ -321,21 +314,19 @@ export default function Terminal({
         return next
       })
     }
-  }, [activeTerminal])
+  }, [activeTerminal, addOutputEntry])
 
-  // ── Output Entry Helper ──
-  const addOutputEntry = useCallback(
-    (entry: TerminalEntry) => {
-      setTerminals((prev) => {
-        const next = [...prev]
-        const s = { ...next[activeTerminal] }
-        s.history = [...s.history, entry]
-        next[activeTerminal] = s
-        return next
-      })
-    },
-    [activeTerminal],
-  )
+  // ── Legacy Mode: Session Management ──
+  useEffect(() => {
+    if (
+      (session?.mode === 'legacy-real' || session?.mode === 'legacy-sim') &&
+      !session?.apiSessionId &&
+      session?.mode === 'legacy-real' &&
+      visible
+    ) {
+      createLegacyRealSession()
+    }
+  }, [activeTerminal, visible, session?.mode, session?.apiSessionId, createLegacyRealSession])
 
   // ── Legacy Real Mode: Execute Command ──
   const executeLegacyRealCommand = useCallback(
@@ -481,7 +472,7 @@ export default function Terminal({
       switch (session?.mode) {
         case 'xterm-real':
           // xterm 模式：通过 WebSocket 发送到 PTY
-          wsWrite(`${trimmed  }\r`)
+          wsWrite(`${trimmed}\r`)
           break
 
         case 'legacy-real':
@@ -650,7 +641,7 @@ export default function Terminal({
         setActiveTerminal(activeTerminal - 1)
       }
     },
-    [terminals.length, activeTerminal, wsDisconnect],
+    [terminals, activeTerminal, wsDisconnect],
   )
 
   // ── Mode Switching ──
@@ -728,11 +719,10 @@ export default function Terminal({
             <button
               key={term.id}
               onClick={() => setActiveTerminal(index)}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono transition-colors ${
-                index === activeTerminal
-                  ? 'bg-[#2d2d5e] text-white'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-[#25254a]'
-              }`}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono transition-colors ${index === activeTerminal
+                ? 'bg-[#2d2d5e] text-white'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-[#25254a]'
+                }`}
             >
               <span className="truncate max-w-[120px]">{term.name}</span>
               {term.isExecuting && <Loader2 size={10} className="animate-spin" />}
@@ -779,9 +769,8 @@ export default function Terminal({
           {/* Git Quick Actions */}
           <button
             onClick={() => setShowGitBar(!showGitBar)}
-            className={`p-1 rounded hover:bg-[#2d2d5e] transition-colors ${
-              showGitBar ? 'text-orange-400' : 'text-gray-400'
-            }`}
+            className={`p-1 rounded hover:bg-[#2d2d5e] transition-colors ${showGitBar ? 'text-orange-400' : 'text-gray-400'
+              }`}
             title="Git 快捷操作"
           >
             <GitBranch size={14} />
@@ -903,17 +892,16 @@ export default function Terminal({
             {session?.history.map((entry, idx) => (
               <div
                 key={`${idx}-${entry.text.slice(0, 20)}`}
-                className={`whitespace-pre-wrap break-all ${
-                  entry.type === 'input'
-                    ? 'text-cyan-300 font-semibold'
-                    : entry.type === 'error'
-                      ? 'text-red-400'
-                      : entry.type === 'success'
-                        ? 'text-green-400'
-                        : entry.type === 'info'
-                          ? 'text-blue-300'
-                          : 'text-gray-300'
-                }`}
+                className={`whitespace-pre-wrap break-all ${entry.type === 'input'
+                  ? 'text-cyan-300 font-semibold'
+                  : entry.type === 'error'
+                    ? 'text-red-400'
+                    : entry.type === 'success'
+                      ? 'text-green-400'
+                      : entry.type === 'info'
+                        ? 'text-blue-300'
+                        : 'text-gray-300'
+                  }`}
               >
                 {entry.text}
               </div>
@@ -954,9 +942,8 @@ export default function Terminal({
                       setTerminalInput(parts.join(' '))
                       setTabSuggestions([])
                     }}
-                    className={`cursor-pointer px-1 py-0.5 rounded ${
-                      i === tabIndex ? 'bg-[#2d2d5e] text-white' : 'text-gray-400 hover:text-white'
-                    }`}
+                    className={`cursor-pointer px-1 py-0.5 rounded ${i === tabIndex ? 'bg-[#2d2d5e] text-white' : 'text-gray-400 hover:text-white'
+                      }`}
                   >
                     {s}
                   </div>

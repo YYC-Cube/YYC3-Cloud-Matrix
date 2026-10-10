@@ -31,12 +31,12 @@
 // ================================================================
 
 import React, {
+  forwardRef,
   useCallback,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
-  forwardRef,
-  useImperativeHandle,
 } from 'react';
 import { List, useListRef, type RowComponentProps } from 'react-window';
 
@@ -120,14 +120,11 @@ export const VirtualList = forwardRef(
       onSortChange,
       className,
       style,
-      innerElementType,
-      onScroll,
-      scrollToIndex,
     } = props;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const listRef = useListRef<any>(null);
-    const [internalScrollTop, setInternalScrollTop] = useState(0);
+    const [internalScrollTop] = useState(0);
     const loadingRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
@@ -178,14 +175,6 @@ export const VirtualList = forwardRef(
       [hasMore, isLoading, items.length, endReachedThreshold, onEndReached, onLoadMore]
     );
 
-    const handleScroll = useCallback(
-      ({ scrollDirection, scrollOffset, scrollUpdateWasRequested }: any) => {
-        setInternalScrollTop(scrollOffset);
-        onScroll?.(scrollOffset);
-      },
-      [onScroll]
-    );
-
     const handleItemClick = useCallback(
       (item: T, index: number, event: React.MouseEvent) => {
         if (!onSelectionChange) return;
@@ -231,16 +220,6 @@ export const VirtualList = forwardRef(
       [items, isLoading, loadingComponent, keyExtractor, selectedIds, renderItem, handleItemClick],
     );
 
-    const itemKey = useCallback(
-      (index: number) => {
-        if (isLoading && index === items.length) {
-          return 'loading';
-        }
-        return keyExtractor(items[index], index);
-      },
-      [items, isLoading, keyExtractor]
-    );
-
     const listHeight = typeof height === 'number' ? height : 400;
 
     const listStyle: React.CSSProperties = {
@@ -255,7 +234,7 @@ export const VirtualList = forwardRef(
           {searchable && (
             <SearchBox
               value={searchQuery}
-              onChange={onSearchChange || (() => {})}
+              onChange={onSearchChange || (() => { })}
               placeholder={searchPlaceholder}
             />
           )}
@@ -264,21 +243,19 @@ export const VirtualList = forwardRef(
       );
     }
 
-    const ListComponent = List;
-
     return (
       <div className={className} style={listStyle}>
         {searchable && (
           <SearchBox
             value={searchQuery}
-            onChange={onSearchChange || (() => {})}
+            onChange={onSearchChange || (() => { })}
             placeholder={searchPlaceholder}
           />
         )}
         {sortable && sortConfig && (
           <SortHeader
             sortConfig={sortConfig}
-            onSortChange={onSortChange || (() => {})}
+            onSortChange={onSortChange || (() => { })}
           />
         )}
         <List
@@ -313,10 +290,10 @@ interface VirtualListRowData<T extends VirtualListItem> {
 function VirtualListRow<T extends VirtualListItem>({
   index,
   style,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   ...rest
 }: RowComponentProps<VirtualListRowData<T>>) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const data = rest.data as any;
   const { items, isLoading, loadingComponent, keyExtractor, selectedIds, renderItem, handleItemClick } = data;
 

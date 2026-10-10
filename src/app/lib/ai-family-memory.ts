@@ -17,12 +17,12 @@
  */
 
 import type {
+  ContentMetadata,
+  ContentType,
+  EmotionType,
   MemoryArchive,
   MemoryCategory,
-  EmotionType,
   SentimentScore,
-  ContentType,
-  ContentMetadata,
 } from "./ai-family.types";
 
 // ============================================================
@@ -52,7 +52,7 @@ export class AIFamilyMemoryManager {
   private currentMemberId: string | null = null;
 
   // 事件回调
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(data?: unknown) => void>> = new Map();
 
   constructor() {
     this.loadFromStorage();
@@ -106,10 +106,10 @@ export class AIFamilyMemoryManager {
       },
       emotion: data.emotion
         ? {
-            primary: data.emotion,
-            intensity: 0.8,
-            emojis: this.getEmojisForEmotion(data.emotion),
-          }
+          primary: data.emotion,
+          intensity: 0.8,
+          emojis: this.getEmojisForEmotion(data.emotion),
+        }
         : undefined,
       relatedMembers: data.relatedMembers || [],
       relatedMemories: [],
@@ -152,7 +152,7 @@ export class AIFamilyMemoryManager {
     updates: Partial<Pick<MemoryArchive, "title" | "description" | "tags" | "emotion" | "content">>
   ): MemoryArchive | null {
     const memory = this.memories.get(id);
-    if (!memory) {return null;}
+    if (!memory) { return null; }
 
     // 版本控制：保存当前版本
     if (!memory.previousVersions) {
@@ -189,7 +189,7 @@ export class AIFamilyMemoryManager {
 
   deleteMemory(id: string): boolean {
     const memory = this.memories.get(id);
-    if (!memory) {return false;}
+    if (!memory) { return false; }
 
     // 永久记忆不能删除
     if (memory.isPermanent) {
@@ -209,7 +209,7 @@ export class AIFamilyMemoryManager {
 
   restoreMemory(id: string): MemoryArchive | null {
     const memory = this.memories.get(id);
-    if (!memory || !memory.previousVersions?.length) {return null;}
+    if (!memory || !memory.previousVersions?.length) { return null; }
 
     // 恢复到上一个版本
     const previousVersion = JSON.parse(memory.previousVersions.pop()!);
@@ -279,17 +279,17 @@ export class AIFamilyMemoryManager {
 
     for (const [, memory] of this.memories) {
       // 所有者过滤
-      if (options?.ownerId && memory.ownerId !== options.ownerId) {continue;}
+      if (options?.ownerId && memory.ownerId !== options.ownerId) { continue; }
 
       // 类别过滤
-      if (options?.categories?.length && !options.categories.includes(memory.category)) {continue;}
+      if (options?.categories?.length && !options.categories.includes(memory.category)) { continue; }
 
       // 情感过滤
-      if (options?.emotions?.length && memory.emotion?.primary && !options.emotions.includes(memory.emotion.primary)) {continue;}
+      if (options?.emotions?.length && memory.emotion?.primary && !options.emotions.includes(memory.emotion.primary)) { continue; }
 
       // 日期范围过滤
       if (options?.dateRange) {
-        if (memory.timestamp < options.dateRange.start || memory.timestamp > options.dateRange.end) {continue;}
+        if (memory.timestamp < options.dateRange.start || memory.timestamp > options.dateRange.end) { continue; }
       }
 
       // 文本搜索（标题、描述、标签、内容）
@@ -325,7 +325,7 @@ export class AIFamilyMemoryManager {
 
   getRelatedMemories(memoryId: string, limit = 5): MemoryArchive[] {
     const memory = this.memories.get(memoryId);
-    if (!memory) {return [];}
+    if (!memory) { return []; }
 
     const related: MemoryArchive[] = [];
 
@@ -579,8 +579,8 @@ export class AIFamilyMemoryManager {
     let negative = 0;
 
     words.forEach((word) => {
-      if (positiveWords.some((pw) => word.includes(pw))) {positive++;}
-      if (negativeWords.some((nw) => word.includes(nw))) {negative++;}
+      if (positiveWords.some((pw) => word.includes(pw))) { positive++; }
+      if (negativeWords.some((nw) => word.includes(nw))) { negative++; }
     });
 
     const total = positive + negative || 1;
@@ -589,10 +589,10 @@ export class AIFamilyMemoryManager {
     const neutralScore = Math.max(0, 1 - positiveScore - negativeScore);
 
     let overall: SentimentScore["overall"];
-    if (positiveScore > 0.6) {overall = "positive";}
-    else if (negativeScore > 0.6) {overall = "negative";}
-    else if (neutralScore > 0.6) {overall = "neutral";}
-    else {overall = "mixed";}
+    if (positiveScore > 0.6) { overall = "positive"; }
+    else if (negativeScore > 0.6) { overall = "negative"; }
+    else if (neutralScore > 0.6) { overall = "neutral"; }
+    else { overall = "mixed"; }
 
     return {
       positive: Math.round(positiveScore * 100) / 100,
@@ -627,7 +627,7 @@ export class AIFamilyMemoryManager {
 
   private addTimelineEvent(memoryId: string, type: NonNullable<MemoryArchive["timeline"]>[0]["type"]): void {
     const memory = this.memories.get(memoryId);
-    if (!memory) {return;}
+    if (!memory) { return; }
 
     if (!memory.timeline) {
       memory.timeline = [];
@@ -661,19 +661,19 @@ export class AIFamilyMemoryManager {
     let score = 0;
 
     // 标题匹配（权重高）
-    if (memory.title.toLowerCase().includes(query)) {score += 10;}
+    if (memory.title.toLowerCase().includes(query)) { score += 10; }
 
     // 标签匹配
     memory.tags.forEach((tag) => {
-      if (tag.toLowerCase().includes(query)) {score += 5;}
+      if (tag.toLowerCase().includes(query)) { score += 5; }
     });
 
     // 描述匹配
-    if (memory.description?.toLowerCase().includes(query)) {score += 3;}
+    if (memory.description?.toLowerCase().includes(query)) { score += 3; }
 
     // 内容匹配
     if (typeof memory.content.data === "string" &&
-        (memory.content.data as string).toLowerCase().includes(query)) {
+      (memory.content.data as string).toLowerCase().includes(query)) {
       score += 2;
     }
 
@@ -738,7 +738,7 @@ export class AIFamilyMemoryManager {
   // 事件系统
   // ============================================================
 
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (data?: unknown) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
@@ -747,7 +747,7 @@ export class AIFamilyMemoryManager {
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data?: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);

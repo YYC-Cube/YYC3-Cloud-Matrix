@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/useAIFixStore.test.ts
  * @description: AIFixStore 单元测试 — 覆盖 requestFix/consumeRequest/clearRequest

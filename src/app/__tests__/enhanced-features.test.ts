@@ -9,7 +9,7 @@
  * @tags: [auto-generated]
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 // ============================================================
 // Mock localStorage
@@ -119,7 +119,7 @@ describe("✅ 数据校验增强 - Validators 测试", () => {
   });
 
   it("应正确验证 ID 格式", async () => {
-    const { isValidId, validateId } = await import("../lib/validators");
+    const { isValidId } = await import("../lib/validators");
 
     // 有效 ID
     expect(isValidId("valid-id_123")).toBe(true);
@@ -478,8 +478,6 @@ describe("⚡ 缓存策略 - 内存缓存层测试", () => {
       store.add({ value: i });
     }
 
-    // 由于防抖，实际写入次数应该少于操作次数
-    const stats = store.getCacheStats();
     expect(store.count()).toBe(50);
     // 注意：实际写入次数取决于防抖实现，这里只验证数据完整性
   });
@@ -534,7 +532,6 @@ describe("🎯 综合集成 - 所有增强功能协同工作", () => {
   it("应结合类型导出、验证和事务的完整流程", async () => {
     // 导入类型
     const { BUILTIN_PROVIDERS } = await import("../hooks/useModelProvider");
-    const { validateModelProvider } = await import("../lib/validators");
     const { createLocalStore } = await import("../lib/create-local-store");
 
     // 验证内置供应商
@@ -561,7 +558,7 @@ describe("🎯 综合集成 - 所有增强功能协同工作", () => {
           return {
             valid: !!(item.label?.trim() && urlResult),
             errors: !item.label?.trim() ? ["label 不能为空"] :
-                   !urlResult ? ["baseUrl 格式无效"] : [],
+              !urlResult ? ["baseUrl 格式无效"] : [],
           };
         },
       }

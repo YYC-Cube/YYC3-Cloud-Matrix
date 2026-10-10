@@ -65,7 +65,6 @@ import {
 import {
   errorReporting,
   type ErrorEvent,
-  type ErrorCategory,
   type ErrorSeverity,
 } from "./services/ErrorReportingService";
 
@@ -1021,7 +1020,7 @@ function HeartbeatTab() {
                           padding: "4px 8px",
                         }}
                         labelStyle={{ color: "#64748b", fontSize: "0.55rem" }}
-                        formatter={(value: unknown, name: unknown) => [
+                        formatter={(value: unknown, _name: unknown) => [
                           `${value}ms`,
                           "延迟",
                         ]}

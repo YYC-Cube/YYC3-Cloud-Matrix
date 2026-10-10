@@ -19,12 +19,9 @@ import { useShallow } from "zustand/react/shallow";
 import { logger } from "../services/Logger";
 import {
   useFileStoreZustand,
-  selectFileContents,
   selectOpenTabs,
   selectActiveFile,
   selectGitBranch,
-  selectGitChanges,
-  selectGitLog,
   type FileStoreState,
 } from "./useFileStoreZustand";
 import {
@@ -33,19 +30,11 @@ import {
   type GeneralSettings,
   type AgentConfig,
   type MCPConfig,
-  type ModelConfig,
-  type ContextSettings,
-  type ConversationSettings,
-  type RuleConfig,
-  type SkillConfig,
 } from "./useSettingsStore";
 import {
   useModelStoreZustand,
   selectActiveModelId,
   selectCustomModels,
-  selectConnectivityResults,
-  selectHeartbeatEnabled,
-  selectLatencyHistory,
   type ModelStoreState,
   type AIModel,
 } from "./useModelStoreZustand";
@@ -60,7 +49,6 @@ import {
 // ===== Stable Selector Factories =====
 
 const selectGitChangesStable = (state: FileStoreState) => state.gitChanges;
-const selectGitLogStable = (state: FileStoreState) => state.gitLog;
 const selectGitLogTop10 = (state: FileStoreState) => state.gitLog.slice(0, 10);
 
 const selectUserProfileStable = (state: { settings: Settings }) => state.settings.userProfile;

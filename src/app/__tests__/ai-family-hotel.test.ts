@@ -415,8 +415,6 @@ describe("🏨 AI Family 酒店人系统 - 多模型协作测试", () => {
 
       const conv = hotelManager.getConversation(conversation.conversationId)!;
 
-      // 检查是否有升级消息
-      const escalatedMessages = conv.messages.filter(m => m.messageType === "escalation");
       // 可能触发升级（取决于阈值设置）
       expect(conv.messages.length).toBeGreaterThan(0);
     });
@@ -605,12 +603,11 @@ describe("🏨 AI Family 酒店人系统 - 多模型协作测试", () => {
 
       console.info("📋 **团队成员 & 模型分配**:");
       HOTEL_TEAM_MEMBERS.forEach((member) => {
-        const roleEmoji = member.role; // 将在运行时获取emoji
         console.info(`${member.name.padEnd(6)} | ${member.primaryModel.modelName.padEnd(20)} | 能力: ${member.primaryModel.capabilities.slice(0, 3).join(", ")}`);
       });
 
       console.info("\n🤖 **可用模型池**:");
-      Object.entries(ZHIPU_MODELS).forEach(([id, model]: [string, any]) => {
+      Object.entries(ZHIPU_MODELS).forEach(([, model]: [string, any]) => {
         console.info(`   • ${model.modelName?.padEnd(20) ?? "unknown".padEnd(20)} | ${model.provider?.padEnd(8) ?? "unknown".padEnd(8)} | 上下文窗口: ${model.contextWindow ?? "unknown"} tokens`);
       });
 

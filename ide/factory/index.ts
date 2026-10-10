@@ -32,7 +32,6 @@ import type {
   IEventBus,
   ILogger,
   IConfigProvider,
-  IDisposable,
   ISubscription,
   ILogEntry,
 } from '../interfaces';
@@ -422,10 +421,10 @@ export function createStorageAdapter(
         localStorage.setItem(`obj:${key}`, JSON.stringify(value));
       }
     },
-    async loadObject<T>(key: string) {
+    async loadObject<T>(key: string): Promise<T | null> {
       if (typeof localStorage !== 'undefined') {
         const data = localStorage.getItem(`obj:${key}`);
-        return data ? JSON.parse(data) : null;
+        return data ? (JSON.parse(data) as T) : null;
       }
       return null;
     },
@@ -467,7 +466,7 @@ export function createStorageAdapter(
  */
 export function createSnapshotManager(
   config: YYC3AppConfig['snapshot'],
-  storage?: IStorageAdapter
+  _storage?: IStorageAdapter
 ): ISnapshotManager {
   const snapshots: Map<string, unknown> = new Map();
   const listeners: { created: Set<(s: unknown) => void>; deleted: Set<(id: string) => void> } = {
@@ -527,7 +526,7 @@ export function createSnapshotManager(
       return false;
     },
 
-    compareSnapshots(id1: string, id2: string) {
+    compareSnapshots(_id1: string, _id2: string) {
       return { added: [], removed: [], modified: [], unchanged: [] };
     },
 
@@ -606,7 +605,7 @@ export function createThemeManager(
       return themes.delete(themeId);
     },
 
-    getTokenValue(tokenPath: string) {
+    getTokenValue(_tokenPath: string) {
       return undefined;
     },
 

@@ -402,8 +402,8 @@ export class CompatibilityTestSuite {
    * 检查功能支持
    */
   private checkFeatureSupport(
-    featureName: string,
-    context: BrowserConfig | OSConfig,
+    _featureName: string,
+    _context: BrowserConfig | OSConfig,
   ): boolean {
     // 模拟功能支持检查
     // 大多数现代浏览器和操作系统都支持这些功能
@@ -414,8 +414,8 @@ export class CompatibilityTestSuite {
    * 检查功能工作状态
    */
   private checkFeatureWorking(
-    featureName: string,
-    context: BrowserConfig | OSConfig,
+    _featureName: string,
+    _context: BrowserConfig | OSConfig,
   ): boolean {
     // 模拟功能工作检查
     // 90% 的功能正常工作
@@ -426,8 +426,8 @@ export class CompatibilityTestSuite {
    * 检查性能影响
    */
   private checkPerformanceImpact(
-    featureName: string,
-    context: BrowserConfig | OSConfig,
+    _featureName: string,
+    _context: BrowserConfig | OSConfig,
   ): 'none' | 'minor' | 'moderate' | 'severe' {
     // 模拟性能影响检查
     const random = Math.random();

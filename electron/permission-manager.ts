@@ -5,7 +5,6 @@
  * 控制 IPC 操作的访问权限
  */
 
-import { app } from "electron";
 import * as crypto from "crypto";
 
 /**

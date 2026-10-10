@@ -169,9 +169,10 @@ function getDB(): Promise<IDBDatabase> {
   // RF-010: 连接可能被 onversionchange 关闭，需要验证
   return dbPromise.then((db) => {
     try {
-      // 如果连接已关闭，访问 objectStoreNames 会抛出 InvalidStateError
-
-      db.objectStoreNames;
+      // 探测连接有效性：连接已关闭时访问 objectStoreNames 会抛出 InvalidStateError
+      if (!db.objectStoreNames) {
+        throw new Error("IndexedDB connection is closed");
+      }
       return db;
     } catch {
       // 连接已失效，重新打开

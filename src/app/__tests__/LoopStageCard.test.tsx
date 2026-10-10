@@ -22,7 +22,7 @@
  * - 连接线
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import React from "react";
 import { render, screen, cleanup } from "@testing-library/react";
 import { LoopStageCard } from "../modules/ops/LoopStageCard";

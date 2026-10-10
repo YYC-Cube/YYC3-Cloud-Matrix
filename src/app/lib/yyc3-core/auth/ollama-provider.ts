@@ -203,7 +203,7 @@ export class OllamaProvider implements AuthProvider {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private transformResponse(data: any, model: string): ChatCompletionResponse {
     return {
       id: `ollama-${Date.now()}`,

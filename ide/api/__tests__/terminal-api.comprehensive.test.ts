@@ -3,7 +3,7 @@
  * @description 终端API V1全面测试 - REST + WebSocket
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 // Mock Logger
 vi.mock('../services/Logger', () => ({

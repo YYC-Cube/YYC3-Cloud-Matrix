@@ -269,7 +269,7 @@ describe('useUserMgmtSlice', () => {
           apiCalls: 200,
         });
 
-        let updated = useUserMgmtSlice.getState().users.find(u => u.id === newUser.id);
+        const updated = useUserMgmtSlice.getState().users.find(u => u.id === newUser.id);
         expect(updated?.role).toBe('高级开发者');
         expect(updated?.apiCalls).toBe(200);
 

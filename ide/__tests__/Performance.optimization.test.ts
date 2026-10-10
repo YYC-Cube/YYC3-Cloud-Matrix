@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/Performance.optimization.test.ts
  * @description: 性能优化测试 - 验证优化效果
@@ -14,15 +13,12 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  PreviewModeControllerOptimized,
   createOptimizedPreviewModeController,
 } from "../PreviewModeController.optimized";
 import {
-  SnapshotManagerOptimized,
   createOptimizedSnapshotManager,
 } from "../SnapshotManager.optimized";
 import {
-  CodeValidatorOptimized,
   createOptimizedCodeValidator,
 } from "../CodeValidator.optimized";
 import {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SystemTheme.test.ts
  * @description: 任务1.3系统主题监听完整测试
@@ -13,10 +12,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SystemThemeListener, SystemTheme } from '../SystemThemeListener';
-import { UserPreferenceManager, ThemeSyncMode } from '../UserPreferenceManager';
+import { SystemThemeListener } from '../SystemThemeListener';
+import { UserPreferenceManager } from '../UserPreferenceManager';
 import { ThemeSyncManager } from '../ThemeSyncManager';
-import { ThemeAPI } from '../ThemeAPI';
 
 describe('任务1.3: 系统主题监听', () => {
   // 模拟window.matchMedia

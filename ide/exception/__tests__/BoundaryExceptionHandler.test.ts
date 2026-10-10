@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: BoundaryExceptionHandler.test.ts
  * @description: BoundaryExceptionHandler单元测试

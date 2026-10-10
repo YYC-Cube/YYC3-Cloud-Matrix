@@ -12,8 +12,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import smartPlaylistGenerator, {
   type TrackInfo,
-  type PlaylistConfig,
-  type PlaylistGenerationOptions,
 } from "../lib/SmartPlaylistGenerator";
 import { type EmotionState } from "../lib/EmotionMusicBridge";
 

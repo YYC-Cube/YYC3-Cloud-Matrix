@@ -55,7 +55,7 @@ vi.mock("../store/slices/family-settings-slice", () => {
     updateModelAssignment: vi.fn(),
     updateVoiceProfile: vi.fn(),
   };
-  const mockFn = (selector?: Function) => selector ? selector(state) : state;
+  const mockFn = (selector?: (s: typeof state) => unknown) => selector ? selector(state) : state;
   mockFn.getState = () => state;
   return { useFamilySettingsSlice: mockFn };
 });

@@ -21,7 +21,6 @@ import {
   PerformanceRecommendation,
   TestEnvironment,
   BenchmarkLevel,
-  _BenchmarkType,
   PerformanceBenchmarkConfig,
   DEFAULT_BENCHMARK_CONFIG,
   DEFAULT_BASELINE_METRICS,
@@ -337,7 +336,7 @@ export class PerformanceBenchmarkSuite {
 
     try {
       observer.observe({ entryTypes: ['gc'] });
-    } catch (e) {
+    } catch {
       // GC 观察不可用
     }
 
@@ -442,7 +441,7 @@ export class PerformanceBenchmarkSuite {
 
     try {
       observer.observe({ entryTypes: ['longtask'] });
-    } catch (e) {
+    } catch {
       // 长任务观察不可用
     }
 
@@ -577,7 +576,7 @@ export class PerformanceBenchmarkSuite {
 
     try {
       observer.observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch (e) {
+    } catch {
       // LCP 观察不可用
     }
 
@@ -727,7 +726,7 @@ export class PerformanceBenchmarkSuite {
     try {
       // 模拟动态导入
       await new Promise((resolve) => setTimeout(resolve, 50));
-    } catch (e) {
+    } catch {
       // 忽略错误
     }
 

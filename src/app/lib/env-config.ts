@@ -143,7 +143,7 @@ function loadEnvOverrides(): Partial<EnvConfig> {
   const overrides: Partial<EnvConfig> = {};
   try {
     // 1. 从 Vite 环境变量读取 (VITE_YYC3_ 前缀)
-    // @ts-ignore - Vite env
+    // @ts-expect-error - Vite env
     const metaEnv = import.meta.env;
     if (metaEnv.VITE_YYC3_SYSTEM_NAME) { overrides.SYSTEM_NAME = metaEnv.VITE_YYC3_SYSTEM_NAME; }
     if (metaEnv.VITE_YYC3_SYSTEM_VERSION) { overrides.SYSTEM_VERSION = metaEnv.VITE_YYC3_SYSTEM_VERSION; }

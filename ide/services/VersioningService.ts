@@ -11,7 +11,7 @@
  * @tags: versioning,history,restore,git
  */
 
-import { getDB, type StoredFile } from "../adapters/IndexedDBAdapter";
+import { getDB } from "../adapters/IndexedDBAdapter";
 import { logger } from "./Logger";
 
 export interface FileVersion {

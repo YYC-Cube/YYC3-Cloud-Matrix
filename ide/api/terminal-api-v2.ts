@@ -12,10 +12,9 @@
  * @tags: terminal,api,websocket,pty,plugin
  */
 
-import { spawn, type ChildProcess } from 'child_process'
-import { createServer as createHttpServer } from 'http'
-import { WebSocketServer, WebSocket } from 'ws'
-import type { Plugin, ViteDevServer } from 'vite'
+import { spawn, type ChildProcess } from 'child_process';
+import type { Plugin, ViteDevServer } from 'vite';
+import { WebSocket, WebSocketServer } from 'ws';
 import { logger } from "../services/Logger";
 
 // 尝试导入 node-pty (可选依赖)
@@ -49,36 +48,15 @@ const MAX_SESSIONS = 15
 const SESSION_TIMEOUT = 3600000 // 1小时
 
 // 安全配置
-const SAFE_COMMANDS = new Set([
-  'node', 'npm', 'npx', 'yarn', 'pnpm', 'bun',
-  'git', 'svn', 'hg',
-  'python', 'python3', 'pip', 'pip3', 'conda',
-  'ollama',
-  'docker', 'docker-compose', 'kubectl',
-  'ls', 'pwd', 'cd', 'cat', 'echo', 'mkdir', 'touch', 'cp', 'mv', 'rm',
-  'find', 'grep', 'head', 'tail', 'wc', 'sort', 'uniq', 'tee', 'xargs',
-  'curl', 'wget', 'ssh', 'scp', 'rsync', 'nc', 'telnet',
-  'tsc', 'vite', 'next', 'webpack', 'esbuild', 'rollup',
-  'eslint', 'prettier', 'biome', 'stylelint',
-  'make', 'cmake', 'cargo', 'go', 'rustc', 'java', 'javac',
-  'which', 'whereis', 'type', 'env', 'export', 'unset', 'alias', 'unalias',
-  'clear', 'reset', 'history', 'date', 'whoami', 'uname', 'hostname',
-  'top', 'htop', 'ps', 'kill', 'jobs', 'bg', 'fg', 'nohup',
-  'vim', 'nano', 'code', 'less', 'more', 'man', 'info',
-  'tar', 'gzip', 'gunzip', 'zip', 'unzip', 'bzip2', 'xz',
-  'chmod', 'chown', 'chgrp', 'ln', 'df', 'du', 'free',
-  'jq', 'yq', 'xmlstarlet', 'sed', 'awk', 'tr', 'cut',
-])
-
 const DANGEROUS_PATTERNS = [
-  /rm\s+-rf\s+[\/\\]/,
+  /rm\s+-rf\s+[/\\]/,
   /rm\s+-rf\s+\*/,
   /mkfs\./,
   /dd\s+if=/,
   />\s*\/dev\/sd[a-z]/,
   /:\(\)\s*\{/,
   /shutdown|reboot|halt|init\s+[06]/,
-  /chmod\s+777\s+[\/\\]/,
+  /chmod\s+777\s+[/\\]/,
   /crontab|iptables|ufw|firewall-cmd/,
 ]
 
@@ -103,8 +81,6 @@ function json(res: any, status: number, data: object) {
 }
 
 export function createTerminalAPIv2(): Plugin {
-  let viteServer: ViteDevServer | null = null
-
   // WebSocket 连接处理
   wss.on('connection', (ws: WebSocket, req: any) => {
     const url = new URL(req.url || '', 'http://localhost')
@@ -332,7 +308,7 @@ export function createTerminalAPIv2(): Plugin {
       } else {
         session.process.kill('SIGTERM')
       }
-    } catch (e) {
+    } catch {
       // 忽略已终止的进程错误
     }
 
@@ -365,8 +341,6 @@ export function createTerminalAPIv2(): Plugin {
   return {
     name: 'yyc3-terminal-api-v2',
     configureServer(server: ViteDevServer) {
-      viteServer = server
-
       // HTTP 升级为 WebSocket
       server.httpServer?.on('upgrade', (req, socket, head) => {
         const url = new URL(req.url || '', 'http://localhost')
@@ -456,7 +430,7 @@ export function createTerminalAPIv2(): Plugin {
               })
             })
 
-          } catch (e) {
+          } catch {
             json(res, 400, { error: '无效请求格式' })
           }
         })

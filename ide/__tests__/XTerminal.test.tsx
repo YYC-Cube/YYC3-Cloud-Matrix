@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import { XTerminal, getDefaultTheme, getLightTheme } from '../XTerminal'
 
 // Mock xterm.js 模块

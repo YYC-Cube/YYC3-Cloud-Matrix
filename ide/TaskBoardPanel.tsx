@@ -12,37 +12,36 @@
  * @tags: task-board,kanban,panel,ai-inference
  */
 
-import { useState, useCallback, useMemo } from "react";
 import {
-  ListTodo,
-  Plus,
-  Trash2,
+  AlertTriangle,
+  Archive,
+  BookOpen,
+  Bot,
+  Bug,
   Check,
-  X,
   ChevronDown,
   ChevronUp,
-  Clock,
-  AlertTriangle,
-  Sparkles,
-  Bug,
-  RefreshCw,
-  FlaskConical,
-  BookOpen,
   Circle,
+  FlaskConical,
   LayoutGrid,
   List,
+  ListTodo,
+  Plus,
+  RefreshCw,
   Search,
-  Archive,
-  Bot,
+  Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { PanelHeader } from "./PanelManager";
 import {
-  useTaskBoardStore,
   KANBAN_COLUMNS,
   PRIORITY_COLORS,
+  useTaskBoardStore,
   type Task,
-  type TaskStatus,
   type TaskPriority,
+  type TaskStatus,
   type TaskType,
 } from "./stores/useTaskBoardStore";
 
@@ -66,7 +65,6 @@ export default function TaskBoardPanel({ nodeId }: { nodeId: string }) {
     boardView,
     filters,
     addTask,
-    updateTask,
     removeTask,
     moveTask,
     archiveTask,
@@ -74,10 +72,7 @@ export default function TaskBoardPanel({ nodeId }: { nodeId: string }) {
     toggleSubTask,
     setPriority,
     setBoardView,
-    setFilters,
-    setSelectedTask,
     getFilteredTasks,
-    getTasksByStatus,
     acceptInference,
     dismissInference,
   } = useTaskBoardStore();
@@ -102,7 +97,9 @@ export default function TaskBoardPanel({ nodeId }: { nodeId: string }) {
           t.description?.toLowerCase().includes(q),
       );
     }
+
     return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tasks/filters 为 store 数据变化信号：getFilteredTasks 引用稳定，需依赖数据字段触发重算
   }, [getFilteredTasks, searchQuery, tasks, filters]);
 
   const handleCreate = useCallback(() => {
@@ -388,7 +385,7 @@ function TaskCard({
   onMove,
   onRemove,
   onArchive,
-  onPriority,
+  onPriority: _onPriority,
   onToggleSubTask,
   onAddSubTask,
   newSubtask,
@@ -464,11 +461,10 @@ function TaskCard({
               <button
                 key={col.status}
                 onClick={() => onMove(task.id, col.status)}
-                className={`px-1.5 py-0.5 rounded text-[0.55rem] border ${
-                  task.status === col.status
-                    ? "bg-sky-600/20 border-sky-600/30 text-sky-400"
-                    : "border-[var(--ide-border-dim)] text-slate-600 hover:text-slate-400"
-                }`}
+                className={`px-1.5 py-0.5 rounded text-[0.55rem] border ${task.status === col.status
+                  ? "bg-sky-600/20 border-sky-600/30 text-sky-400"
+                  : "border-[var(--ide-border-dim)] text-slate-600 hover:text-slate-400"
+                  }`}
               >
                 {col.label}
               </button>
@@ -482,11 +478,10 @@ function TaskCard({
                 <div key={sub.id} className="flex items-center gap-1.5 pl-1">
                   <button
                     onClick={() => onToggleSubTask(task.id, sub.id)}
-                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${
-                      sub.isCompleted
-                        ? "bg-emerald-500/20 border-emerald-500/30"
-                        : "border-[var(--ide-border-mid)]"
-                    }`}
+                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${sub.isCompleted
+                      ? "bg-emerald-500/20 border-emerald-500/30"
+                      : "border-[var(--ide-border-mid)]"
+                      }`}
                   >
                     {sub.isCompleted && (
                       <Check className="w-2 h-2 text-emerald-400" />

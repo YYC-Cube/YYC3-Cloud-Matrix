@@ -7,34 +7,24 @@
  * @license: MIT
  */
 
-import { useState, useCallback, useMemo } from 'react'
 import {
-  Save,
-  FolderOpen,
-  Trash2,
-  ChevronDown,
-  Layout,
-  Columns3,
-  Rows3,
-  Monitor,
-  Code2,
   Bot,
-  X,
   Check,
+  ChevronDown,
+  Columns3,
+  FolderOpen,
+  Layout,
   Pencil,
   Plus,
   Settings2,
-  GripVertical,
-  Terminal,
   Shield,
-  TestTube,
-  FileSearch,
-  Zap,
+  Trash2,
+  X,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import {
   usePanelManager,
   type LayoutNode,
-  LAYOUT_PRESETS,
 } from './PanelManager'
 import { loadJSON, saveJSON } from './constants/storage-keys'
 
@@ -193,14 +183,12 @@ interface ColumnRatioEditorProps {
 }
 
 function ColumnRatioEditor({ ratios, onChange }: ColumnRatioEditorProps) {
-  const total = ratios.reduce((a, b) => a + b, 0)
-
   const handleRatioChange = (index: number, value: number) => {
     const newRatios = [...ratios]
     newRatios[index] = Math.max(10, Math.min(80, value))
     const remaining = 100 - newRatios[index]
     const othersTotal = ratios.reduce((a, b, i) => (i === index ? 0 : a + b), 0)
-    
+
     if (othersTotal > 0) {
       for (let i = 0; i < newRatios.length; i++) {
         if (i !== index) {
@@ -208,7 +196,7 @@ function ColumnRatioEditor({ ratios, onChange }: ColumnRatioEditorProps) {
         }
       }
     }
-    
+
     onChange(newRatios)
   }
 
@@ -259,11 +247,6 @@ export default function LayoutPresetsEnhanced() {
   const [saveName, setSaveName] = useState('')
   const [editMode, setEditMode] = useState<string | null>(null)
   const [editRatios, setEditRatios] = useState<number[]>([])
-
-  const currentColumnCount = useMemo(() => {
-    if (!ctx?.layout.children) return 0
-    return ctx.layout.children.length
-  }, [ctx?.layout.children])
 
   const currentRatios = useMemo(() => {
     if (!ctx?.layout.children) return []

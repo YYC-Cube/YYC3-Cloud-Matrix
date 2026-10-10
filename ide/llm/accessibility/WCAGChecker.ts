@@ -17,7 +17,6 @@ import {
   WCAGLevel,
   CheckStatus,
   WCAGReport,
-  _ColorContrastResult,
   DEFAULT_ACCESSIBILITY_CONFIG,
   AccessibilityConfig,
 } from './AccessibilityTypes';

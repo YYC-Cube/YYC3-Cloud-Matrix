@@ -118,7 +118,7 @@ vi.mock("./EmotionVisualizer", () => ({
 }));
 
 vi.mock("./CoverFlow", () => ({
-  CoverFlow: ({ onSelect }: { onSelect?: (track: unknown) => void }) => (
+  CoverFlow: ({ onSelect: _onSelect }: { onSelect?: (track: unknown) => void }) => (
     <div data-testid="cover-flow">CoverFlow</div>
   ),
 }));

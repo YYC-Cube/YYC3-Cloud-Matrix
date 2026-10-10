@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: FontSizeValidator.test.ts
  * @description: FontSizeValidator单元测试

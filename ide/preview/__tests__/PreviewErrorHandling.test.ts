@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: PreviewErrorHandling.test.ts
  * @description: 预览错误处理增强系统测试套件
@@ -23,7 +22,6 @@ import {
 import {
   ConsoleManager,
   LogType,
-  getConsoleManager,
 } from '../ConsoleManager';
 import { ErrorFilter } from '../ErrorFilter';
 

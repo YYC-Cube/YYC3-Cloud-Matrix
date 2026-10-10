@@ -438,19 +438,19 @@ export class DesignTokenSystem {
     const variables: Record<string, string> = {};
 
     // 导出基础Token
-    Array.from(this.primitiveTokens.entries()).forEach(([name, token]) => {
+    Array.from(this.primitiveTokens.entries()).forEach(([name, _token]) => {
       const cssVarName = this.tokenNameToCSSVar(name);
       variables[cssVarName] = this.getToken(name, theme);
     });
 
     // 导出语义Token
-    for (const [name, token] of this.semanticTokens) {
+    for (const [name] of this.semanticTokens) {
       const cssVarName = this.tokenNameToCSSVar(name);
       variables[cssVarName] = this.getToken(name, theme);
     }
 
     // 导出组件Token
-    for (const [name, token] of this.componentTokens) {
+    for (const [name] of this.componentTokens) {
       const cssVarName = this.tokenNameToCSSVar(name);
       variables[cssVarName] = this.getToken(name, theme);
     }

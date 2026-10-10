@@ -20,7 +20,7 @@ import {
   isMockMode,
   getAuthMode,
 } from "../lib/supabaseClientReal";
-import type { AppUser, AppSession } from "../types";
+import type { AppUser } from "../types";
 
 describe("supabaseClientReal", () => {
   beforeEach(() => {

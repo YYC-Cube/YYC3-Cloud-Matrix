@@ -17,7 +17,6 @@ import {
   Database,
   HardDrive,
   FileText,
-  Settings,
   Download,
   Upload,
   Trash2,
@@ -25,11 +24,8 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
-  Eye,
-  EyeOff,
   Copy,
   Check,
-  AlertTriangle,
   Shield,
   Lock,
   Info,
@@ -37,13 +33,12 @@ import {
   Layers,
   Archive,
   X,
-  Plus,
   Edit3,
   Save,
   Clock,
   Activity,
 } from 'lucide-react'
-import { StorageManager, type StorageQuota, type StorageInfo } from '../services/StorageManager'
+import { StorageManager, type StorageQuota } from '../services/StorageManager'
 import { DataExporter, type ExportData } from '../services/DataExporter'
 import { DataImporter } from '../services/DataImporter'
 import { toastSuccess, toastError } from '../stores/useToastStore'
@@ -56,14 +51,11 @@ import { BatchOperations } from './BatchOperations'
 import {
   STORAGE_PREFIXES,
   clearAllYYC3Storage,
-  loadJSON,
-  saveJSON,
 } from '../constants/storage-keys'
 import {
   getDB,
   type StoredFile,
   type StoredProject,
-  type StoredSnapshot,
 } from '../adapters/IndexedDBAdapter'
 import { logger } from "../services/Logger";
 

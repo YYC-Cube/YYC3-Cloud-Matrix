@@ -10,7 +10,6 @@
  * @tags: test,vitest,unit-test
  */
 
-// @ts-nocheck
 /**
  * 用户反馈收集系统 - 测试文件
  *

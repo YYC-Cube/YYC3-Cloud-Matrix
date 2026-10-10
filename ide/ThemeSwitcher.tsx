@@ -21,7 +21,7 @@ interface ThemeSwitcherProps {
 }
 
 export default function ThemeSwitcher({ compact = false, layout = 'horizontal' }: ThemeSwitcherProps) {
-  const { currentTheme, toggleTheme, isCyber, setShowThemeCustomizer } = useThemeStore();
+  const { toggleTheme, isCyber, setShowThemeCustomizer } = useThemeStore();
   const t = useThemeTokens();
   const ts = t.themeSwitcher;
 

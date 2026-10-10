@@ -371,7 +371,7 @@ export class AIFamilyHotelManager {
   private modelPerformanceStats: Map<string, ModelPerformanceStats> = new Map();
 
   // 事件回调
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(data?: unknown) => void>> = new Map();
 
   constructor(routingStrategy?: ModelRoutingStrategy) {
     this.routingStrategy = routingStrategy || DEFAULT_ROUTING_STRATEGY;
@@ -1172,7 +1172,7 @@ export class AIFamilyHotelManager {
   // 事件系统
   // ============================================================
 
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (data?: unknown) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
@@ -1181,7 +1181,7 @@ export class AIFamilyHotelManager {
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data?: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);

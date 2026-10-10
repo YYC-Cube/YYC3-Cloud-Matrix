@@ -13,10 +13,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   PerformanceOptimizer,
   performanceOptimizer,
-  type PerformanceMetrics,
-  type QueryOptimization,
-  type SyncOptimization,
-  type IPCOptimization,
 } from "../lib/performance-optimizer";
 
 describe("性能优化工具测试", () => {

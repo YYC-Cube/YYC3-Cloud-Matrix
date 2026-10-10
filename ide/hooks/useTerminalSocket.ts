@@ -12,7 +12,7 @@
  * @tags: terminal,websocket,hook,pty,realtime
  */
 
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { logger } from "../services/Logger";
 
 interface TerminalSocketState {
@@ -64,6 +64,14 @@ export function useTerminalSocket({
   })
 
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 以 ref 镜像最新连接状态，供回调/effect 读取而无需将 state 纳入依赖
+  const connStateRef = useRef(state)
+  // handleReconnect 定义在 connect 之后，通过 ref 打破循环依赖
+  const handleReconnectRef = useRef<() => void>(() => { })
+
+  useEffect(() => {
+    connStateRef.current = state
+  }, [state])
   const optionsRef = useRef({
     sessionId,
     serverUrl,
@@ -123,7 +131,7 @@ export function useTerminalSocket({
 
     // 防止重复连接
     if (wsRef.current?.readyState === WebSocket.OPEN ||
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      wsRef.current?.readyState === WebSocket.CONNECTING) {
       logger.warn('已有活跃连接');
       return
     }
@@ -176,7 +184,7 @@ export function useTerminalSocket({
       ws.onclose = (event) => {
         logger.info(`[useTerminalSocket] 连接关闭 (Code: ${event.code}, Reason: ${event.reason})`);
 
-        const wasConnected = state.connected
+        const wasConnected = connStateRef.current.connected
         setState(prev => ({
           ...prev,
           connected: false,
@@ -190,8 +198,8 @@ export function useTerminalSocket({
         }
 
         // 自动重连逻辑
-        if (autoReconnect && event.code !== 1000) { // 1000 = 正常关闭
-          handleReconnect()
+        if (opts.autoReconnect && event.code !== 1000) { // 1000 = 正常关闭
+          handleReconnectRef.current()
         }
       }
 
@@ -203,7 +211,7 @@ export function useTerminalSocket({
         error: error instanceof Error ? error.message : '未知错误',
       }))
     }
-  }, [buildWsUrl, autoReconnect])
+  }, [buildWsUrl])
 
   // 断开连接
   const disconnect = useCallback((code = 1000, reason = '用户主动断开') => {
@@ -293,29 +301,35 @@ export function useTerminalSocket({
     })
   }, [connect])
 
+  useEffect(() => {
+    handleReconnectRef.current = handleReconnect
+  }, [handleReconnect])
+
   // sessionId 变化时连接
   useEffect(() => {
+    const s = connStateRef.current
+
     // 有 sessionId 时才连接
-    if (sessionId && !state.connected && !state.connecting) {
+    if (sessionId && !s.connected && !s.connecting) {
       logger.info('sessionId 变化，准备连接: ${sessionId}');
       connect()
     }
 
     // sessionId 变化且已连接时，重新连接
-    if (sessionId && state.connected) {
+    if (sessionId && s.connected) {
       disconnect(4001, 'Session 变更')
       setTimeout(() => {
         connect()
       }, 200)
     }
-  }, [sessionId])  
+  }, [sessionId, connect, disconnect])
 
   // 组件卸载时断开连接
   useEffect(() => {
     return () => {
       disconnect()
     }
-  }, [])  
+  }, [disconnect])
 
   return {
     state,

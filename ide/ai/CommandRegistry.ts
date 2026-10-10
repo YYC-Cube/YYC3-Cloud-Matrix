@@ -500,7 +500,7 @@ registerCommand({
     function render(
       node: Record<string, any>,
       indent: string,
-      isLast: boolean,
+      _isLast: boolean,
     ) {
       const keys = Object.keys(node).sort();
       keys.forEach((key, i) => {

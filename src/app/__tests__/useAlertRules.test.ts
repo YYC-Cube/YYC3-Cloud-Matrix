@@ -10,15 +10,14 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAlertRules } from "../hooks/useAlertRules";
-import type { AlertRule, AlertEvent } from "../types";
 
 vi.mock("../hooks/usePersistedState", () => ({
   usePersistedList: vi.fn((storeName, defaultData) => {
     const [items, setItems] = React.useState(defaultData);
-    const [loaded, setLoaded] = React.useState(true);
+    const [loaded] = React.useState(true);
 
     const upsert = async (item: any) => {
       setItems((prev: any[]) => {
@@ -159,7 +158,6 @@ describe("useAlertRules", () => {
       const { result } = renderHook(() => useAlertRules());
 
       const firstRule = result.current.rules[0];
-      const originalName = firstRule.name;
 
       act(() => {
         result.current.setEditingRule(firstRule);

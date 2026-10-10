@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: ThemeFlow.integration.test.ts
  * @description: 主题流程集成测试 - 测试主题切换、自定义颜色、验证和系统主题同步
@@ -12,7 +11,7 @@
  * @tags: test,integration,theme-flow,color-validation
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useThemeStore } from "../stores/useThemeStore";
 import { ColorValidator } from "../theme/ColorValidator";
 import { FontSizeValidator } from "../theme/FontSizeValidator";
@@ -230,7 +229,7 @@ describe("Theme Flow Integration", () => {
     });
 
     it("should show error when customizing with invalid hex color", () => {
-      const { setTheme, updateCustomColors, themeError } = useThemeStore.getState();
+      const { setTheme, updateCustomColors } = useThemeStore.getState();
 
       setTheme("custom");
 
@@ -250,7 +249,7 @@ describe("Theme Flow Integration", () => {
     });
 
     it("should show error when customizing with low contrast colors", () => {
-      const { setTheme, updateCustomColors } = useThemeStore.getState();
+      const { setTheme } = useThemeStore.getState();
 
       setTheme("custom");
 
@@ -291,7 +290,7 @@ describe("Theme Flow Integration", () => {
       setSystemThemeFollow(true);
 
       // Simulate system theme change event
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      window.matchMedia("(prefers-color-scheme: dark)");
 
       // Note: In real scenario, this would trigger automatic update
       expect(useThemeStore.getState().systemThemeFollow).toBe(true);

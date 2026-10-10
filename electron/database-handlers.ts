@@ -5,10 +5,10 @@
  * 支持 SQLite、MySQL、PostgreSQL 等多种数据库
  */
 
-import { ipcMain, app } from "electron";
-import { IPCChannel, type IPCResponse, type DatabaseQueryResult, type DatabaseExecuteResult } from "../src/shared/ipc-types";
+import { ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
+import { IPCChannel, type DatabaseExecuteResult, type DatabaseQueryResult, type IPCResponse } from "../src/shared/ipc-types";
 
 /**
  * 数据库连接配置
@@ -24,7 +24,7 @@ interface DatabaseConnection {
   connection?: any;
 }
 
-let currentConnection: DatabaseConnection | null = null;
+const currentConnection: DatabaseConnection | null = null;
 
 /**
  * 创建成功响应
@@ -49,25 +49,9 @@ function createErrorResponse(error: string): IPCResponse {
 }
 
 /**
- * 初始化数据库连接
- */
-async function initializeDatabase(config: any): Promise<void> {
-  currentConnection = {
-    type: config.type || "sqlite",
-    ...config,
-  };
-
-  // 在实际应用中，这里应该使用真实的数据库驱动
-  // 例如：better-sqlite3、mysql2、pg 等
-  if (currentConnection) {
-    console.info(`[Database] Initialized ${currentConnection.type} database`);
-  }
-}
-
-/**
  * 执行 SQL 查询（模拟实现）
  */
-async function executeQuery(sql: string, params?: any[]): Promise<any[]> {
+async function executeQuery(sql: string, _params?: any[]): Promise<any[]> {
   if (!currentConnection) {
     throw new Error("Database not initialized");
   }
@@ -75,14 +59,14 @@ async function executeQuery(sql: string, params?: any[]): Promise<any[]> {
   // 模拟查询结果
   // 在实际应用中，这里应该使用真实的数据库驱动执行查询
   console.info(`[Database] Executing query: ${sql}`);
-  
+
   return [];
 }
 
 /**
  * 执行 SQL 语句（模拟实现）
  */
-async function executeStatement(sql: string, params?: any[]): Promise<{ affectedRows: number; insertId?: number }> {
+async function executeStatement(sql: string, _params?: any[]): Promise<{ affectedRows: number; insertId?: number }> {
   if (!currentConnection) {
     throw new Error("Database not initialized");
   }
@@ -90,7 +74,7 @@ async function executeStatement(sql: string, params?: any[]): Promise<{ affected
   // 模拟执行结果
   // 在实际应用中，这里应该使用真实的数据库驱动执行语句
   console.info(`[Database] Executing statement: ${sql}`);
-  
+
   return {
     affectedRows: 0,
     insertId: undefined,

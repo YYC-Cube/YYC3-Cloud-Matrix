@@ -257,7 +257,7 @@ export class CodeValidationEnhancer {
   /**
    * 检测函数长度
    */
-  private detectFunctionLengths(code: string, lines: string[]): FunctionLength[] {
+  private detectFunctionLengths(code: string, _lines: string[]): FunctionLength[] {
     const functionLengths: FunctionLength[] = [];
     const functionRegex = /(?:function\s+(\w+)|const\s+(\w+)\s*=\s*(?:async\s*)?\(|(\w+)\s*\([^)]*\)\s*{)/g;
 
@@ -335,7 +335,7 @@ export class CodeValidationEnhancer {
       }
     });
 
-    lineMap.forEach((occurrences, line) => {
+    lineMap.forEach((occurrences, _line) => {
       if (occurrences.length >= 2) {
         duplicates.push({
           type: 'exact',
@@ -352,7 +352,7 @@ export class CodeValidationEnhancer {
   /**
    * 计算复杂度
    */
-  private calculateComplexity(code: string, language: string): ComplexityInfo {
+  private calculateComplexity(code: string, _language: string): ComplexityInfo {
     // 简化的复杂度计算
     const ifCount = (code.match(/\bif\b/g) || []).length;
     const forCount = (code.match(/\bfor\b/g) || []).length;

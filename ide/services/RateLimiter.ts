@@ -256,7 +256,6 @@ export class CircuitBreaker {
   }
 
   private transitionTo(newState: CircuitState): void {
-    const oldState = this.state;
     this.state = newState;
 
     if (newState === 'closed') {

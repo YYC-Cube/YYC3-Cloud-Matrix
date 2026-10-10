@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: __tests__/useTaskBoardStore.test.ts
  * @description: TaskBoardStore 单元测试 — 覆盖任务 CRUD、状态流转、子任务、

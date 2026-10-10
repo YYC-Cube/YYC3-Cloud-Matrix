@@ -118,7 +118,7 @@ export class AIFamilySyncEngine {
   private offlineCheckIntervalId: ReturnType<typeof setInterval> | null = null;
 
   // 事件回调
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(data?: unknown) => void>> = new Map();
 
   // 本地变更追踪
   private localChanges: Map<string, SyncPayload[]> = new Map();
@@ -456,7 +456,7 @@ export class AIFamilySyncEngine {
     mergedData?: unknown
   ): void {
     const conflict = this.conflicts.get(conflictId);
-    if (!conflict) {return;}
+    if (!conflict) { return; }
 
     conflict.resolvedWith = resolution;
     conflict.resolvedAt = Date.now();
@@ -563,7 +563,7 @@ export class AIFamilySyncEngine {
   }
 
   private async processSyncQueue(): Promise<void> {
-    if (this.isSyncing || this.syncQueue.length === 0 || !navigator.onLine) {return;}
+    if (this.isSyncing || this.syncQueue.length === 0 || !navigator.onLine) { return; }
 
     await this.incrementalSync();
   }
@@ -604,10 +604,10 @@ export class AIFamilySyncEngine {
   }
 
   getSyncStatus(): SyncStatus {
-    if (this.isOffline()) {return "offline";}
-    if (this.isSyncing) {return "syncing";}
-    if (this.syncQueue.length > 0) {return "pending";}
-    if (this.conflicts.size > 0) {return "conflict";}
+    if (this.isOffline()) { return "offline"; }
+    if (this.isSyncing) { return "syncing"; }
+    if (this.syncQueue.length > 0) { return "pending"; }
+    if (this.conflicts.size > 0) { return "conflict"; }
     return "synced";
   }
 
@@ -743,7 +743,7 @@ export class AIFamilySyncEngine {
   // 事件系统
   // ============================================================
 
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (data?: unknown) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
@@ -752,7 +752,7 @@ export class AIFamilySyncEngine {
     return () => this.off(event, callback);
   }
 
-  off(event: string, callback: Function): void {
+  off(event: string, callback: (data?: unknown) => void): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);
@@ -774,8 +774,8 @@ export class AIFamilySyncEngine {
 
   destroy(): void {
     // 清除定时器
-    if (this.syncIntervalId) {clearInterval(this.syncIntervalId);}
-    if (this.offlineCheckIntervalId) {clearInterval(this.offlineCheckIntervalId);}
+    if (this.syncIntervalId) { clearInterval(this.syncIntervalId); }
+    if (this.offlineCheckIntervalId) { clearInterval(this.offlineCheckIntervalId); }
 
     // 保存状态
     this.saveDeviceState();

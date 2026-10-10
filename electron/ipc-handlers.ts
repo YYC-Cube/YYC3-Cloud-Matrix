@@ -5,7 +5,7 @@
  */
 
 import { execFile } from "child_process";
-import { app, dialog, Notification as ElectronNotification, ipcMain, shell } from "electron";
+import { app, BrowserWindow, dialog, Notification as ElectronNotification, ipcMain, shell } from "electron";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -104,7 +104,7 @@ export function registerFileSystemHandlers(): void {
   });
 
   // 列出目录内容
-  ipcMain.handle(IPCChannel.FILE_LIST, async (_, dirPath: string, options?: any) => {
+  ipcMain.handle(IPCChannel.FILE_LIST, async (_, dirPath: string, _options?: any) => {
     try {
       const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
       const files = entries.map(entry => ({
@@ -421,7 +421,7 @@ export function registerNotificationHandlers(): void {
       });
 
       notif.on("click", () => {
-        const win = require("electron").BrowserWindow.getAllWindows()[0];
+        const win = BrowserWindow.getAllWindows()[0];
         if (win) {
           win.show();
           win.focus();

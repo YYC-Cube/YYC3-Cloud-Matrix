@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { StorageManager } from "../services/storageManager";
-import type { StorageConfig, StorageEvent } from "../types/storage";
+import type { StorageConfig } from "../types/storage";
 
 // 模拟 localStorage
 const localStorageMock = (() => {

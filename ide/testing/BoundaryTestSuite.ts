@@ -171,8 +171,6 @@ export class BoundaryTestSuite {
       `  [LargeFileTest] Testing large file (${this.config.largeFileSize} bytes)...`,
     );
 
-    const startTime = Date.now();
-
     try {
       // 生成超大文件内容
       logger.warn('[LargeFileTest] Generating large file content...');
@@ -298,7 +296,7 @@ export class BoundaryTestSuite {
         } else {
           failedChars.push(char);
         }
-      } catch (error) {
+      } catch {
         failedChars.push(`ERROR-${i}`);
       }
     }
@@ -459,8 +457,8 @@ export class BoundaryTestSuite {
    * 模拟操作
    */
   private async simulateOperation(
-    type: ConflictType,
-    id: number,
+    _type: ConflictType,
+    _id: number,
   ): Promise<{ conflict: boolean }> {
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 10));
 
@@ -474,7 +472,7 @@ export class BoundaryTestSuite {
   /**
    * 解决冲突
    */
-  private async resolveConflict(type: ConflictType): Promise<boolean> {
+  private async resolveConflict(_type: ConflictType): Promise<boolean> {
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
 
     // 模拟解决成功率

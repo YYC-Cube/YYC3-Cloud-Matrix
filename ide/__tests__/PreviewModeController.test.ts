@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: PreviewModeController.test.ts
  * @description: PreviewModeController 单元测试
@@ -12,7 +11,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PreviewModeController, createPreviewModeController } from "../PreviewModeController";
-import type { PreviewMode } from "../../stores/usePreviewStore";
 
 describe("PreviewModeController", () => {
   let controller: PreviewModeController;

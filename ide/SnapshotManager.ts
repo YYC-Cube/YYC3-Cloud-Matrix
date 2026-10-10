@@ -102,9 +102,6 @@ export class SnapshotManager {
 
     if (previousSnapshot && this.canUseDelta(previousSnapshot, files)) {
       const deltas = this.computeDeltas(previousSnapshot.files, files);
-      const baseFiles = previousSnapshot.metadata.isDelta
-        ? this.reconstructBaseFiles(previousSnapshot)
-        : previousSnapshot.files;
 
       const fullFiles = files.map(f => ({
         path: f.path,

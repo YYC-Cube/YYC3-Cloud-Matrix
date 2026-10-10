@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: testing/__tests__/PerformanceBenchmark.test.ts
  * @description: 性能基准测试文件（简化版本）

@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetMCPServer } from "../../lib/mcp/mcp-server";
 
 vi.mock("../../lib/mcp/mcp-server", async () => {
-  const listeners = new Map<string, Set<Function>>();
+  const listeners = new Map<string, Set<(data?: unknown) => void>>();
   const agents: any[] = [];
   let mockCallToolFn = vi.fn().mockResolvedValue({
     id: "result-1",
@@ -32,7 +32,7 @@ vi.mock("../../lib/mcp/mcp-server", async () => {
         }
         return [];
       },
-      on: (event: string, handler: Function) => {
+      on: (event: string, handler: (data?: unknown) => void) => {
         if (!listeners.has(event)) { listeners.set(event, new Set()); }
         listeners.get(event)!.add(handler);
         return () => listeners.get(event)?.delete(handler);

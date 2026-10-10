@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SnapshotViewController.test.ts
  * @description: SnapshotViewController单元测试
@@ -33,7 +32,7 @@ describe("SnapshotViewController", () => {
 
   describe("视图管理", () => {
     it("应该添加视图", () => {
-      const result = controller.addView("view1", "snapshot1");
+      controller.addView("view1", "snapshot1");
       const view = controller.getViewState("view1");
 
       expect(view).toBeDefined();

@@ -142,6 +142,7 @@ test.describe("Dashboard Performance", () => {
     try {
       await expect(statCards.first()).toBeVisible({ timeout: 15000 });
     } catch {
+      // noop: 统计卡片非硬性断言，不可见时仅跳过等待、继续测量加载耗时
     }
 
     const loadTime = Date.now() - startTime;

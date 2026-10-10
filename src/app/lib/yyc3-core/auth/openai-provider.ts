@@ -202,14 +202,14 @@ export class OpenAIProvider implements AuthProvider {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private transformResponse(data: any): ChatCompletionResponse {
     return {
       id: data.id || `chat-${Date.now()}`,
       object: data.object || 'chat.completion',
       created: data.created || Date.now(),
       model: data.model || this.config.defaultModel!,
-      choices: data.choices?.map((choice: any, index: number) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+      choices: data.choices?.map((choice: any, index: number) => ({  
         index,
         message: {
           role: choice.message?.role || choice.delta?.role || 'assistant',

@@ -9,7 +9,7 @@
  * @tags: [tag1],[tag2],[tag3]
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   initCrossTabSync,
   onCrossTabMessage,
@@ -45,7 +45,7 @@ describe("cross-tab-sync", () => {
 
   it("should not throw when BroadcastChannel is unavailable", () => {
     const orig = globalThis.BroadcastChannel;
-    // @ts-ignore
+    // @ts-expect-error -- 删除只读宿主属性以模拟不支持 BroadcastChannel 的环境
     delete globalThis.BroadcastChannel;
     expect(() => initCrossTabSync()).not.toThrow();
     globalThis.BroadcastChannel = orig;

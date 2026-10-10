@@ -380,7 +380,7 @@ export class ThreeWayMerge {
     return parts.join('\n');
   }
 
-  private buildRanges(changes: LineChange[], totalLines: number): Array<{
+  private buildRanges(changes: LineChange[], _totalLines: number): Array<{
     start: number;
     end: number;
     content: string;
@@ -429,8 +429,8 @@ export class ThreeWayMerge {
     remoteRanges: Array<{ start: number; end: number; content: string; changeType: LineChange["type"] }>,
     overlaps: Array<{ localIndex: number; remoteIndex: number; type: "overlap" | "adjacent" }>,
     baseLines: string[],
-    localContent: string,
-    remoteContent: string,
+    _localContent: string,
+    _remoteContent: string,
   ): Array<MergeEvent> {
     const events: MergeEvent[] = [];
     const conflictLocalIndices = new Set(overlaps.map(o => o.localIndex));

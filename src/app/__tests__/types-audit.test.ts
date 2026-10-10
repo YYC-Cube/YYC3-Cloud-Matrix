@@ -33,102 +33,34 @@ vi.mock("../lib/yyc3-storage", () => ({
 }));
 import {
   // Section 1: Auth
-  type UserRole, type AppUser, type AppSession, type AuthContextValue,
-  // Section 2: Node
-  type NodeStatusType, type NodeData, type NodeStatusRecord, toNodeData,
+  type UserRole, type NodeStatusRecord, toNodeData,
   // Section 3: Model
-  type ModelTier, type Model, type Agent, type InferenceStatus, type InferenceLog, type ModelStats,
+  type ModelTier,
   // Section 4: WebSocket
-  type ConnectionState, type AlertLevel, type AlertData, type ThroughputPoint, type SystemStats,
-  type WSMessage, type WebSocketDataState,
-  // Section 5: Network
-  type NetworkInterface, type NetworkMode, type NetworkConfig, type TestStatus,
-  type ConnectionTestResult, type NetworkConfigState,
-  // Section 6: Sync
-  type SyncItemType, type SyncItem, type SyncQueueStats, type SyncProcessResult,
-  // Section 7: Error
-  type ErrorCategory, type ErrorSeverity, type AppError, type ErrorStats,
-  // Section 8: Layout
-  type Breakpoint, type ViewState,
-  // Section 9: UI Props
-  type ErrorBoundaryLevel, type ChatMessage, type CommandCategory, type BeforeInstallPromptEvent,
-  // Section 10: FollowUp
-  type FollowUpSeverity, type FollowUpStatus, type ChainEventType, type ChainEvent,
-  type FollowUpItem, type QuickAction,
-  // Section 11: Operation
-  type OperationCategoryType, type OperationCategoryMeta, type OperationStatus,
-  type OperationItem, type OperationTemplateItem, type OperationLogEntry, type LogFilterType,
-  // Section 12: Terminal
-  type TerminalHistoryEntry, type IDEPanelTab,
-  // Section 13: File System
-  type FileItemType, type FileItem, type LogLevel, type LogEntry,
-  type ReportType, type ReportFormat, type ReportConfig, type ReportResult,
-  // Section 14: Shortcuts
-  type KeyboardShortcut,
-  // Section 15: AI Decision
-  type AnomalyPatternType, type PatternSeverity, type DetectedPattern,
-  type AIRecommendation, type AIAnalysisResult,
-  // Section 16: Command Palette
-  type CommandPaletteItem,
-  // Section 17: PWA
-  type SWStatus, type CacheEntry, type PWAState,
-  // Section 18: I18n
-  type Locale, type LocaleInfo,
+  type ConnectionState, type AlertLevel,
   // Section 19: Service Loop
-  type LoopStage, type StageStatus, type StageResult, type LoopRun,
-  type DataFlowNodeType, type DataFlowEdge,
-  // Section 20: Model Provider
-  type ModelProviderId, type ModelProviderDef, type ConfiguredModel,
-  type OllamaModel, type OllamaTagsResponse,
-  // Section 21: SDK
-  type SDKConnectionStatus, type ChatRole, type ChatSession, type SDKCapability,
-  type SDKUsageStats, type SDKProviderCapabilities, type SDKChatRequest, type SDKChatResponse,
-  // Section 22: Host FS
-  type HostFileEntry, type FileVersion, type HostFSState,
+  type LoopStage,
   // Section 23: Database
-  type DatabaseType, type DBConnectionStatus, type DBConnection, type DBTable, type DBColumn,
-  type QueryResult, type DBBackup,
+  type DatabaseType, type DBConnectionStatus,
   // Section 24: Patrol
-  type PatrolStatus, type CheckStatus, type PatrolInterval, type PatrolCheckItem,
-  type PatrolResult, type PatrolSchedule,
+  type PatrolStatus, type CheckStatus, type PatrolInterval,
   // Section 25: Security Monitor
-  type SecurityTab, type ScanStatus, type RiskLevel, type VitalRating,
-  type CSPResult, type CookieResult, type SensitiveDataResult, type ResourceEntry,
-  type PerformanceResult, type MemoryResult, type WebVital, type DeviceInfo,
-  type NetworkInfo, type BrowserFeature, type BrowserInfo, type StorageUsage,
-  type DataManagementState, type SecurityMonitorState,
-  // Section 26: Service Loop Meta
-  type StageMeta, type DataFlowNode,
-  // Section 27: Registered Shortcuts
-  type RegisteredShortcut,
-  // Section 28: I18n Context
-  type I18nContextValue,
-  // Section 29: SQL Template
-  type SQLTemplate,
+  type SecurityTab, type RiskLevel,
   // Section 30: Inline Editable Table
-  type ChangeType, type EditableCellChange, type CommittedChange,
+  type ChangeType, type CommittedChange,
   // Section 31: Smart Alert Rules
-  type AlertSeverity, type AlertMetric, type AlertCondition, type EscalationLevel,
-  type AlertThreshold, type EscalationPolicy, type AlertRule, type AlertEvent, type AlertRulesOptions,
+  type AlertSeverity, type AlertMetric, type AlertRule,
   // Section 32: Report Exporter
   type ExportReportType, type ExportFormat, type TimeRange,
-  type ReportMetric, type PerformanceSnapshot, type SecuritySnapshot,
-  type ReportData, type ReportHistoryEntry,
   // Section 33: AI Diagnostics
-  type DiagnosticStatus, type PatternType, type ConfidenceLevel, type ActionPriority,
-  type DiagnosticPattern, type AnomalyRecord, type SuggestedAction,
-  type PredictiveForecast, type DiagnosticSession,
-  type WsNodeSnapshot, type DiagnosticsOptions,
-  type DiagnosticHistoryEntry, type DiagnosticView,
-  // Section 34: Recent Files
-  type RecentFile,
+  type DiagnosticStatus, type PatternType,
+  type DiagnosticPattern,
   // Section 35: Storage Infrastructure
-  type StoreName, type StorageChangeEvent,
+  type StoreName,
   // Section 36: API Configuration
   type APIEndpoints,
   // Section 37: Design System
-  type ColorToken, type TypographyToken, type SpacingToken, type ShadowToken, type AnimationToken,
-  type StatusDef, type ComponentEntry, type InteractionSpec,
+  type ColorToken, type TypographyToken, type SpacingToken, type ShadowToken, type AnimationToken, type ComponentEntry, type InteractionSpec,
   type ChapterStatus, type ChapterReview, type ProjectStats, type AcceptanceItem,
 } from "../types";
 

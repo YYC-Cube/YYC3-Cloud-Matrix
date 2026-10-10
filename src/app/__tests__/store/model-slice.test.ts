@@ -337,14 +337,14 @@ describe('useModelSlice', () => {
           status: 'deployed' as any,
         });
 
-        let updated = useModelSlice.getState().models.find(m => m.id === newModel.id);
+        const updated = useModelSlice.getState().models.find(m => m.id === newModel.id);
         expect(updated?.version).toBe('v2.0');
         expect(updated?.size).toBe('100GB');
         expect(updated?.gpu).toBe('GPU-A100-04');
         expect(updated?.status).toBe('deployed');
 
         // 3. 验证可以通过 ID 找到
-        let found = useModelSlice.getState().getModelById(newModel.id);
+        const found = useModelSlice.getState().getModelById(newModel.id);
         expect(found?.name).toBe('Lifecycle-Model');
         expect(found?.version).toBe('v2.0');
 
@@ -353,7 +353,7 @@ describe('useModelSlice', () => {
         expect(useModelSlice.getState().models.find(m => m.name === 'Lifecycle-Model')).toBeUndefined();
 
         // 5. 删除后通过 ID 查找应该返回 undefined
-        let afterDelete = useModelSlice.getState().getModelById(newModel.id);
+        const afterDelete = useModelSlice.getState().getModelById(newModel.id);
         expect(afterDelete).toBeUndefined();
       }
     });
@@ -424,7 +424,7 @@ describe('useModelSlice', () => {
           status: 'deploying' as any,
         });
 
-        let deploying = useModelSlice.getState().models.find(m => m.id === newModel.id);
+        const deploying = useModelSlice.getState().models.find(m => m.id === newModel.id);
         expect(deploying?.status).toBe('deploying');
         expect(deploying?.gpu).toBe('GPU-A100-05');
 
@@ -433,7 +433,7 @@ describe('useModelSlice', () => {
           status: 'deployed' as any,
         });
 
-        let deployed = useModelSlice.getState().models.find(m => m.id === newModel.id);
+        const deployed = useModelSlice.getState().models.find(m => m.id === newModel.id);
         expect(deployed?.status).toBe('deployed');
 
         // 4. 升级版本
@@ -442,7 +442,7 @@ describe('useModelSlice', () => {
           size: '130GB',
         });
 
-        let upgraded = useModelSlice.getState().models.find(m => m.id === newModel.id);
+        const upgraded = useModelSlice.getState().models.find(m => m.id === newModel.id);
         expect(upgraded?.version).toBe('v2.0.0');
         expect(upgraded?.size).toBe('130GB');
       }

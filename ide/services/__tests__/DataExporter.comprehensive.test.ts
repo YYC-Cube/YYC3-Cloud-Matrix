@@ -58,7 +58,7 @@ describe('DataExporter - 导出数据结构', () => {
         const date = new Date(data.exportedAt)
         expect(date.getTime()).not.toBeNaN()
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -71,7 +71,7 @@ describe('DataExporter - 导出数据结构', () => {
         expect(typeof data.version).toBe('string')
         expect(data.version.length).toBeGreaterThan(0)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -88,7 +88,7 @@ describe('DataExporter - 边界情况', () => {
         // exportedAt应该不同（时间戳）
         expect(result1.exportedAt).not.toBe(result2.exportedAt)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -101,7 +101,7 @@ describe('DataExporter - 边界情况', () => {
         expect(typeof data.localStorage).toBe('object')
         expect(Array.isArray(data.localStorage)).toBe(false)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })
@@ -115,7 +115,7 @@ describe('DataExporter - 边界情况', () => {
         expect(Array.isArray(data.indexedDB.projects)).toBe(true)
         expect(Array.isArray(data.indexedDB.snapshots)).toBe(true)
       }
-    } catch (e) {
+    } catch {
       // 可能失败
     }
   })

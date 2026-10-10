@@ -18,6 +18,11 @@ import {
   setEnvConfig,
   type EnvConfig,
 } from "../../../lib/env-config";
+import {
+  getAllCategories,
+  getKnowledgeStats,
+  searchKnowledge,
+} from "../../../lib/local-knowledge-base";
 import type { TerminalHistoryEntry } from "../../../types";
 
 // ============================================================
@@ -272,7 +277,6 @@ function processCommand(input: string): CommandResult {
       if (!q) {
         return { status: "info", output: `用法: kb search <关键词>\n       kb list\n       kb stats\n       kb categories\n\n示例:\n  kb search react hooks\n  kb search zustand 状态管理\n  kb search 终端 命令` };
       }
-      const { searchKnowledge, formatSearchResultForAI: _formatSearchResultForAI } = require("../../../lib/local-knowledge-base") as typeof import("../../../lib/local-knowledge-base");
       const results = searchKnowledge(q);
       if (results.length === 0) {
         return { status: "info", output: `未找到与 "${q}" 相关的知识条目。\n\n输入 kb list 查看所有条目，或 kb categories 查看分类。` };
@@ -285,18 +289,15 @@ function processCommand(input: string): CommandResult {
       return { status: "success", output: header + body };
     }
     if (sub === "list") {
-      const { searchKnowledge } = require("../../../lib/local-knowledge-base") as typeof import("../../../lib/local-knowledge-base");
       const all = searchKnowledge("", { limit: 50, threshold: 0 });
       const body = all.map((r, i) => `[${String(i + 1).padStart(2)}] ${r.article.title.padEnd(35)} ${r.article.category}`).join("\n");
       return { status: "success", output: `📚 知识库条目列表 (${all.length} 条)\n${"─".repeat(50)}\n${body}` };
     }
     if (sub === "stats") {
-      const { getKnowledgeStats } = require("../../../lib/local-knowledge-base") as typeof import("../../../lib/local-knowledge-base");
       const s = getKnowledgeStats();
       return { status: "success", output: `📊 知识库统计\n${"─".repeat(30)}\n  总条目数: ${s.totalArticles}\n  分类数:   ${s.categories}\n  关键词数: ${s.totalKeywords}` };
     }
     if (sub === "categories") {
-      const { getAllCategories } = require("../../../lib/local-knowledge-base") as typeof import("../../../lib/local-knowledge-base");
       const cats = getAllCategories();
       return { status: "success", output: `📂 知识库分类 (${cats.length} 个)\n${"─".repeat(30)}\n${cats.map((c) => `  · ${c}`).join("\n")}` };
     }

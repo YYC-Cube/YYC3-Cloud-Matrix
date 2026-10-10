@@ -276,7 +276,7 @@ function generateFunctionTests(sym: ExtractedSymbol, fp: string): TestCase[] {
       description: `验证 ${name} 在参数为 null/undefined 时的行为`,
       targetSymbol: name,
       targetFile: fp,
-      testCode: `it("${name} 处理空参数", () => {\n  ${params.map((p) => `// @ts-expect-error 测试空参数\n`).join("")}  expect(() => ${name}(${params.map(() => "undefined").join(", ")})).not.toThrow()\n})`,
+      testCode: `it("${name} 处理空参数", () => {\n  ${params.map((_p) => `// @ts-expect-error 测试空参数\n`).join("")}  expect(() => ${name}(${params.map(() => "undefined").join(", ")})).not.toThrow()\n})`,
     });
   }
 

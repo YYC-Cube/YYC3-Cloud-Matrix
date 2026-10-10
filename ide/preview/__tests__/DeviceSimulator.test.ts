@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: DeviceSimulator.test.ts
  * @description: 设备模拟引擎完整测试套件
@@ -14,12 +13,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { 
-  DeviceSimulator, 
-  type DeviceState,
-  type DeviceOrientation
+  DeviceSimulator
 } from '../DeviceSimulator';
-import { 
-  DevicePresets,
+import {
   getAllDevices,
   getDeviceById,
   getDevicesByCategory,

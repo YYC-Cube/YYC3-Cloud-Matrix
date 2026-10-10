@@ -18,7 +18,6 @@ import {
   DeduplicationDetail,
   MergedTask,
   TaskPriority,
-  TaskType,
 } from './TaskTypes';
 
 /**

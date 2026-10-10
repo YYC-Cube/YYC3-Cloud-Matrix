@@ -26,8 +26,6 @@ import {
   AlertCircle,
   Clock,
   Loader2,
-  ChevronRight,
-  ChevronDown,
   Zap,
   ArrowRight,
   GitBranch,
@@ -35,7 +33,6 @@ import {
   BarChart3,
   MessageSquare,
   Sparkles,
-  Target,
   CircleDot,
   Timer,
   X,
@@ -45,18 +42,14 @@ import {
   Pin,
   Trash2,
   Plus,
-  BookOpen,
-  History,
   Tag,
-  Diff,
   Check,
   XCircle,
   Send,
 } from "lucide-react"
 import { PanelHeader } from "./PanelManager"
-import { type ProviderId, getProviderConfigs } from "./LLMService"
 import { useMemoryStore } from "./stores/useMemoryStore"
-import { useMultiAgentDispatch, type PipelineStage, type AgentRole as PipelineAgentRole, type AgentResult } from "./hooks/useMultiAgentDispatch"
+import { useMultiAgentDispatch, type PipelineStage } from "./hooks/useMultiAgentDispatch"
 import { useI18n } from "./i18n"
 
 // ── Types ──
@@ -599,7 +592,7 @@ export default function MultiAgentPanel({ nodeId }: { nodeId: string }) {
     }
 
     return baseAgents
-  }, [pipelineState])
+  }, [pipelineState, t])
 
   // ── Derive Flow from Pipeline ──
   const flow = useMemo<TaskFlowNode[]>(() => {

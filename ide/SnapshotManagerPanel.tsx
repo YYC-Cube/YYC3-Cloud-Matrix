@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: SnapshotManagerPanel.tsx
  * @description: 快照管理面板组件，提供创建、恢复、删除、比较快照等功能
@@ -15,7 +14,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Camera,
-  _Clock,
   RotateCcw,
   Trash2,
   GitCompare,
@@ -83,11 +81,12 @@ export function SnapshotManagerPanel({
 
   const { files } = useFileStore();
 
-  // 初始化快照管理器
+  // 初始化快照管理器（listProjectSnapshots 为 zustand 稳定 action，避免引用每次渲染变化的 refreshSnapshots）
   useEffect(() => {
     initSnapshotManager();
-    refreshSnapshots();
-  }, [initSnapshotManager]);
+    const list = listProjectSnapshots();
+    setSnapshots(list.slice(0, maxSnapshots));
+  }, [initSnapshotManager, listProjectSnapshots, maxSnapshots]);
 
   // 刷新快照列表
   const refreshSnapshots = () => {

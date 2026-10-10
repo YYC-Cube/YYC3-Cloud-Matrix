@@ -22,7 +22,6 @@ import {
   Search,
   RefreshCw,
   X,
-  ExternalLink,
   Sparkles,
   AlertTriangle,
   Bug,
@@ -34,7 +33,6 @@ import {
   Settings2,
   GitBranch,
   Package,
-  Filter,
 } from "lucide-react";
 import { PanelHeader } from "./PanelManager";
 import { useFileStore } from "./FileStore";
@@ -138,11 +136,13 @@ export default function SecurityPanel({ nodeId }: { nodeId: string }) {
     });
   }, [fileContents]);
 
-  // Auto-scan on mount
+  // Auto-scan on mount（ref 读取最新回调，保持 mount-only 语义）
+  const runScanRef = useRef(runScan);
+  runScanRef.current = runScan;
   useEffect(() => {
-    scanTimer.current = setTimeout(runScan, 800);
+    scanTimer.current = setTimeout(() => runScanRef.current(), 800);
     return () => clearTimeout(scanTimer.current);
-  }, []);  
+  }, []);
 
   // Filtered findings
   const filteredFindings = useMemo(() => {

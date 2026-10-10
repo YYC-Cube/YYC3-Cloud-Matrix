@@ -14,11 +14,7 @@ import {
   errorReporting,
   initErrorReporting,
   type ErrorEvent,
-  type ErrorCategory,
-  type ErrorSeverity,
-  type Breadcrumb,
   type ErrorTransport,
-  type ErrorReportingConfig,
 } from '../ErrorReportingService';
 
 // ── Mock Setup ───────────────────────────────────────────
@@ -823,9 +819,7 @@ describe('ErrorReportingService - 边界情况', () => {
     });
     
     service.captureError(new Error('Will fail'));
-    
-    const pendingBefore = (service as any).pendingEvents.length;
-    
+
     await service.flush();
     
     // 失败的事件应该放回队列（如果retryCount < 3）

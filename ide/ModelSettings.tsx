@@ -12,63 +12,53 @@
  * @tags: settings,models,providers,api-key,connectivity
  */
 
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck — TODO(P0-3): React 19 + lucide-react 类型兼容性问题，待上游修复
+
 // 拆分子组件后主文件从 2447 行/121KB 精简至 650 行/25KB
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
-  X, Plus, Trash2, Edit3, Check, ChevronDown, ChevronRight,
-  Server, Cloud, Bot, Sparkles, RefreshCw, ExternalLink,
-  Eye, EyeOff, AlertCircle, CheckCircle2, Search,
-  HardDrive, Zap, Loader2, XCircle, Clock, Settings2,
-  Shield, Globe, Cpu, Activity, Wrench, Terminal,
-  ArrowRight, Plug, AlertTriangle,
-  FileCode2, PlusCircle, MinusCircle, Lightbulb, Bug,
-  Network, Lock, RotateCcw
+  Activity,
+  ArrowRight,
+  HardDrive,
+  Lightbulb,
+  Loader2,
+  Network,
+  Plug,
+  Plus,
+  RefreshCw, Search,
+  Server,
+  Settings2,
+  Wrench,
+  X
 } from 'lucide-react'
-import { useModelRegistry, type AIModel } from './ModelRegistry'
-import { useThemeTokens } from './hooks/useThemeTokens'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useModelRegistry } from './ModelRegistry'
 import { loadProxyConfig } from './ProxyService'
 import {
   BUILTIN_PROVIDERS,
-  type ProviderDef,
   type ModelDef,
+  type ProviderDef,
 } from './constants/providers'
 import {
   loadJSON,
   saveJSON,
+  SK_CUSTOM_PROVIDERS,
+  SK_MCP_SERVERS,
+  SK_OLLAMA_CACHE_PREFIX,
   SK_PROVIDER_API_KEYS,
   SK_PROVIDER_URLS,
-  SK_MCP_SERVERS,
-  SK_CUSTOM_PROVIDERS,
-  SK_OLLAMA_CACHE_PREFIX,
-  SK_MODEL_PERF_DATA,
 } from './constants/storage-keys'
-import { logger } from "./services/Logger"
 
 /* ================================================================
    Sub-Components — 已提取到 model-settings/ 目录
    ================================================================ */
-import { CopyButton } from './model-settings/CopyButton'
-import { ProviderCard } from './model-settings/ProviderCard'
 import { MCPConfigPanel } from './model-settings/MCPConfigPanel'
-import { SmartDiagnosticsPanel } from './model-settings/SmartDiagnosticsPanel'
+import { ProviderCard } from './model-settings/ProviderCard'
 import { ProxyConfigPanel } from './model-settings/ProxyConfigPanel'
+import { SmartDiagnosticsPanel } from './model-settings/SmartDiagnosticsPanel'
 
 /* ================================================================
    Types (local to ModelSettings)
    ================================================================ */
-
-interface MCPServerConfig {
-  id: string
-  name: string
-  description: string
-  command: string
-  args: string[]
-  env: Record<string, string>
-  enabled: boolean
-}
 
 interface DiagnosticResult {
   providerId: string
@@ -130,11 +120,9 @@ export interface ModelSettingsProps {
 export function ModelSettings({ mode = 'modal', onClose, initialTab = 'providers' }: ModelSettingsProps = {}) {
   const {
     showModelSettingsV2, setShowModelSettingsV2, models: aiModels,
-    addModel: addAIModelRaw, removeModel: removeAIModel, updateModel: updateAIModel,
     setActiveModelId: activateAIModel, activeModelId,
     addCustomModel,
   } = useModelRegistry()
-  const t = useThemeTokens()
 
   // Wrapper: ModelSettings.md uses addAIModel({ name, provider, endpoint, apiKey, isActive })
   // but ModelRegistry addModel expects a full AIModel object.
@@ -217,14 +205,11 @@ export function ModelSettings({ mode = 'modal', onClose, initialTab = 'providers
   }, [])
 
   // Handler: Add model to provider
-  const handleAddModel = useCallback((providerId: string, model: ModelDef) => {
+  const handleAddModel = useCallback((providerId: string, _model: ModelDef) => {
     const provider = PROVIDERS.find(p => p.id === providerId) || customProviders.find(p => p.id === providerId)
     if (!provider) return
-    // Add to AIModel registry
-    const endpoint = customUrls[providerId] || provider.baseURL
-    const modelKey = `${providerId}:${model.id}`
     // Use parsed model info
-  }, [customUrls, customProviders])
+  }, [customProviders])
 
   // Handler: Remove model
   const handleRemoveModel = useCallback((providerId: string, modelId: string) => {
@@ -407,11 +392,10 @@ export function ModelSettings({ mode = 'modal', onClose, initialTab = 'providers
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] transition-all ${
-                activeTab === key
-                  ? 'bg-white/[0.06] text-white/70 shadow-sm'
-                  : 'text-white/25 hover:text-white/40'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] transition-all ${activeTab === key
+                ? 'bg-white/[0.06] text-white/70 shadow-sm'
+                : 'text-white/25 hover:text-white/40'
+                }`}
             >
               <Icon className="w-3 h-3" />
               {label}
@@ -560,11 +544,10 @@ export function ModelSettings({ mode = 'modal', onClose, initialTab = 'providers
                   const isImported = aiModels.some(m => m.name === model.name && m.provider === 'ollama')
                   return (
                     <div key={model.name}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${
-                        isImported
-                          ? 'bg-emerald-500/[0.03] border-emerald-500/15'
-                          : 'bg-white/[0.01] border-white/[0.04] hover:border-white/[0.08]'
-                      }`}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${isImported
+                        ? 'bg-emerald-500/[0.03] border-emerald-500/15'
+                        : 'bg-white/[0.01] border-white/[0.04] hover:border-white/[0.08]'
+                        }`}
                     >
                       <div className={`w-2 h-2 rounded-full ${model.status === 'online' ? 'bg-emerald-400' : 'bg-red-400'}`} />
                       <div className="flex-1 min-w-0">

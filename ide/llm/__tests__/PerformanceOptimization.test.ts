@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: llm/__tests__/PerformanceOptimization.test.ts
  * @description: 性能优化与监控测试套件

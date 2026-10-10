@@ -12,8 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { pluginManager, type PluginMarketItem, type PluginMarketConfig } from './PluginSystem';
-import type { PluginManifest } from './types';
+import { pluginManager, type PluginMarketItem } from './PluginSystem';
 import { logger } from "./services/Logger";
 
 type TabType = 'market' | 'installed' | 'updates';
@@ -55,24 +54,24 @@ const PluginMarketPanel: React.FC = () => {
   const [installing, setInstalling] = useState<Set<string>>(new Set());
   const [uninstalling, setUninstalling] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    pluginManager.configureMarket({ registryUrl: DEFAULT_REGISTRY_URL });
-    loadPlugins();
-  }, []);
-
   const loadPlugins = useCallback(async (forceRefresh = false) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       const plugins = await pluginManager.fetchMarketPlugins(forceRefresh);
       setState(prev => ({ ...prev, plugins, loading: false }));
-    } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: 'Failed to load plugins' 
+    } catch {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load plugins'
       }));
     }
   }, []);
+
+  useEffect(() => {
+    pluginManager.configureMarket({ registryUrl: DEFAULT_REGISTRY_URL });
+    loadPlugins();
+  }, [loadPlugins]);
 
   const handleInstall = useCallback(async (pluginId: string) => {
     setInstalling(prev => new Set(prev).add(pluginId));

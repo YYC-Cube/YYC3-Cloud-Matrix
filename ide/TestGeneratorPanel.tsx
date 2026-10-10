@@ -27,9 +27,7 @@ import {
   X,
   Copy,
   Check,
-  Sparkles,
   Plus,
-  Filter,
   Code2,
 } from "lucide-react";
 import { PanelHeader } from "./PanelManager";
@@ -103,10 +101,13 @@ export default function TestGeneratorPanel({ nodeId }: { nodeId: string }) {
     });
   }, [fileContents]);
 
+  // 首次挂载防抖生成一次计划（ref 读取最新回调，保持 mount-only 语义）
+  const generatePlanRef = useRef(generatePlan);
+  generatePlanRef.current = generatePlan;
   useEffect(() => {
-    const t = setTimeout(generatePlan, 800);
+    const t = setTimeout(() => generatePlanRef.current(), 800);
     return () => clearTimeout(t);
-  }, []);  
+  }, []);
 
   // Filter
   const filteredSuites = useMemo(() => {

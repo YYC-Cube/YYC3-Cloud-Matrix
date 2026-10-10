@@ -96,7 +96,7 @@ function scanAndFix(context: PluginContext) {
 /**
  * 扫描代码问题
  */
-function scanIssues(content: string, filepath: string) {
+function scanIssues(content: string, _filepath: string) {
   const issues: Array<{
     type: string;
     severity: "error" | "warning" | "info";

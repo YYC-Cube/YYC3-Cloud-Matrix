@@ -14,16 +14,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 describe("broadcast-channel", () => {
   const originalBroadcastChannel = global.BroadcastChannel;
-  let mockChannels: Map<string, { postMessage: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }> = new Map();
-
-  const createMockBroadcastChannel = (name: string) => {
-    const channel = {
-      postMessage: vi.fn(),
-      close: vi.fn(),
-    };
-    mockChannels.set(name, channel);
-    return channel;
-  };
+  const mockChannels: Map<string, { postMessage: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }> = new Map();
 
   beforeEach(async () => {
     mockChannels.clear();

@@ -438,7 +438,7 @@ export class CollabService {
       Y.applyUpdate(tempDoc, state);
       const filesMap = tempDoc.getMap("files");
       const contents: string[] = [];
-      filesMap.forEach((value, key) => {
+      filesMap.forEach((value) => {
         if (value instanceof Y.Text) {
           contents.push(value.toString());
         }

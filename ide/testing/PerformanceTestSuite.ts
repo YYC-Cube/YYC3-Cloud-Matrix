@@ -119,7 +119,6 @@ export class PerformanceTestSuite {
    * 测试快照管理性能
    */
   async testSnapshotPerformance(): Promise<SnapshotPerformanceResult> {
-    const startTime = Date.now();
     const snapshots: Array<{
       id: string;
       timestamp: number;

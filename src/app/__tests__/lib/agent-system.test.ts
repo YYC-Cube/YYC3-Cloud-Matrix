@@ -110,7 +110,6 @@ describe("AIAgent Base Class", () => {
   });
 
   it("should abort a running task", async () => {
-    const agent = createTestAgent("test-5");
     let resolveThink: () => void;
     class SlowAgent extends AIAgent {
       constructor() {

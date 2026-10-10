@@ -451,19 +451,19 @@ export class ZoomController {
     };
   }
 
-  setTargetElement(element: HTMLElement): void {
+  setTargetElement(_element: HTMLElement): void {
     /* empty */
   }
 
-  fitToWidth(width: number): void {
+  fitToWidth(_width: number): void {
     /* empty */
   }
 
-  fitToHeight(height: number): void {
+  fitToHeight(_height: number): void {
     /* empty */
   }
 
-  fitToContainer(width: number, height: number): void {
+  fitToContainer(_width: number, _height: number): void {
     /* empty */
   }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: SnapshotManager.test.ts
  * @description: SnapshotManager 单元测试
@@ -12,7 +11,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { SnapshotManager, createSnapshotManager } from "../SnapshotManager";
-import type { Snapshot } from "../SnapshotManager";
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -260,7 +258,7 @@ describe("SnapshotManager", () => {
     it("应该批量删除快照", () => {
       const snap1 = manager.createSnapshot("快照1", [{ path: "f1.ts", content: "c1" }]);
       const snap2 = manager.createSnapshot("快照2", [{ path: "f2.ts", content: "c2" }]);
-      const snap3 = manager.createSnapshot("快照3", [{ path: "f3.ts", content: "c3" }]);
+      manager.createSnapshot("快照3", [{ path: "f3.ts", content: "c3" }]);
       
       const count = manager.deleteSnapshots([snap1.id, snap2.id]);
       

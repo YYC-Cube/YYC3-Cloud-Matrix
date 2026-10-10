@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: llm/__tests__/Accessibility.test.ts
  * @description: 可访问性增强测试套件
@@ -18,12 +17,8 @@ import { WCAGChecker } from '../accessibility/WCAGChecker';
 import { KeyboardNavigator } from '../accessibility/KeyboardNavigator';
 import { ARIAManager } from '../accessibility/ARIAManager';
 import {
-  WCAGLevel,
-  WCAGCheckType,
-  CheckStatus,
   FocusTrapMode,
   ARIARole,
-  NotificationType,
 } from '../accessibility/AccessibilityTypes';
 
 // 创建DOM环境

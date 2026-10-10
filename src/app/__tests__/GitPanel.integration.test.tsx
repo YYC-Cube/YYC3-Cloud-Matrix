@@ -11,7 +11,7 @@
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as React from "react";
 
@@ -301,7 +301,7 @@ describe("GitPanel Integration Tests", () => {
       const { getGitService } = await import("../lib/GitService");
 
       const { unmount } = render(React.createElement(GitPanel));
-      const serviceBeforeUnmount = getGitService();
+      getGitService();
 
       unmount();
 

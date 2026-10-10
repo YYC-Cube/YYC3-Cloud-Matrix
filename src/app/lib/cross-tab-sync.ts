@@ -28,7 +28,7 @@ type SyncMessage =
   | { type: 'PONG'; tabId: string };
 
 let channel: BroadcastChannel | null = null;
-const listeners = new Map<string, Set<Function>>();
+const listeners = new Map<string, Set<(payload: unknown) => void>>();
 const TAB_ID = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 export function initCrossTabSync(): void {
@@ -60,7 +60,7 @@ function handleIncoming(event: MessageEvent<SyncMessage>): void {
   }
 }
 
-export function onCrossTabMessage(type: SyncMessage['type'], handler: Function): () => void {
+export function onCrossTabMessage(type: SyncMessage['type'], handler: (payload: unknown) => void): () => void {
   if (!listeners.has(type)) {
     listeners.set(type, new Set());
   }

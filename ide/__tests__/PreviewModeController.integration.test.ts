@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @file: PreviewModeController.integration.test.ts
  * @description: PreviewModeController 集成测试 - 测试编辑器到预览的完整流程
@@ -14,7 +13,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { usePreviewStore } from "../stores/usePreviewStore";
-import { PreviewModeController } from "../PreviewModeController";
 
 // ================================================================
 // Integration Tests - PreviewModeController with usePreviewStore
@@ -464,7 +462,7 @@ describe("PreviewModeController Integration", () => {
     });
 
     it("should fallback to direct trigger if controller not initialized", () => {
-      const { notifyFileChange, triggerRefresh } = usePreviewStore.getState();
+      const { notifyFileChange } = usePreviewStore.getState();
 
       // Spy on triggerRefresh
       const refreshSpy = vi.spyOn(usePreviewStore.getState(), "triggerRefresh");

@@ -45,7 +45,6 @@ import {
   useQuickActionsStore,
   QUICK_ACTIONS,
   type QuickAction,
-  type ActionType,
 } from "./stores/useQuickActionsStore";
 import {
   useQuickActionBridge,
@@ -82,7 +81,6 @@ export default function QuickActionsBar() {
     setShowQuickBar,
     currentContext,
     activeActionId,
-    actionStatus,
     clipboardHistory,
     recentActions,
     addToClipboard,

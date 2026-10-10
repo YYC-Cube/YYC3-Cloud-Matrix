@@ -9,7 +9,7 @@
  * @tags: [auto-generated]
  */
 
-// @ts-ignore - Optional dependency
+// @ts-expect-error - Optional dependency
 import DOMPurify from 'dompurify';
 
 export class XSSProtection {
@@ -30,7 +30,7 @@ export class XSSProtection {
     if (this.isInitialized) {return;}
 
     try {
-      // @ts-ignore - Optional dependency
+      // @ts-expect-error - Optional dependency
       const DOMPurifyModule = await import('dompurify');
       this.sanitizer = DOMPurifyModule.default as unknown as DOMPurify;
       this.isInitialized = true;

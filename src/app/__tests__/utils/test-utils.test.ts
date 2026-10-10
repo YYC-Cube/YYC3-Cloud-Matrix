@@ -9,28 +9,28 @@
  * @tags: [module]
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  createMockNode,
-  createMockNodes,
+  cleanupTestEnvironment,
   createMockAlert,
   createMockAlerts,
-  createMockModel,
   createMockConfiguredModel,
   createMockLocalStorage,
-  createMockWebSocket,
+  createMockModel,
+  createMockNode,
+  createMockNodes,
   createMockResponse,
-  waitFor,
-  generateRandomString,
-  generateRandomNumber,
+  createMockWebSocket,
+  createPerformanceBenchmark,
+  delay,
+  flushPromises,
   generateRandomBoolean,
   generateRandomDate,
+  generateRandomNumber,
+  generateRandomString,
   measurePerformance,
-  createPerformanceBenchmark,
-  flushPromises,
-  delay,
   setupTestEnvironment,
-  cleanupTestEnvironment,
+  waitFor,
 } from "./test-utils";
 
 describe("Mock Factories", () => {
@@ -217,7 +217,7 @@ describe("WebSocket Mocks", () => {
     });
 
     it("should simulate open event", () => {
-      const { ws, events, simulateOpen } = createMockWebSocket();
+      const { ws, simulateOpen } = createMockWebSocket();
       const handler = vi.fn();
 
       ws.addEventListener("open", handler);
@@ -227,7 +227,7 @@ describe("WebSocket Mocks", () => {
     });
 
     it("should simulate message event", () => {
-      const { ws, events, simulateMessage } = createMockWebSocket();
+      const { ws, simulateMessage } = createMockWebSocket();
       const handler = vi.fn();
 
       ws.addEventListener("message", handler);

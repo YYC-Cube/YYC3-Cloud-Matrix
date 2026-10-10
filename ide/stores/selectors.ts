@@ -12,7 +12,7 @@ import { logger } from "../services/Logger";
  * @tags: stores,zustand,selectors,performance,optimization
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
 import { shallow } from "zustand/shallow";
@@ -52,7 +52,8 @@ export function createShallowSelector<T, K extends keyof T>(
           result[key] = state[key];
         });
         return result;
-      }, [keys]),
+        // keys 为工厂函数闭包参数，组件生命周期内引用不变，无需纳入依赖
+      }, []),
       shallow,
     );
 }
@@ -68,13 +69,17 @@ export function useStorePerformanceMonitor(
   componentName: string,
   selectedKeys?: string[],
 ) {
-  const isDev = process.env.NODE_ENV === "development";
-  useMemo(() => {
-    if (!isDev) return;
+  // 订阅信息仅在挂载时记录一次：通过 ref 读取最新参数而不纳入依赖
+  const latestRef = useRef({ storeName, componentName, selectedKeys });
+  latestRef.current = { storeName, componentName, selectedKeys };
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const { storeName: s, componentName: c, selectedKeys: k } = latestRef.current;
     const timestamp = new Date().toISOString();
-    const keysInfo = selectedKeys ? ` [${selectedKeys.join(", ")}]` : "";
+    const keysInfo = k ? ` [${k.join(", ")}]` : "";
     logger.warn(
-      `[Zustand Perf] ${timestamp} ${componentName} subscribed to ${storeName}${keysInfo}`,
+      `[Zustand Perf] ${timestamp} ${c} subscribed to ${s}${keysInfo}`,
     );
   }, []);
 }
@@ -101,9 +106,8 @@ export function createArraySelector<T, Item>(
           items = [...items].sort(sortFn);
         }
         return items;
-      },
-      [filterFn, sortFn],
-    );
+        // filterFn/sortFn 为工厂函数闭包参数，组件生命周期内引用不变，无需纳入依赖
+      }, []);
     return useStore(store, selector, shallow);
   };
 }
@@ -121,9 +125,8 @@ export function createMapSelector<T, V>(
       (state: T) => {
         const map = state[mapKey] as Record<string, V>;
         return map[itemKey];
-      },
-      [itemKey],
-    );
+        // itemKey 为工厂函数闭包参数，组件生命周期内引用不变，无需纳入依赖
+      }, []);
     return useStore(store, selector);
   };
 }

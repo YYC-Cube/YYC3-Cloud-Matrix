@@ -28,7 +28,6 @@ import { axe } from "vitest-axe";
 
 // Mock figma:asset imports — 返回占位 URL
 vi.mock("../modules/shared/YYC3LogoSvg", () => {
-  const React = require("react");
   return {
     YYC3LogoSvg: ({ size = 40, className = "", style }: any) =>
       React.createElement("img", {

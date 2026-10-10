@@ -14,61 +14,61 @@
  */
 
 import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  memo,
-  lazy,
-  Suspense,
-} from "react";
-import {
-  RefreshCw,
+  AlertCircle,
+  AlertTriangle,
+  Bug,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Copy,
+  Eye,
+  GitCompareArrows,
+  Grid3X3,
+  Hand,
+  History,
+  Info,
+  Link2,
   Monitor,
+  Package,
+  RefreshCw,
   Smartphone,
   Tablet,
   TerminalSquare,
-  Clock,
+  Trash2,
+  X,
   Zap,
-  Hand,
   ZoomIn,
   ZoomOut,
-  Grid3X3,
-  ChevronDown,
-  AlertCircle,
-  Eye,
-  Trash2,
-  Info,
-  AlertTriangle,
-  Bug,
-  ChevronRight,
-  X,
-  Copy,
-  Check,
-  History,
-  Link2,
-  Package,
-  GitCompareArrows,
 } from "lucide-react";
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useFileStore } from "./FileStore";
 import { PanelHeader } from "./PanelManager";
-import { copyToClipboard } from "./utils/clipboard";
 import {
   buildPreviewHtml,
   detectLanguage,
   type PreviewLanguage,
 } from "./PreviewEngine";
 import {
-  usePreviewStore,
   DEVICE_PRESETS,
-  type DevicePreset,
+  usePreviewStore,
   type ConsoleEntry,
-  type PreviewMode,
+  type DevicePreset,
   type PreviewEngineType,
+  type PreviewMode,
   type PreviewState,
 } from "./stores/usePreviewStore";
 import { useScrollSyncStore } from "./stores/useScrollSyncStore";
+import { copyToClipboard } from "./utils/clipboard";
 
 // Lazy-load heavy components
 const SandpackPreviewPanel = lazy(() => import("./SandpackPreview"));
@@ -128,6 +128,8 @@ interface RealtimePreviewPanelProps {
 function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
   const { fileContents, activeFile } = useFileStore();
   const store: PreviewState = usePreviewStore();
+  // zustand action 引用稳定，单独解构以避免 Hook 依赖整个 store 状态对象
+  const { setIsUpdating, setPreviewError, addConsoleLog, addSnapshot, clearConsole } = store;
   const { publishPreviewScroll, editorScrollRatio, scrollSource } =
     useScrollSyncStore();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -182,8 +184,8 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
   const doUpdate = useCallback(() => {
     if (!iframeRef.current || store.previewEngine === "sandpack") return;
     const start = performance.now();
-    store.setIsUpdating(true);
-    store.setPreviewError(null);
+    setIsUpdating(true);
+    setPreviewError(null);
     // Mark iframe as not ready — blocks postMessage until re-loaded
     iframeReadyRef.current = false;
 
@@ -191,16 +193,16 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
       iframeRef.current.srcdoc = previewHtml.html;
       setIframeLoaded(false);
     } catch (err) {
-      store.setPreviewError({
+      setPreviewError({
         message: err instanceof Error ? err.message : String(err),
       });
     }
 
     requestAnimationFrame(() => {
       setLastUpdateTime(Math.round(performance.now() - start));
-      store.setIsUpdating(false);
+      setIsUpdating(false);
     });
-  }, [previewHtml.html, store.previewEngine]);
+  }, [previewHtml.html, store.previewEngine, setIsUpdating, setPreviewError]);
 
   // ── Listen for messages from iframe ──
 
@@ -213,21 +215,21 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
 
       switch (e.data.type) {
         case "preview-console":
-          store.addConsoleLog({
+          addConsoleLog({
             level: e.data.level || "log",
             message: e.data.message || "",
           });
           break;
 
         case "preview-error":
-          store.setPreviewError({
+          setPreviewError({
             message: e.data.message || "Unknown error",
             line: e.data.line,
             column: e.data.column,
             source: e.data.source,
             stack: e.data.stack,
           });
-          store.addConsoleLog({
+          addConsoleLog({
             level: "error",
             message: `${e.data.message}${e.data.line ? ` (line ${e.data.line})` : ""}`,
           });
@@ -236,13 +238,13 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
         case "preview-loaded":
           iframeReadyRef.current = true;
           setIframeLoaded(true);
-          store.setIsUpdating(false);
+          setIsUpdating(false);
           // 自动捕获快照：每次成功加载预览时记录（去重）
           if (
             currentCode.trim().length > 0 &&
             currentCode !== lastSnapshotCodeRef.current
           ) {
-            store.addSnapshot({
+            addSnapshot({
               code: currentCode,
               language: detectedLanguage,
               label: activeFile.split("/").pop() || undefined,
@@ -271,6 +273,10 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
     currentCode,
     detectedLanguage,
     activeFile,
+    addConsoleLog,
+    setPreviewError,
+    setIsUpdating,
+    addSnapshot,
   ]);
 
   // ── Scroll Sync: Editor → Preview (via iframe postMessage) ──
@@ -320,6 +326,7 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
     store.previewDelay,
     store.refreshCounter,
     store.previewEngine,
+    doUpdate,
   ]);
 
   // ── Auto-refresh timer ──
@@ -349,14 +356,14 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
   // Initial render
   useEffect(() => {
     if (store.previewEngine === "iframe") doUpdate();
-  }, [store.previewEngine]);
+  }, [store.previewEngine, doUpdate]);
 
   // ── Handlers ──
 
   const handleRefresh = useCallback(() => {
-    store.clearConsole();
+    clearConsole();
     doUpdate();
-  }, [doUpdate]);
+  }, [doUpdate, clearConsole]);
 
   const handleCopyUrl = useCallback(() => {
     copyToClipboard(`preview://${activeFile}`).then(() => {
@@ -417,11 +424,10 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
       >
         {/* Engine badge */}
         <span
-          className={`ml-2 px-1.5 py-0.5 rounded text-[0.55rem] ${
-            isSandpack
-              ? "bg-amber-500/15 text-amber-400"
-              : "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-          }`}
+          className={`ml-2 px-1.5 py-0.5 rounded text-[0.55rem] ${isSandpack
+            ? "bg-amber-500/15 text-amber-400"
+            : "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+            }`}
         >
           {isSandpack ? "Sandpack" : detectedLanguage.toUpperCase()}
         </span>
@@ -440,8 +446,6 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
         setShowModeMenu={setShowModeMenu}
         showDeviceMenu={showDeviceMenu}
         setShowDeviceMenu={setShowDeviceMenu}
-        showSettingsMenu={showSettingsMenu}
-        setShowSettingsMenu={setShowSettingsMenu}
         showHistoryPanel={showHistoryPanel}
         setShowHistoryPanel={setShowHistoryPanel}
         onRefresh={handleRefresh}
@@ -477,11 +481,10 @@ function RealtimePreviewPanelInner({ nodeId }: RealtimePreviewPanelProps) {
               style={{ padding: isDesktop ? 0 : "16px" }}
             >
               <div
-                className={`relative ${
-                  !isDesktop
-                    ? "border border-[var(--ide-border)] rounded-xl overflow-hidden shadow-2xl"
-                    : "size-full"
-                }`}
+                className={`relative ${!isDesktop
+                  ? "border border-[var(--ide-border)] rounded-xl overflow-hidden shadow-2xl"
+                  : "size-full"
+                  }`}
                 style={{
                   width: deviceWidth,
                   height: isDesktop ? "100%" : "auto",
@@ -600,8 +603,6 @@ interface PreviewToolbarProps {
   setShowModeMenu: (v: boolean) => void;
   showDeviceMenu: boolean;
   setShowDeviceMenu: (v: boolean) => void;
-  showSettingsMenu: boolean;
-  setShowSettingsMenu: (v: boolean) => void;
   showHistoryPanel: boolean;
   setShowHistoryPanel: (v: boolean) => void;
   onRefresh: () => void;
@@ -619,8 +620,6 @@ const PreviewToolbar = memo(({
   setShowModeMenu,
   showDeviceMenu,
   setShowDeviceMenu,
-  showSettingsMenu,
-  setShowSettingsMenu,
   showHistoryPanel,
   setShowHistoryPanel,
   onRefresh,
@@ -638,13 +637,12 @@ const PreviewToolbar = memo(({
       {/* Address bar */}
       <div className="flex items-center gap-1.5 bg-[var(--ide-bg-elevated)] border border-[var(--ide-border-dim)] rounded-full px-2.5 py-0.5 flex-1 max-w-[220px] min-w-0">
         <div
-          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-            iframeLoaded
-              ? "bg-emerald-500"
-              : store.isUpdating
-                ? "bg-amber-500 animate-pulse"
-                : "bg-slate-600"
-          }`}
+          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${iframeLoaded
+            ? "bg-emerald-500"
+            : store.isUpdating
+              ? "bg-amber-500 animate-pulse"
+              : "bg-slate-600"
+            }`}
         />
         <span className="text-[0.6rem] text-[var(--ide-text-muted)] truncate">
           {activeFile || "preview://empty"}
@@ -669,11 +667,10 @@ const PreviewToolbar = memo(({
         onClick={() =>
           store.setPreviewEngine(isSandpack ? "iframe" : "sandpack")
         }
-        className={`h-6 px-1.5 rounded flex items-center gap-1 text-[0.6rem] transition-colors ${
-          isSandpack
-            ? "bg-amber-500/15 text-amber-400"
-            : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-        }`}
+        className={`h-6 px-1.5 rounded flex items-center gap-1 text-[0.6rem] transition-colors ${isSandpack
+          ? "bg-amber-500/15 text-amber-400"
+          : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+          }`}
         title={
           isSandpack ? "切换到轻量预览" : "切换到 Sandpack (完整 React 环境)"
         }
@@ -690,11 +687,10 @@ const PreviewToolbar = memo(({
       {/* Scroll Sync toggle */}
       <button
         onClick={() => store.setScrollSyncEnabled(!store.scrollSyncEnabled)}
-        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
-          store.scrollSyncEnabled
-            ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-            : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-        }`}
+        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${store.scrollSyncEnabled
+          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+          : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+          }`}
         title={store.scrollSyncEnabled ? "关闭滚动同步" : "开启滚动同步"}
       >
         <Link2 className="w-3.5 h-3.5" />
@@ -735,11 +731,10 @@ const PreviewToolbar = memo(({
                         store.setMode(m);
                         setShowModeMenu(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-[0.65rem] transition-colors ${
-                        store.mode === m
-                          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-                          : "text-[var(--ide-text-secondary)] hover:bg-[var(--ide-border-faint)]"
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-[0.65rem] transition-colors ${store.mode === m
+                        ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+                        : "text-[var(--ide-text-secondary)] hover:bg-[var(--ide-border-faint)]"
+                        }`}
                     >
                       <Icon className="w-3 h-3" />
                       <div className="text-left">
@@ -818,11 +813,10 @@ const PreviewToolbar = memo(({
                         store.setActiveDevice(d);
                         setShowDeviceMenu(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-[0.65rem] transition-colors ${
-                        store.activeDevice.id === d.id
-                          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-                          : "text-[var(--ide-text-secondary)] hover:bg-[var(--ide-border-faint)]"
-                      }`}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-[0.65rem] transition-colors ${store.activeDevice.id === d.id
+                        ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+                        : "text-[var(--ide-text-secondary)] hover:bg-[var(--ide-border-faint)]"
+                        }`}
                     >
                       <DeviceIcon type={d.type} className="w-3 h-3" />
                       <span>{d.name}</span>
@@ -869,11 +863,10 @@ const PreviewToolbar = memo(({
       {/* Grid toggle */}
       <button
         onClick={() => store.setShowGrid(!store.showGrid)}
-        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
-          store.showGrid
-            ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-            : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-        }`}
+        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${store.showGrid
+          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+          : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+          }`}
         title="网格线"
       >
         <Grid3X3 className="w-3.5 h-3.5" />
@@ -882,34 +875,32 @@ const PreviewToolbar = memo(({
       {/* Console toggle */}
       <button
         onClick={() => store.setShowConsole(!store.showConsole)}
-        className={`w-6 h-6 rounded flex items-center justify-center transition-colors relative ${
-          store.showConsole
-            ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-            : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-        }`}
+        className={`w-6 h-6 rounded flex items-center justify-center transition-colors relative ${store.showConsole
+          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+          : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+          }`}
         title="控制台"
       >
         <TerminalSquare className="w-3.5 h-3.5" />
         {store.consoleLogs.filter((l: ConsoleEntry) => l.level === "error")
           .length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 text-white text-[0.4rem] flex items-center justify-center">
-            {Math.min(
-              9,
-              store.consoleLogs.filter((l: ConsoleEntry) => l.level === "error")
-                .length,
-            )}
-          </span>
-        )}
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 text-white text-[0.4rem] flex items-center justify-center">
+              {Math.min(
+                9,
+                store.consoleLogs.filter((l: ConsoleEntry) => l.level === "error")
+                  .length,
+              )}
+            </span>
+          )}
       </button>
 
       {/* History toggle */}
       <button
         onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
-          showHistoryPanel
-            ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-            : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-        }`}
+        className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${showHistoryPanel
+          ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+          : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+          }`}
         title="预览历史"
       >
         <History className="w-3.5 h-3.5" />
@@ -960,12 +951,12 @@ function ConsolePanel({
     label: string;
     value: ConsoleEntry["level"] | "all";
   }[] = [
-    { label: "全部", value: "all" },
-    { label: "Log", value: "log" },
-    { label: "Info", value: "info" },
-    { label: "Warn", value: "warn" },
-    { label: "Error", value: "error" },
-  ];
+      { label: "全部", value: "all" },
+      { label: "Log", value: "log" },
+      { label: "Info", value: "info" },
+      { label: "Warn", value: "warn" },
+      { label: "Error", value: "error" },
+    ];
 
   return (
     <div className="h-[180px] flex-shrink-0 border-t border-[var(--ide-border-faint)] bg-[var(--ide-bg-dark)] flex flex-col">
@@ -979,11 +970,10 @@ function ConsolePanel({
             <button
               key={fb.value}
               onClick={() => onFilterChange(fb.value)}
-              className={`px-1.5 py-0.5 rounded text-[0.55rem] transition-colors ${
-                filter === fb.value
-                  ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
-                  : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)]"
-              }`}
+              className={`px-1.5 py-0.5 rounded text-[0.55rem] transition-colors ${filter === fb.value
+                ? "bg-[var(--ide-accent-bg)] text-[var(--ide-accent)]"
+                : "text-[var(--ide-text-dim)] hover:text-[var(--ide-text-muted)]"
+                }`}
             >
               {fb.label}
             </button>
@@ -1140,22 +1130,20 @@ function HistoryPanel({
               return (
                 <div
                   key={snap.id}
-                  className={`flex items-center gap-1 px-2 py-1.5 transition-colors ${
-                    isDiffSelected
-                      ? "bg-amber-500/10 border-l-2 border-amber-400"
-                      : isActive
-                        ? "bg-[var(--ide-accent-bg)]"
-                        : "hover:bg-[var(--ide-border-faint)]"
-                  }`}
+                  className={`flex items-center gap-1 px-2 py-1.5 transition-colors ${isDiffSelected
+                    ? "bg-amber-500/10 border-l-2 border-amber-400"
+                    : isActive
+                      ? "bg-[var(--ide-accent-bg)]"
+                      : "hover:bg-[var(--ide-border-faint)]"
+                    }`}
                 >
                   {/* Diff select button */}
                   <button
                     onClick={() => handleDiffClick(idx)}
-                    className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isDiffSelected
-                        ? "text-amber-400 bg-amber-500/20"
-                        : "text-[var(--ide-text-faint)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
-                    }`}
+                    className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${isDiffSelected
+                      ? "text-amber-400 bg-amber-500/20"
+                      : "text-[var(--ide-text-faint)] hover:text-[var(--ide-text-muted)] hover:bg-white/5"
+                      }`}
                     title={
                       diffSelect === null
                         ? "选择此快照进行差异对比"
@@ -1168,11 +1156,10 @@ function HistoryPanel({
                   {/* Restore button (the main content) */}
                   <button
                     onClick={() => onRestore(idx)}
-                    className={`flex-1 flex items-center gap-2 text-left min-w-0 ${
-                      isActive
-                        ? "text-[var(--ide-accent)]"
-                        : "text-[var(--ide-text-secondary)]"
-                    }`}
+                    className={`flex-1 flex items-center gap-2 text-left min-w-0 ${isActive
+                      ? "text-[var(--ide-accent)]"
+                      : "text-[var(--ide-text-secondary)]"
+                      }`}
                   >
                     <div
                       className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-[var(--ide-accent)]" : "bg-[var(--ide-border)]"}`}
@@ -1246,7 +1233,7 @@ function PreviewStatusBar({
       <span className="uppercase">{language}</span>
 
       <span>
-        {engine === "sandpack" ? "Sandpack" : `${MODE_CONFIG[mode].label  }模式`}
+        {engine === "sandpack" ? "Sandpack" : `${MODE_CONFIG[mode].label}模式`}
       </span>
 
       {scrollSync && (

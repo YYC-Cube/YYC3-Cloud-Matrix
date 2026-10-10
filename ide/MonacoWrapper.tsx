@@ -296,7 +296,7 @@ export default function MonacoWrapper({
         });
       }
     },
-    [isCyber, filePath],
+    [isCyber, filePath, registerEditor],
   );
 
   // ── Editor Registry: cleanup on unmount ──

@@ -11,12 +11,10 @@
 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import * as React from "react";
 import { CommandPalette } from "../modules/shared/CommandPalette";
 
-import { useI18n } from "../hooks/useI18n";
-import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 
 const mockNavigate = vi.fn();
 const mockTriggerShortcut = vi.fn();

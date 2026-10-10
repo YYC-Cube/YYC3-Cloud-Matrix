@@ -16,16 +16,6 @@ import {
   Shield,
   FileText,
   Code2,
-  Cpu,
-  Globe,
-  Mic,
-  Volume2,
-  Image,
-  Film,
-  Newspaper,
-  MessageSquare,
-  Lock,
-  Zap,
 } from 'lucide-react'
 import { PanelHeader } from './PanelManager'
 import type { PanelId } from './types/index'

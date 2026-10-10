@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import React from "react";
 
 // ─── Mock localStorage (Node 环境) ───────────────────
 const store: Record<string, string> = {};
@@ -215,7 +214,7 @@ describe("E2E: env-config 配置闭环", () => {
 
   it("导入/导出往返一致性", async () => {
     vi.resetModules();
-    const { setEnvConfig, exportEnvConfig, importEnvConfig, getEnvConfig } = await import("../lib/env-config");
+    const { setEnvConfig, exportEnvConfig } = await import("../lib/env-config");
 
     setEnvConfig({ CLUSTER_ID: "E2E-TEST-CLUSTER" });
     const exported = exportEnvConfig();

@@ -542,7 +542,7 @@ export class PluginAPIFactory {
    */
   private createAIAPI(pluginId: string): PluginAIAPI {
     return {
-      chat: async (prompt: string, options?: unknown) => {
+      chat: async (prompt: string, _options?: unknown) => {
         const provider = this.aiProviderManager.getDefault();
         if (!provider) {
           return `[PluginAI] No AI provider available. Prompt: "${prompt.slice(0, 50)}..."`;
@@ -551,11 +551,11 @@ export class PluginAPIFactory {
         return `[PluginAI] Provider: ${provider}, Prompt: "${prompt.slice(0, 50)}..."`;
       },
 
-      complete: async (prompt: string, options?: unknown) => {
+      complete: async (prompt: string, _options?: unknown) => {
         return `[PluginAI] Completion for: "${prompt.slice(0, 50)}..."`;
       },
 
-      embed: async (text: string) => {
+      embed: async (_text: string) => {
         // 模拟嵌入向量
         return Array(768).fill(0).map(() => Math.random());
       },
@@ -626,7 +626,7 @@ export class PluginAPIFactory {
   /**
    * 创建事件 API
    */
-  private createEventAPI(pluginId: string): PluginEventAPI {
+  private createEventAPI(_pluginId: string): PluginEventAPI {
     return {
       on: (event: string, handler: EventHandler) => {
         return this.eventBus.on(event, handler);
@@ -731,7 +731,7 @@ export class PluginAPIFactory {
   /**
    * 创建网络 API
    */
-  private createNetworkAPI(pluginId: string): PluginNetworkAPI {
+  private createNetworkAPI(_pluginId: string): PluginNetworkAPI {
     return {
       fetch: async (url: string, options?: RequestInit) => {
         return fetch(url, options);
@@ -777,13 +777,13 @@ export class PluginAPIFactory {
   /**
    * 创建工作区 API
    */
-  private createWorkspaceAPI(pluginId: string): PluginWorkspaceAPI {
+  private createWorkspaceAPI(_pluginId: string): PluginWorkspaceAPI {
     return {
       getWorkspaceFolders: () => {
         return [];
       },
 
-      getConfiguration: (section?: string) => {
+      getConfiguration: (_section?: string) => {
         return {};
       },
 

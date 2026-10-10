@@ -415,7 +415,7 @@ export class BoundaryExceptionHandler {
   /**
    * 确定严重级别
    */
-  private determineSeverity(type: ExceptionType, error?: Error): ExceptionSeverity {
+  private determineSeverity(type: ExceptionType, _error?: Error): ExceptionSeverity {
     switch (type) {
       case "memory":
         return "critical";

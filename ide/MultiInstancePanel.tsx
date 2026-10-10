@@ -22,27 +22,20 @@ import {
   Trash2,
   Copy,
   Download,
-  Upload,
   Play,
   Pause,
-  RotateCcw,
   Eye,
-  EyeOff,
   Minimize2,
   Maximize2,
   X,
   Search,
-  Filter,
   Monitor,
   Code,
   Terminal as TerminalIcon,
   Bot,
   Settings,
-  Layers,
   Bug,
   Palette,
-  ChevronDown,
-  ExternalLink,
 } from "lucide-react";
 import { useWindowStore } from "./stores/useWindowStore";
 import { useWorkspaceStore } from "./stores/useWorkspaceStore";
@@ -52,9 +45,6 @@ import type {
   WindowType,
   WorkspaceType,
   SessionType,
-  AppInstance,
-  Workspace,
-  Session,
 } from "./types/multi-instance";
 
 // ── Tab definitions ──

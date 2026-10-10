@@ -9,11 +9,11 @@
  * @tags: [module]
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DataFlowPipeline } from "../../lib/data-flow-pipeline";
+import { DependencyScanner } from "../../lib/dependency-scanner";
 import { PerformanceMonitor } from "../../lib/performance-monitor";
 import { SecurityAuditor } from "../../lib/security-audit";
-import { DependencyScanner } from "../../lib/dependency-scanner";
-import { DataFlowPipeline } from "../../lib/data-flow-pipeline";
 import { StateSyncManager } from "../../lib/state-sync-manager";
 
 interface TestItem {
@@ -108,12 +108,9 @@ describe("Module Integration Tests", () => {
         cacheEnabled: true,
       });
 
-      let callCount = 0;
-
       pipeline.addStage({
         name: "expensive",
         process: async (input: number) => {
-          callCount++;
           return input * input;
         },
       });
@@ -326,7 +323,7 @@ describe("Module Integration Tests", () => {
 
       try {
         await pipeline.process(42);
-      } catch (error) {
+      } catch {
         stateSync.set({
           id: "error-log",
           value: 0,

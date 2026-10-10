@@ -16,7 +16,6 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
 } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";

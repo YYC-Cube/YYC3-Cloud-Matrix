@@ -44,23 +44,6 @@ export interface ThemeState {
   setShowThemeCustomizer: (show: boolean) => void;
 }
 
-const themePresets: Record<ThemeId, ThemeColors> = {
-  navy: {
-    background: "#ffffff",
-    foreground: "#0a0a0a",
-    primary: "#2563eb",
-    accent: "#7c3aed",
-    muted: "#a1a1aa",
-  },
-  cyberpunk: {
-    background: "#0a0a0a",
-    foreground: "#fafafa",
-    primary: "#3b82f6",
-    accent: "#8b5cf6",
-    muted: "#71717a",
-  },
-};
-
 function applyThemeClasses(theme: ThemeId) {
   document.documentElement.classList.remove("navy", "cyberpunk");
   document.documentElement.classList.add(theme);

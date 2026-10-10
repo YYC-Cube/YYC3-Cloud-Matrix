@@ -39,7 +39,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import React from "react";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { useI18nProvider, SUPPORTED_LOCALES } from "../hooks/useI18n";
 

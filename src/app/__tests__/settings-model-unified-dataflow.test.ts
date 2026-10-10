@@ -22,7 +22,6 @@ const localStorageMock = (() => {
 Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
 
 import { describe, it, expect, beforeEach } from "vitest";
-import React from "react";
 import { createLocalStore } from "../lib/create-local-store";
 import type { SettingsValues } from "../hooks/useSettingsStore";
 

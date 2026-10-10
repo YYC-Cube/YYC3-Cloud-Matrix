@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: left-panel/ConnectivityIndicator.tsx
  * @description: 模型连通性指示器子组件 — 实时 Ping 测试、延迟显示、
@@ -13,13 +12,13 @@
  * @tags: left-panel,connectivity,ping,status
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
 import {
+  AlertCircle,
   RefreshCw,
   Wifi,
   WifiOff,
-  AlertCircle,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { testModelConnectivity, type ProviderConfig } from "../LLMService";
 
 // ── Types ──
@@ -50,7 +49,7 @@ export interface ConnectivityIndicatorProps {
 export default function ConnectivityIndicator({
   activeModel,
   activeModelId,
-  activeFile,
+  activeFile: _activeFile,
   globalConn,
   getActiveProvider,
   setConnectivityResult,
@@ -58,9 +57,10 @@ export default function ConnectivityIndicator({
   const [connStatus, setConnStatus] = useState<
     "idle" | "testing" | "success" | "fail"
   >("idle");
-  const [connLatency, setConnLatency] = useState<number | null>(null);
-  const [connError, setConnError] = useState<string | null>(null);
-  const [showConnDetail, setShowConnDetail] = useState(false);
+  // 状态值经 globalConn 同步渲染，本地值仅作为 setter 载荷，无需读取
+  const [, setConnLatency] = useState<number | null>(null);
+  const [, setConnError] = useState<string | null>(null);
+  const [, setShowConnDetail] = useState(false);
   const connMountedRef = useRef(true);
 
   useEffect(() => {
@@ -153,11 +153,10 @@ export default function ConnectivityIndicator({
         <button
           onClick={handleConnTest}
           disabled={connStatus === "testing"}
-          className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
-            connStatus === "testing"
+          className={`w-7 h-7 rounded flex items-center justify-center transition-all ${connStatus === "testing"
               ? "cursor-wait"
               : "hover:bg-white/[0.08]"
-          }`}
+            }`}
           title={connStatus === "testing"
             ? "测试中..."
             : connStatus === "success"

@@ -146,7 +146,7 @@ export default function PanelMinimap() {
   const visiblePanels = useMemo(() => {
     if (!ctx) return [];
     return collectPanels(ctx.layout);
-  }, [ctx?.layout]);
+  }, [ctx]);
 
   if (!ctx) return null;
 

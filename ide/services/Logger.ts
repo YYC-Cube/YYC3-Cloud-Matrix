@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 /**
  * @file Logger.ts
  * @description YYC³ 统一日志服务 - 替代原生console，支持环境感知和结构化日志
@@ -9,14 +9,6 @@
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-
-interface LogEntry {
-  level: LogLevel
-  message: string
-  data?: unknown
-  timestamp: string
-  source?: string
-}
 
 class Logger {
   private isDevelopment = import.meta.env?.DEV ?? process.env.NODE_ENV === 'development'

@@ -3,7 +3,7 @@
  * @description BackupService 全面测试 - 备份创建、恢复、配置管理
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { BackupService } from '../BackupService'
 
 // 类型别名简化使用

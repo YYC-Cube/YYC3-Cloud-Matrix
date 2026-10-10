@@ -72,6 +72,12 @@ export function useWorkspaceFileSync(fileStoreApi: {
 }) {
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const prevWorkspaceRef = useRef<string | null>(null);
+  // 以 ref 镜像 fileStoreApi，避免调用方每次渲染新建对象导致 effect 重跑
+  const fileStoreApiRef = useRef(fileStoreApi);
+
+  useEffect(() => {
+    fileStoreApiRef.current = fileStoreApi;
+  });
 
   // When workspace changes: save old state, restore new state
   useEffect(() => {
@@ -83,8 +89,8 @@ export function useWorkspaceFileSync(fileStoreApi: {
       prevWorkspaceRef.current !== activeWorkspaceId
     ) {
       saveWorkspaceFileState(prevWorkspaceRef.current, {
-        activeFile: fileStoreApi.activeFile,
-        openTabPaths: fileStoreApi.openTabs.map((t) => t.path),
+        activeFile: fileStoreApiRef.current.activeFile,
+        openTabPaths: fileStoreApiRef.current.openTabs.map((t) => t.path),
       });
     }
 
@@ -92,14 +98,14 @@ export function useWorkspaceFileSync(fileStoreApi: {
     const savedState = loadWorkspaceFileState(activeWorkspaceId);
     if (savedState) {
       // Restore open tabs
-      if (fileStoreApi.openFile) {
+      if (fileStoreApiRef.current.openFile) {
         for (const path of savedState.openTabPaths) {
-          fileStoreApi.openFile(path);
+          fileStoreApiRef.current.openFile(path);
         }
       }
       // Restore active file
       if (savedState.activeFile) {
-        fileStoreApi.setActiveFile(savedState.activeFile);
+        fileStoreApiRef.current.setActiveFile(savedState.activeFile);
       }
     }
 

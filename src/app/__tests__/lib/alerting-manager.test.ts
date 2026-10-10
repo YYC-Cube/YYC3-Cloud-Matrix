@@ -14,8 +14,6 @@ import {
   AlertingManager,
   createAlertingManager,
   type AlertRule,
-  type AlertSeverity,
-  type AlertCategory,
 } from "../../lib/alerting-manager";
 
 describe("AlertingManager", () => {

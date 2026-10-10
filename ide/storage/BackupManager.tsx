@@ -24,7 +24,6 @@ import {
   CheckCircle,
   Info,
   Archive,
-  Calendar,
   HardDrive,
 } from 'lucide-react'
 import backupService, {
@@ -89,7 +88,8 @@ export function BackupManager() {
     } finally {
       setIsLoading(false)
     }
-  }, [backupService])
+    // backupService 为模块级单例导入，不属于组件响应式依赖
+  }, [])
 
   useEffect(() => {
     loadData()

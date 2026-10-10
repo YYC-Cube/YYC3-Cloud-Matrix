@@ -190,7 +190,7 @@ describe('Storage Management Integration Tests', () => {
         success: true,
       })
 
-      const backupId = await backupService.createBackup('manual')
+      await backupService.createBackup('manual')
       monitor.recordMetric({
         operation: 'write',
         storage: 'localStorage',

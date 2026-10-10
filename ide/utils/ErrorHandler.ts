@@ -358,7 +358,7 @@ export class ErrorHandler {
   /**
    * 获取用户友好的错误消息
    */
-  private getUserMessage(type: ErrorType, error: Error | string): string {
+  private getUserMessage(type: ErrorType, _error: Error | string): string {
     const messages: Record<ErrorType, string> = {
       [ErrorType.PREVIEW_UPDATE_FAILED]: "预览更新失败，请刷新页面重试",
       [ErrorType.PREVIEW_MODE_INVALID]: "预览模式无效，已恢复默认模式",
@@ -443,7 +443,7 @@ export class ErrorHandler {
   /**
    * 通知用户
    */
-  private notifyUser(errorInfo: ErrorInfo): void {
+  private notifyUser(_errorInfo: ErrorInfo): void {
     // 这里可以集成到 UI 通知系统
     // 目前使用 console.warn
     logger.warn('${errorInfo.userMessage}');

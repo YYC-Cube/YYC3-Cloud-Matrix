@@ -16,7 +16,7 @@ import type { AppUser, AppSession } from '../types';
 // 环境配置
 // ============================================================
 
-// @ts-ignore - Vite env
+// @ts-expect-error - Vite env
 const env = import.meta.env;
 const SUPABASE_URL = env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
@@ -200,7 +200,7 @@ export const supabase = USE_MOCK ? new MockSupabaseClient() : getSupabaseClient(
  * 幽灵登录（仅限开发环境）
  */
 export function ghostSignIn(): AppSession | null {
-  // @ts-ignore - Vite env
+  // @ts-expect-error - Vite env
   if (import.meta.env.PROD) {
     console.error('[Auth] Ghost mode is disabled in production builds');
     return null;
@@ -219,7 +219,7 @@ export function ghostSignIn(): AppSession | null {
  * 检查是否为幽灵模式
  */
 export function isGhostMode(): boolean {
-  // @ts-ignore - Vite env
+  // @ts-expect-error - Vite env
   if (import.meta.env.PROD) { return false; }
   return localStorage.getItem(GHOST_KEY) === "1";
 }

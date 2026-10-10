@@ -17,7 +17,6 @@ import {
 } from "../../lib/mcp/mcp-server";
 import type {
   MCPAgentConfig,
-  MCPTool,
   MCPToolResult,
   MCPToolExecutor,
 } from "../../lib/mcp/mcp-types";

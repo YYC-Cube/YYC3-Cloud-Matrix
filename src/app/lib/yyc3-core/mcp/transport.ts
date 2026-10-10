@@ -37,7 +37,7 @@ export class StdioTransport implements MCPTransport {
   private config: StdioTransportConfig
   private _connected = false
   private messageHandler?: (message: MCPMessage) => void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private process?: any
 
   constructor(config: StdioTransportConfig) {

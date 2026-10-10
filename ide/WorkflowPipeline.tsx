@@ -39,7 +39,6 @@ import {
   LayoutTemplate,
   Database,
   FileCode2,
-  AlignLeft,
   ShieldCheck,
   HardDrive,
   Play,
@@ -63,7 +62,6 @@ import {
   // Stage icons - Collab
   UserRound,
   Shuffle,
-  Share2,
   Wifi,
   ShieldAlert,
   UsersRound,

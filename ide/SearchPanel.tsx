@@ -134,7 +134,7 @@ export default function SearchPanel({ nodeId }: { nodeId: string }) {
     } finally {
       setIsSearching(false)
     }
-  }, [query, selectedFreshness, deepResearchMode])
+  }, [query, selectedFreshness, deepResearchMode, t])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

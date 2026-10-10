@@ -12,41 +12,38 @@
  * @tags: dashboard,quality,metrics,charts,analysis
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
-  BarChart3,
-  RefreshCw,
-  Bug,
-  Gauge,
-  ShieldAlert,
-  FlaskConical,
-  ChevronRight,
-  ChevronDown,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  ArrowRight,
-  Trash2,
-  Clock,
   Activity,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Bug,
+  ChevronRight,
+  Clock,
+  FlaskConical,
+  Gauge,
+  Minus,
+  RefreshCw,
+  ShieldAlert,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
   Area,
   AreaChart,
-  RadarChart,
-  PolarGrid,
+  Line,
+  LineChart,
   PolarAngleAxis,
+  PolarGrid,
   Radar,
+  RadarChart,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
 } from "recharts";
-import { PanelHeader, usePanelManager } from "./PanelManager";
-import { useFileStore } from "./FileStore";
 import { analyzeProject, type ProjectAnalysisResult } from "./ai/ErrorAnalyzer";
 import {
   analyzeProjectPerformance,
@@ -58,6 +55,8 @@ import {
   type ProjectTestPlan,
 } from "./ai/TestGenerator";
 import { loadJSON, saveJSON } from "./constants/storage-keys";
+import { useFileStore } from "./FileStore";
+import { PanelHeader, usePanelManager } from "./PanelManager";
 import { RecentErrorsEntry } from "./RecentErrorsEntry";
 
 // ── Types ──
@@ -232,10 +231,13 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
     });
   }, [fileContents, snapshot]);
 
+  // 首次挂载防抖触发一次完整分析；通过 ref 读取最新回调，保持 mount-only 语义
+  const runAnalysisRef = useRef(runFullAnalysis);
+  runAnalysisRef.current = runFullAnalysis;
   useEffect(() => {
-    timer.current = setTimeout(runFullAnalysis, 600);
+    timer.current = setTimeout(() => runAnalysisRef.current(), 600);
     return () => clearTimeout(timer.current);
-  }, []);  
+  }, []);
 
   // Navigate to sub-panel
   const openPanel = useCallback(
@@ -306,15 +308,15 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
         score: calcDiagScore(d),
         stats: d
           ? [
-              { label: "错误", value: d.totalErrors, color: "text-red-400" },
-              {
-                label: "警告",
-                value: d.totalWarnings,
-                color: "text-amber-400",
-              },
-              { label: "信息", value: d.totalInfos, color: "text-blue-400" },
-              { label: "文件", value: d.files.length, color: "text-slate-400" },
-            ]
+            { label: "错误", value: d.totalErrors, color: "text-red-400" },
+            {
+              label: "警告",
+              value: d.totalWarnings,
+              color: "text-amber-400",
+            },
+            { label: "信息", value: d.totalInfos, color: "text-blue-400" },
+            { label: "文件", value: d.files.length, color: "text-slate-400" },
+          ]
           : [],
         panelId: "diagnostics",
       },
@@ -328,18 +330,18 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
         score: calcPerfScore(p),
         stats: p
           ? [
-              {
-                label: "高影响",
-                value: p.topIssues.length,
-                color: "text-red-400",
-              },
-              {
-                label: "建议",
-                value: p.files.reduce((s2, f) => s2 + f.suggestions.length, 0),
-                color: "text-amber-400",
-              },
-              { label: "文件", value: p.files.length, color: "text-slate-400" },
-            ]
+            {
+              label: "高影响",
+              value: p.topIssues.length,
+              color: "text-red-400",
+            },
+            {
+              label: "建议",
+              value: p.files.reduce((s2, f) => s2 + f.suggestions.length, 0),
+              color: "text-amber-400",
+            },
+            { label: "文件", value: p.files.length, color: "text-slate-400" },
+          ]
           : [],
         panelId: "performance",
       },
@@ -353,11 +355,11 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
         score: calcSecScore(s),
         stats: s
           ? [
-              { label: "严重", value: s.criticalCount, color: "text-red-500" },
-              { label: "高危", value: s.highCount, color: "text-orange-400" },
-              { label: "中危", value: s.mediumCount, color: "text-amber-400" },
-              { label: "文件", value: s.files.length, color: "text-slate-400" },
-            ]
+            { label: "严重", value: s.criticalCount, color: "text-red-500" },
+            { label: "高危", value: s.highCount, color: "text-orange-400" },
+            { label: "中危", value: s.mediumCount, color: "text-amber-400" },
+            { label: "文件", value: s.files.length, color: "text-slate-400" },
+          ]
           : [],
         panelId: "security",
       },
@@ -371,9 +373,9 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
         score: calcTestScore(t),
         stats: t
           ? [
-              { label: "用例", value: t.totalTests, color: "text-emerald-400" },
-              { label: "套件", value: t.suites.length, color: "text-sky-400" },
-            ]
+            { label: "用例", value: t.totalTests, color: "text-emerald-400" },
+            { label: "套件", value: t.suites.length, color: "text-sky-400" },
+          ]
           : [],
         panelId: "test-gen",
       },
@@ -420,10 +422,10 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { id: "overview", label: "概览", icon: BarChart3 },
-    { id: "trend", label: "趋势", icon: Activity },
-    { id: "radar", label: "雷达", icon: Gauge },
-  ];
+      { id: "overview", label: "概览", icon: BarChart3 },
+      { id: "trend", label: "趋势", icon: Activity },
+      { id: "radar", label: "雷达", icon: Gauge },
+    ];
 
   return (
     <div className="size-full flex flex-col bg-[var(--ide-bg)]">
@@ -457,11 +459,10 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-[0.62rem] transition-colors border-b-2 ${
-                  active
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-[0.62rem] transition-colors border-b-2 ${active
                     ? "border-[var(--ide-accent)] text-[var(--ide-accent)]"
                     : "border-transparent text-[var(--ide-text-dim)] hover:text-[var(--ide-text-secondary)]"
-                }`}
+                  }`}
               >
                 <TabIcon className="w-3 h-3" />
                 {tab.label}
@@ -535,13 +536,12 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
                     {/* Mini bar */}
                     <div className="w-full h-1.5 bg-[var(--ide-bg-deep)] rounded-full mt-2 overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          snapshot.overallScore >= 80
+                        className={`h-full rounded-full transition-all duration-500 ${snapshot.overallScore >= 80
                             ? "bg-emerald-500"
                             : snapshot.overallScore >= 60
                               ? "bg-amber-500"
                               : "bg-red-500"
-                        }`}
+                          }`}
                         style={{ width: `${snapshot.overallScore}%` }}
                       />
                     </div>
@@ -667,15 +667,14 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
                           className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.02] transition-colors text-left group"
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                              issue.severity === "critical"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${issue.severity === "critical"
                                 ? "bg-red-500"
                                 : issue.severity === "error"
                                   ? "bg-red-400"
                                   : issue.severity === "high"
                                     ? "bg-orange-400"
                                     : "bg-amber-400"
-                            }`}
+                              }`}
                           />
                           <span className="text-[0.6rem] text-[var(--ide-text-secondary)] truncate flex-1">
                             {issue.text}
@@ -917,7 +916,7 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
                         {history
                           .slice(-10)
                           .reverse()
-                          .map((h, i) => {
+                          .map((h) => {
                             const g = getGrade(h.overall);
                             return (
                               <div
@@ -1011,13 +1010,12 @@ export default function CodeQualityDashboard({ nodeId }: { nodeId: string }) {
                         </span>
                         <div className="flex-1 h-2 bg-[var(--ide-bg-deep)] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              r.score >= 80
+                            className={`h-full rounded-full transition-all duration-500 ${r.score >= 80
                                 ? "bg-emerald-500"
                                 : r.score >= 60
                                   ? "bg-amber-500"
                                   : "bg-red-500"
-                            }`}
+                              }`}
                             style={{ width: `${r.score}%` }}
                           />
                         </div>

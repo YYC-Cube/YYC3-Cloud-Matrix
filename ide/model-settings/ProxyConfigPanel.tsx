@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，待上游修复
+ 
 /**
  * @file ProxyConfigPanel.tsx
  * @description 代理服务配置面板 — 支持健康检查、架构模板、高级设置

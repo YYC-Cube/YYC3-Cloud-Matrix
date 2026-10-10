@@ -763,7 +763,7 @@ describe("跨组件数据流集成", () => {
   it("userStore 修改后 UserManagement 应反映变更", () => {
     localStorage.clear();
     // The component uses useUserMgmtSlice, default users = 5
-    const { rerender } = render(<UserManagement />);
+    render(<UserManagement />);
     expect(screen.getAllByText("5")[0]).toBeInTheDocument(); // total users = 5
 
     // 通过 UI 添加用户

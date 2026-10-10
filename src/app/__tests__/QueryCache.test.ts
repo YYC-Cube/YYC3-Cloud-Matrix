@@ -9,7 +9,7 @@
  * @tags: [module]
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { QueryCache } from "../../database/QueryCache";
 import type { QueryResult } from "../../database/types";
 

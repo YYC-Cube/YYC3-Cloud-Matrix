@@ -9,15 +9,15 @@
  * @tags: [module]
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  hexToRgb,
-  rgbToHex,
-  hexToOklch,
-  oklchToHex,
   formatOklch,
-  parseOklchString,
+  hexToOklch,
+  hexToRgb,
   hsvToRgb,
+  oklchToHex,
+  parseOklchString,
+  rgbToHex,
   rgbToHsv,
   type OklchColor,
 } from "../modules/dev/theme/color-utils";
@@ -212,13 +212,13 @@ describe("color-utils", () => {
     });
 
     it("should convert rgb to hsv correctly for white", () => {
-      const [h, s, v] = rgbToHsv(255, 255, 255);
+      const [, s, v] = rgbToHsv(255, 255, 255);
       expect(s).toBe(0);
       expect(v).toBe(1);
     });
 
     it("should convert rgb to hsv correctly for black", () => {
-      const [h, s, v] = rgbToHsv(0, 0, 0);
+      const [, s, v] = rgbToHsv(0, 0, 0);
       expect(s).toBe(0);
       expect(v).toBe(0);
     });

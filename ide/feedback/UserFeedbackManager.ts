@@ -23,7 +23,6 @@
 
 import type {
   Survey,
-  SurveyQuestion,
   SurveyResponse,
   UserFeedback,
   FeedbackAnalysisReport,

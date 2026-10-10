@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import React from "react";
 
 // ============================================================
 // Mock import.meta.env - 必须在 import supabaseClient 之前

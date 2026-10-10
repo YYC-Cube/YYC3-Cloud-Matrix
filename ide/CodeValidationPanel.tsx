@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO(P0-1): React 19 + lucide-react 类型兼容性问题，需升级 lucide-react 或调整 tsconfig JSX 配置后移除
 /**
  * @file: CodeValidationPanel.tsx
  * @description: 代码验证结果面板组件，显示多个文件的验证结果、统计信息和筛选功能
@@ -16,12 +15,10 @@ import React, { useState, useMemo } from "react";
 import {
   AlertCircle,
   AlertTriangle,
-  _Info,
   CheckCircle,
   ChevronDown,
   ChevronUp,
   Filter,
-  _X,
   FileCode,
   BarChart,
 } from "lucide-react";
@@ -129,7 +126,7 @@ export function CodeValidationPanel({
       const hasWarnings = result.warnings.length > 0;
       const hasSuggestions = result.suggestions.length > 0;
 
-      let shouldShow = true;
+      let shouldShow: boolean;
       switch (filter) {
         case "errors":
           shouldShow = hasErrors;

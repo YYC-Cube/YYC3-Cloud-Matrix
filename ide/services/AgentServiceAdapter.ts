@@ -12,13 +12,13 @@
  * @tags: agent,adapter,service,integration
  */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import {
   AgentOrchestrator,
   type OrchestratorConfig,
   type OrchestratorState,
 } from 'agent:orchestrator';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import type {
   AgentRole,
   AgentTask,
@@ -26,13 +26,13 @@ import type {
   AgentContext,
   TaskDefinition,
 } from 'agent:types';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { PlannerAgent } from 'agent:planner';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { CoderAgent } from 'agent:coder';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { TesterAgent } from 'agent:tester';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { ReviewerAgent } from 'agent:reviewer';
 
 export interface LLMServiceConfig {
@@ -109,7 +109,7 @@ export class AgentServiceAdapter implements IAgentServiceAdapter {
 
   async executePipeline(
     userRequest: string,
-    options?: AgentExecutionOptions
+    _options?: AgentExecutionOptions
   ): Promise<PipelineExecutionResult> {
     this.ensureInitialized();
 
@@ -215,7 +215,7 @@ export class AgentServiceAdapter implements IAgentServiceAdapter {
           if (result.status === 'failed') {
             break;
           }
-        } catch (error) {
+        } catch {
           break;
         }
       }
@@ -239,7 +239,7 @@ export class AgentServiceAdapter implements IAgentServiceAdapter {
   async executeAgent(
     role: AgentRole,
     task: string,
-    options?: AgentExecutionOptions
+    _options?: AgentExecutionOptions
   ): Promise<AgentResult> {
     this.ensureInitialized();
 

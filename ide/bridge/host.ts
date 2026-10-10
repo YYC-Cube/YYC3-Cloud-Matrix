@@ -23,13 +23,12 @@ try {
   fsApi = require("@tauri-apps/api/fs");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   dialogApi = require("@tauri-apps/api/dialog");
-} catch (e) {
+} catch {
   logger.warn("[HostBridge] Tauri API not available, using IndexedDB fallback");
 }
 
 // IndexedDB Adapter
 import {
-  saveFile as _saveFileToIndexedDB,
   readFile as readFileFromIndexedDB,
   deleteFile as deleteFileFromIndexedDB,
 } from "../adapters/IndexedDBAdapter";
@@ -348,7 +347,7 @@ export const HostBridge = {
         isFile: true,
         isDir: false,
       };
-    } catch (error) {
+    } catch {
       // 如果读取失败，可能是目录
       const _entries = await this.readDir(path);
       return {

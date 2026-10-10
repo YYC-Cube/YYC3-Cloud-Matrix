@@ -11,17 +11,16 @@
  * @tags: batch,operations,edit,delete,export
  */
 
-import React, { useState, useMemo } from 'react'
 import {
-  CheckSquare,
-  Square,
-  Trash2,
-  Download,
-  Edit3,
-  X,
   AlertTriangle,
   CheckCircle,
-} from 'lucide-react'
+  CheckSquare,
+  Download,
+  Edit3,
+  Square,
+  Trash2,
+} from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import { logger } from "../services/Logger";
 
 interface StorageItem {
@@ -42,7 +41,7 @@ export function BatchOperations() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
 
-  const loadItems = () => {
+  const loadItems = useCallback(() => {
     if (storageType === 'localStorage') {
       const loadedItems: StorageItem[] = []
       for (let i = 0; i < localStorage.length; i++) {
@@ -57,11 +56,11 @@ export function BatchOperations() {
       setItems(loadedItems)
     }
     setSelectedKeys(new Set())
-  }
+  }, [storageType])
 
   React.useEffect(() => {
     loadItems()
-  }, [storageType])
+  }, [loadItems])
 
   const toggleSelection = (key: string) => {
     const newSelected = new Set(selectedKeys)
@@ -193,11 +192,10 @@ export function BatchOperations() {
 
       {result && (
         <div
-          className={`p-4 rounded-lg flex items-center gap-2 ${
-            result.success
+          className={`p-4 rounded-lg flex items-center gap-2 ${result.success
               ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
               : 'bg-red-500/10 border border-red-500/30 text-red-400'
-          }`}
+            }`}
         >
           {result.success ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           <span className="text-sm">{result.message}</span>
@@ -262,9 +260,8 @@ export function BatchOperations() {
               {items.map((item) => (
                 <div
                   key={item.key}
-                  className={`flex items-center gap-3 p-3 hover:bg-white/[0.02] transition-colors cursor-pointer ${
-                    selectedKeys.has(item.key) ? 'bg-blue-500/5' : ''
-                  }`}
+                  className={`flex items-center gap-3 p-3 hover:bg-white/[0.02] transition-colors cursor-pointer ${selectedKeys.has(item.key) ? 'bg-blue-500/5' : ''
+                    }`}
                   onClick={() => toggleSelection(item.key)}
                 >
                   {selectedKeys.has(item.key) ? (
@@ -322,11 +319,10 @@ export function BatchOperations() {
               </button>
               <button
                 onClick={confirmOperation}
-                className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-                  operation === 'delete'
+                className={`px-4 py-2 rounded-lg transition-colors text-sm ${operation === 'delete'
                     ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                     : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                }`}
+                  }`}
               >
                 确认{operation === 'delete' ? '删除' : '编辑'}
               </button>

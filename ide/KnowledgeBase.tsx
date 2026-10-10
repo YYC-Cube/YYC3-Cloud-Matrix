@@ -138,7 +138,7 @@ const COLLECTIONS: KBCollection[] = [
 ];
 
 export default function KnowledgeBase({ nodeId }: { nodeId: string }) {
-  const [collections, setCollections] = useState(COLLECTIONS);
+  const [collections] = useState(COLLECTIONS);
   const [expandedKB, setExpandedKB] = useState<Set<string>>(new Set(["kb1"]));
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<

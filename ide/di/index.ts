@@ -36,6 +36,9 @@ import type {
  * 服务令牌 — 用于标识注册的服务
  */
 export class ServiceToken<T = unknown> {
+  /** 幻型参数：编译期标记令牌绑定的服务类型，运行时不产生代码 */
+  declare readonly __type?: T;
+
   constructor(
     public readonly identifier: string,
     public readonly description?: string
@@ -248,7 +251,7 @@ export class DIContainer implements IServiceLocator, IDisposable {
     });
     this.children.clear();
 
-    Array.from(this.singletons.entries()).forEach(([key, instance]) => {
+    Array.from(this.singletons.entries()).forEach(([_key, instance]) => {
       if (typeof (instance as IDisposable).dispose === 'function') {
         try {
           (instance as IDisposable).dispose();
@@ -258,7 +261,7 @@ export class DIContainer implements IServiceLocator, IDisposable {
       }
     });
 
-    Array.from(this.scopedInstances.entries()).forEach(([key, instance]) => {
+    Array.from(this.scopedInstances.entries()).forEach(([_key, instance]) => {
       if (typeof (instance as IDisposable).dispose === 'function') {
         try {
           (instance as IDisposable).dispose();
