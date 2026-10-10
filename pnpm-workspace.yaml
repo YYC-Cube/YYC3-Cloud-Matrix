@@ -5,6 +5,10 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
 overrides:
+  # @electron/rebuild@3.7.2 上游以 git+ssh 形式声明 @electron/node-gyp，
+  # pnpm 11 再生成锁文件时改走 SSH clone，CI（无 SSH 密钥）安装失败。
+  # 钉回同 commit 的 codeload tarball（匿名 HTTPS 可达），与历史锁文件等价。
+  "@electron/node-gyp": "https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2"
   lodash: ^4.18.0
   lodash-es: ^4.18.0
   "@tootallnate/once@<3.0.1": ">=3.0.1"
