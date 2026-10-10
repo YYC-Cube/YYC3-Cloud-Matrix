@@ -27,6 +27,27 @@ language: zh-CN
 
 ---
 
+## [3.5.0] - 2026-10-10
+
+### Added
+
+- 🚀 GitHub Pages 门禁式部署链路: CI 全绿后经 `workflow_run` 触发 `pages-deploy.yml`，复用 CI 构建工件发布至 https://matrix.yyc3.vip
+- CI 构建任务 Pages 就绪化: `vite build --base=/` + `404.html` SPA 深链回退 + `.nojekyll` + 部署完整性校验门禁（index/404/CNAME/manifest/资产 五要素缺一即失败）
+- `pnpm build:pages` 脚本: 自定义域名根路径构建（资产绝对路径，深链回退不破链）
+- 部署 concurrency 串行化: `group: pages` 排队不取消，避免半途丢站点
+
+### Changed
+
+- CI 工件 `build-output` → `pages-dist`（语义化命名，供部署工作流精准拉取）
+- README 新增「部署 | Deployment」章节: 部署架构图、关键机制表、本地验证指引
+- CI 头部注释补充部署链路全景说明
+
+### Security
+
+- （延续）依赖漏洞治理残留 3 项（extract-zip ×2 / sprintf-js ×1）等待上游发版，Dependabot 周更自动收敛
+
+---
+
 ## [3.4.2] - 2026-04-26
 
 ### Added

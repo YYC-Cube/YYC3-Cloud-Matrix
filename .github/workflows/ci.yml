@@ -10,7 +10,9 @@
 # 阶段:
 #   1. quality  → Lint + TypeScript 类型检查 + 依赖审计（audit 严重漏洞门禁）
 #   2. test     → Vitest 单元测试 + 覆盖率报告
-#   3. build    → Vite 生产构建
+#   3. build    → Vite 生产构建（Pages 就绪包，供 pages-deploy.yml 复用发布）
+#
+# 部署链路: CI 全绿 → pages-deploy.yml（workflow_run 门禁触发）→ matrix.yyc3.vip
 #
 # 覆盖率门槛: 棘轮基线 45/44/31/44 (lines/functions/branches/statements)，
 #   随测试补齐逐步上调至 80/70/80/80（见 vitest.config.ts）
@@ -137,10 +139,15 @@ jobs:
           json-final-path: coverage/coverage-final.json
 
   # ============================================================
-  # 2. 构建验证
+  # 2. 构建验证（GitHub Pages 就绪产物）
+  #    - --base=/ ：自定义域名根路径部署 + 深链 404 回退可用
+  #    - 404.html ：SPA 回退入口（GH Pages 对未知路径返回 404.html，
+  #      路由器接管后渲染对应深链路由）
+  #    - .nojekyll：跳过 Jekyll 处理，加速发布并支持下划线资源
+  #    - 产物 pages-dist 由 pages-deploy.yml 在 CI 全绿后复用发布
   # ============================================================
   build:
-    name: Build
+    name: Build (Pages-ready)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [quality, test]
@@ -163,12 +170,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: Build web bundle (base=/)
+        run: pnpm build:pages
 
-      - name: Upload build artifacts
+      - name: Post-process for GitHub Pages
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      # 部署完整性门禁：四要素缺一即失败，阻断坏产物向 Pages 扩散
+      - name: Verify bundle integrity
+        run: |
+          for f in dist/index.html dist/404.html dist/.nojekyll public/CNAME dist/CNAME dist/manifest.json; do
+            test -e "$f" || { echo "❌ 缺失部署关键文件: $f"; exit 1; }
+          done
+          test -n "$(ls dist/assets 2>/dev/null)" || { echo "❌ dist/assets 为空"; exit 1; }
+          grep -q 'src="/assets/' dist/index.html || { echo "❌ index.html 资源路径非绝对（base=/ 未生效）"; exit 1; }
+          echo "✅ 部署包完整性校验通过"
+
+      - name: Upload Pages bundle
         uses: actions/upload-artifact@v7
         with:
-          name: build-output
+          name: pages-dist
           path: dist/
           retention-days: 7

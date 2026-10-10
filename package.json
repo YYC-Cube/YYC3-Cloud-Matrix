@@ -12,6 +12,7 @@
     "build:mac": "tsc -p electron/tsconfig.json && vite build && electron-builder --mac",
     "build:win": "tsc -p electron/tsconfig.json && vite build && electron-builder --win",
     "build:linux": "tsc -p electron/tsconfig.json && vite build && electron-builder --linux",
+    "build:pages": "vite build --base=/",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3218 && electron .\"",
     "electron:build": "tsc -p electron/tsconfig.json && vite build && electron-builder",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",

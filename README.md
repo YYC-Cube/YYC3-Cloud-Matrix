@@ -690,6 +690,9 @@ pnpm test:e2e:ui
 # 标准构建
 pnpm build
 
+# Web / GitHub Pages 构建（base=/，自定义域名根路径部署）
+pnpm build:pages
+
 # Electron 桌面应用构建
 pnpm build:electron      # 当前平台
 pnpm build:mac           # macOS (arm64 + x64)
@@ -713,6 +716,45 @@ dist/assets/index.js            275.69 kB │ gzip: 80.45 kB
 - 初始 JS 减少 82% (1.54MB → 275KB)
 - 完整代码分割 + 路由懒加载
 - Gzip 压缩后总大小: 295 KB
+```
+
+### 🌐 部署 | Deployment
+
+**线上地址**: [https://matrix.yyc3.vip](https://matrix.yyc3.vip)（GitHub Pages + 自定义域名）
+
+**部署架构（CI 门禁式全链路）**:
+
+```
+push main ──► YYC³ CI（三道门禁）
+              ├─ quality : lint + type-check + audit
+              ├─ test    : 5063 单测 + 覆盖率棘轮门禁
+              └─ build   : vite build --base=/ + 404.html 回退 + .nojekyll + 完整性校验
+                       │ (全绿后 pages-dist 工件)
+                       ▼
+              YYC³ Pages Deploy (workflow_run 门禁触发)
+              └─ 复用 CI 工件 → GitHub Actions 部署 → matrix.yyc3.vip
+```
+
+**关键设计**:
+
+| 机制 | 说明 |
+| ---- | ---- |
+| 门禁触发 | `workflow_run` 仅在 CI 全绿后部署，坏代码无法上线 |
+| 单一构建 | 部署复用 CI 构建工件，免二次构建、单一事实源 |
+| SPA 深链回退 | `dist/404.html`（复制自 index.html），深链经路由器接管渲染 |
+| base=/ | 自定义域名根路径部署，资产绝对路径，深链回退不破链 |
+| .nojekyll | 跳过 Jekyll 处理，加速发布、支持下划线资源 |
+| 自定义域名 | `public/CNAME` → `matrix.yyc3.vip`（DNS CNAME 指向 `<org>.github.io`） |
+
+**手动触发**: Actions → YYC³ Pages Deploy → Run workflow（免门禁紧急发布，谨慎使用）
+
+**本地验证部署包**:
+
+```bash
+pnpm build:pages
+cp dist/index.html dist/404.html && touch dist/.nojekyll
+pnpm exec vite preview --port 4180
+# 冒烟: curl http://localhost:4180/ 与深链路径均应 200
 ```
 
 ---

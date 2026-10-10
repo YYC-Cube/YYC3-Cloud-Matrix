@@ -1,0 +1,79 @@
+# ============================================================================
+#  YYC³ Pages Deploy
+#  GitHub Pages 门禁式部署 → https://matrix.yyc3.vip
+# ============================================================================
+#
+# 设计（全链路闭环）:
+#   push main → YYC³ CI（lint/test/build 三道门禁，产出 pages-dist 工件）
+#             → 本 workflow（workflow_run 门禁触发，仅 CI 全绿时执行）
+#             → 复用 CI 构建工件 → 部署 GitHub Pages（免二次构建，单一事实源）
+#
+# 前置条件（仓库 Settings → Pages）:
+#   Source = GitHub Actions；自定义域名 matrix.yyc3.vip（public/CNAME 已入库）
+#
+# 手动触发: workflow_dispatch（支持免门禁紧急发布，请谨慎使用）
+# ============================================================================
+
+name: YYC³ Pages Deploy
+
+on:
+  workflow_run:
+    workflows: ["YYC³ CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间仅一个 Pages 部署；新部署排队而非取消（避免半途丢站点）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Pages
+    # workflow_dispatch 手动触发或上游 CI 成功时执行
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download CI build bundle
+        uses: actions/download-artifact@v7
+        with:
+          name: pages-dist
+          path: dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify bundle integrity
+        run: |
+          for f in dist/index.html dist/404.html dist/.nojekyll dist/CNAME; do
+            test -e "$f" || { echo "❌ 缺失部署关键文件: $f"; exit 1; }
+          done
+          grep -q "matrix.yyc3.vip" dist/CNAME || { echo "❌ CNAME 域名不符"; exit 1; }
+          echo "✅ 部署包校验通过（$(du -sh dist | cut -f1)）"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
