@@ -137,7 +137,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.1.4",
     "concurrently": "^9.2.1",
-    "electron": "^41.10.3",
+    "electron": "^41.10.6",
     "electron-builder": "^26.15.3",
     "esbuild": "^0.28.1",
     "eslint": "^10.2.0",
@@ -157,16 +157,6 @@
     "vitest": "^4.1.11",
     "vitest-axe": "^0.1.0",
     "wait-on": "^7.2.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "lodash": "^4.18.0",
-      "lodash-es": "^4.18.0",
-      "tmp": "^0.2.4",
-      "@tootallnate/once": "^3.0.1",
-      "brace-expansion": "^2.0.2",
-      "tar": "^7.5.11"
-    }
   },
   "build": {
     "appId": "com.yyc3.cloud.intelli-matrix",
