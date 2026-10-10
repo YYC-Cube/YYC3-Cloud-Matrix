@@ -194,3 +194,5 @@ jobs:
           name: pages-dist
           path: dist/
           retention-days: 7
+          # .nojekyll 为隐藏文件，默认会被排除导致部署校验失败
+          include-hidden-files: true
