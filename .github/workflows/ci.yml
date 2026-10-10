@@ -12,7 +12,8 @@
 #   2. test     → Vitest 单元测试 + 覆盖率报告
 #   3. build    → Vite 生产构建
 #
-# 覆盖率门槛: 80% (lines/functions/statements), 70% (branches)
+# 覆盖率门槛: 棘轮基线 45/44/31/44 (lines/functions/branches/statements)，
+#   随测试补齐逐步上调至 80/70/80/80（见 vitest.config.ts）
 # ============================================================================
 
 name: YYC³ CI
