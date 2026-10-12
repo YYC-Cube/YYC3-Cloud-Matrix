@@ -98,7 +98,7 @@
     "immer": "^11.1.4",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.8.0",
-    "motion": "^12.34.5",
+    "motion": "^14.0.0",
     "next-themes": "^0.4.6",
     "open": "^10.0.0",
     "react": "^19.2.5",
