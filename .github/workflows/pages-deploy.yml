@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Download CI build bundle
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: pages-dist
           path: dist
