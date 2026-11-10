@@ -714,7 +714,15 @@ export function Dashboard() {
             </button>
           </div>
           <div className="space-y-2">
-            {recentOps.map((op) => (
+            {recentOps.length === 0 ? (
+              <div
+                className="flex items-center justify-center py-6 text-[rgba(0,212,255,0.35)]"
+                style={{ fontSize: "0.72rem" }}
+                data-testid="recent-ops-empty"
+              >
+                {t("monitor.noRecentOps")}
+              </div>
+            ) : recentOps.map((op) => (
               <div key={op.id} className="flex items-center gap-2 md:gap-3 p-2 md:p-2.5 rounded-lg bg-[rgba(0,40,80,0.2)] border border-[rgba(0,180,255,0.06)] hover:border-[rgba(0,180,255,0.15)] transition-all cursor-pointer">
                 <div className={`shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center ${op.status === "success" ? "bg-[rgba(0,255,136,0.1)]" :
                   op.status === "running" ? "bg-[rgba(0,212,255,0.1)]" :

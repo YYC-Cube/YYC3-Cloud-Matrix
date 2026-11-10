@@ -14,17 +14,6 @@ import { persist } from 'zustand/middleware';
 import { newId } from '../../lib/id';
 import type { LogLevel, StoredLogEntry } from '../../types';
 
-const DEFAULT_LOGS: StoredLogEntry[] = [
-  { id: "log-001", timestamp: Date.now() - 120000, level: "info", source: "GPU-A100-01", message: "推理任务完成 #12847, 延迟 820ms" },
-  { id: "log-002", timestamp: Date.now() - 240000, level: "info", source: "GPU-A100-03", message: "模型缓存命中 LLaMA-70B, 跳过加载" },
-  { id: "log-003", timestamp: Date.now() - 360000, level: "warn", source: "GPU-A100-03", message: "GPU 温度接近阈值 78°C > 75°C" },
-  { id: "log-004", timestamp: Date.now() - 480000, level: "error", source: "GPU-H100-01", message: "推理超时 task #12853, 超过 5000ms" },
-  { id: "log-005", timestamp: Date.now() - 600000, level: "info", source: "system", message: "批次处理完成 batch_size=32, tokens=4096" },
-  { id: "log-006", timestamp: Date.now() - 720000, level: "warn", source: "GPU-A100-03", message: "内存使用率 89%, 建议清理缓存" },
-  { id: "log-007", timestamp: Date.now() - 840000, level: "debug", source: "scheduler", message: "WebSocket 心跳 ack, 延迟 12ms" },
-  { id: "log-008", timestamp: Date.now() - 960000, level: "info", source: "system", message: "自动巡查完成, 健康度 96%" },
-];
-
 export interface LogSlice {
   logs: StoredLogEntry[];
   addLog: (entry: Omit<StoredLogEntry, 'id'>) => void;
@@ -34,10 +23,15 @@ export interface LogSlice {
   getLogsByLevel: (level: LogLevel) => StoredLogEntry[];
 }
 
+/**
+ * 日志域 SSOT — 初始为空（禁止硬编码假日志政策，2026-11-11）。
+ * 真实写入来源：WS 告警事件（useWebSocketData）、用户操作审计、
+ * agent 系统事件；persist 保留最近 200 条。
+ */
 export const useLogSlice = create<LogSlice>()(
   persist(
     (set, get) => ({
-      logs: DEFAULT_LOGS,
+      logs: [],
       addLog: (entry) => set((s) => ({ logs: [...s.logs, { ...entry, id: newId('log') }] })),
       updateLog: (id, updates) => set((s) => ({ logs: s.logs.map((l) => l.id === id ? { ...l, ...updates } : l) })),
       removeLog: (id) => set((s) => ({ logs: s.logs.filter((l) => l.id !== id) })),

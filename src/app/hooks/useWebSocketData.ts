@@ -38,6 +38,8 @@ import { getAPIConfig } from "../lib/api-config";
 import { dataBus } from "../lib/data-bus";
 import { useNodeSlice } from "../store/slices/node-slice";
 import { useFollowUpSlice } from "../store/slices/follow-up-slice";
+import { useLogSlice } from "../store/slices/log-slice";
+import { useAppSlice } from "../store/slices/app-slice";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // ============================================================
@@ -237,11 +239,33 @@ export function useWebSocketData(): WebSocketDataState {
                 // 真实 WS 全量快照：权威替换，清除 DEFAULT_NODES 模拟种子与已下线节点
                 mergeFromWS(msg.payload as NodeData[], { authoritative: true });
                 break;
-              case "alert":
-                setAlerts((prev) => [msg.payload, ...prev].slice(0, 100));
+              case "alert": {
+                const alertPayload = msg.payload;
+                setAlerts((prev) => [alertPayload, ...prev].slice(0, 100));
                 // 真实告警 → 告警工单域持久化（幂等去重），TopBar/巡查/协同全局面板共享
-                useFollowUpSlice.getState().ingestWSAlert(msg.payload);
+                useFollowUpSlice.getState().ingestWSAlert(alertPayload);
+                // 真实告警 → 日志域（persist，保留最近 200 条）
+                useLogSlice.getState().addLog({
+                  timestamp: alertPayload.timestamp || Date.now(),
+                  level: alertPayload.level === "critical" || alertPayload.level === "error"
+                    ? "error"
+                    : alertPayload.level === "warning" ? "warn" : "info",
+                  source: alertPayload.source,
+                  message: alertPayload.message,
+                });
+                // 真实告警 → 操作流域（会话级实时事件流，Dashboard 操作流真实呈现）
+                useAppSlice.getState().addRecentOp({
+                  id: `OP-ALERT-${alertPayload.source}-${alertPayload.id}`,
+                  action: "系统告警",
+                  target: alertPayload.message,
+                  user: alertPayload.source,
+                  time: new Date(alertPayload.timestamp || Date.now()).toLocaleTimeString("zh-CN", { hour12: false }),
+                  status: alertPayload.level === "critical" || alertPayload.level === "error"
+                    ? "error"
+                    : alertPayload.level === "warning" ? "warning" : "pending",
+                });
                 break;
+              }
               case "throughput_history":
                 setThroughputHistory(msg.payload.slice(-MAX_THROUGHPUT_HISTORY));
                 break;

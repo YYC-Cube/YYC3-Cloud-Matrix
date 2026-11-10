@@ -160,6 +160,7 @@ const enUS: TranslationKeys = {
     panorama: "Panorama",
     realtimeOps: "Real-time Operations",
     viewAll: "View All →",
+    noRecentOps: "No operation events — alerts and actions appear in real time",
     radarTab: "Radar",
     performanceTab: "Comparison",
     predictionTab: "Prediction",

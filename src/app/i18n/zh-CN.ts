@@ -158,6 +158,7 @@ const zhCN = {
     panorama: "全景",
     realtimeOps: "实时操作流",
     viewAll: "查看全部 →",
+    noRecentOps: "暂无操作事件 — 系统告警与操作将实时呈现",
     radarTab: "性能雷达",
     performanceTab: "模型对比",
     predictionTab: "负载预测",

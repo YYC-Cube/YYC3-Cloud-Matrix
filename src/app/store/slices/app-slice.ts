@@ -29,13 +29,10 @@ export interface RecentOpEntry {
   status: "success" | "running" | "pending" | "warning" | "error";
 }
 
-const DEFAULT_RECENT_OPS: RecentOpEntry[] = [
-  { id: "OP-001", action: "模型部署", target: "DeepSeek-V3 → GPU-A100-03", user: "admin",   time: "14:28:32", status: "success" },
-  { id: "OP-002", action: "推理任务", target: "Batch#2847 → LLaMA-70B",    user: "api_svc", time: "14:25:10", status: "running" },
-  { id: "OP-003", action: "节点扩容", target: "GPU-H100-03 加入集群",      user: "ops_bot", time: "14:20:55", status: "pending" },
-  { id: "OP-004", action: "数据同步", target: "向量库 → 分片迁移",         user: "admin",   time: "14:15:22", status: "success" },
-  { id: "OP-005", action: "告警处理", target: "GPU-A100-03 温度预警",      user: "system",  time: "14:10:08", status: "warning" },
-];
+// 2026-11-11 禁止硬编码政策：DEFAULT_RECENT_OPS 假操作流种子已清除。
+// recentOps 初始为空，真实写入来源：WS 系统告警事件（useWebSocketData）、
+// 操作中心用户实际操作；会话级实时流（app-slice 纯内存不持久化，
+// 历史告警见 follow-up-slice 持久化工单域）。
 
 interface AppSlice {
   commandPaletteOpen: boolean;
@@ -61,7 +58,7 @@ export const useAppSlice = create<AppSlice>()((set) => ({
   maxAlerts: 100,
   fps: 60,
   memoryUsage: 0,
-  recentOps: DEFAULT_RECENT_OPS,
+  recentOps: [],
 
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   addAlert: (alert) =>
