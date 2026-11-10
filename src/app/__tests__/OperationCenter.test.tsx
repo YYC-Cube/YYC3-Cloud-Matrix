@@ -15,6 +15,10 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as React from "react";
 import { OperationCenter } from "../modules/ops/OperationCenter";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 vi.mock("../hooks/useOperationCenter", () => ({
   useOperationCenter: vi.fn(() => ({

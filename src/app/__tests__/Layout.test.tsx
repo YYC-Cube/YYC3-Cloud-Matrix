@@ -152,6 +152,10 @@ vi.mock("../lib/view-context", () => ({
 
 import { Layout } from "../modules/shared/Layout";
 import { WebSocketContext, ViewContext } from "../lib/view-context";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 describe("Layout", () => {
   beforeEach(() => {

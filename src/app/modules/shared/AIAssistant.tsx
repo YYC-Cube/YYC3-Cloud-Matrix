@@ -55,6 +55,7 @@ import { useWebSocketData } from "../../hooks/useWebSocketData";
 import { runFullSystemDiagnostic, testAIConnection, type AIConnectionConfig, type SystemDiagnosticResult } from "../../lib/connection-test-engine";
 import { useNodeSlice } from "../../store/slices/node-slice";
 import { useProviderSlice } from "../../store/slices/provider-slice";
+import { useSettingsSSOT } from "../../store/slices/settings-ssot-slice";
 import { useUIPrefsSlice } from "../../store/slices/ui-prefs-slice";
 import type { ChatMessage, CommandCategory } from "../../types";
 import { YYC3LogoSvg } from "./YYC3LogoSvg";
@@ -151,6 +152,8 @@ interface AIAssistantProps {
 }
 
 export function AIAssistant({ isMobile }: AIAssistantProps) {
+  // 演示模式总开关（Settings SSOT）：关闭时本地 Mock 回复替换为配置引导
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   // Panel state
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -267,10 +270,15 @@ export function AIAssistant({ isMobile }: AIAssistantProps) {
     setInputValue("");
     setIsTyping(true);
 
-    // Simulate AI response delay
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 1200));
+    // Simulate AI response delay（仅演示模式）
+    if (demoMode) {
+      await new Promise(r => setTimeout(r, 800 + Math.random() * 1200));
+    }
 
-    const response = generateMockResponse(content);
+    // 演示模式关闭：不返回编造的集群数据，如实引导配置真实模型服务
+    const response = demoMode
+      ? generateMockResponse(content)
+      : "演示模式已关闭：AI 智能助理未接入真实模型服务。\n\n请前往「系统设置 → 模型管理」配置本地 Ollama 或云端 API Key；或在「系统设置 → 显示与界面」开启演示模式体验模拟回复。";
     const assistantMsg: ChatMessage = {
       id: generateMessageId("-resp"),
       role: "assistant",
@@ -280,7 +288,7 @@ export function AIAssistant({ isMobile }: AIAssistantProps) {
 
     setMessages(prev => [...prev, assistantMsg]);
     setIsTyping(false);
-  }, []);
+  }, [demoMode]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

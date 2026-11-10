@@ -26,6 +26,10 @@ import React from "react";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { OperationCategory } from "../modules/ops/OperationCategory";
 import { CATEGORY_META } from "../hooks/useOperationCenter";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 describe("OperationCategory", () => {
   let onChange: any;

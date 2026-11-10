@@ -29,6 +29,10 @@ import { renderHook, act, cleanup, waitFor } from "@testing-library/react";
 import { useBigModelSDK } from "../hooks/useBigModelSDK";
 import { useSDKSessionSlice } from "../store/slices/sdk-session-slice";
 import type { ConfiguredModel, SDKCapability } from "../types";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 // Mock ollama-url to avoid environment-dependent code
 vi.mock("../lib/ollama-url", () => ({

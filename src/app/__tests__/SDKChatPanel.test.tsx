@@ -198,6 +198,10 @@ vi.mock("../modules/shared/Layout", () => ({
 // ===============================
 
 import { SDKChatPanel } from "../modules/monitor/SDKChatPanel";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 describe("SDKChatPanel", () => {
   beforeEach(() => {

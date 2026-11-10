@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { getOllamaChatUrl, getOllamaUrl } from "../lib/ollama-url";
 import { useSDKSessionSlice } from "../store/slices/sdk-session-slice";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type {
   ChatMessage,
   ChatRole,
@@ -167,11 +168,22 @@ function getMockResponse(input: string): string {
   return MOCK_RESPONSES.default;
 }
 
+/**
+ * 演示模式关闭时的 Mock 替代文案：
+ * 模型未配置真实 API Key 且演示模式关闭时，不返回编造的系统数据，
+ * 如实引导用户配置真实模型服务。
+ */
+const MOCK_DISABLED_GUIDE =
+  "当前模型未配置 API Key，且演示模式已关闭。\n\n" +
+  "请前往「系统设置 → 模型管理」配置真实模型服务（本地 Ollama 或云端 API Key）后再发起对话。";
+
 // ============================================================
 // Hook
 // ============================================================
 
 export function useBigModelSDK() {
+  // 演示模式总开关（Settings SSOT）：关闭时未配置真实模型的对话不返回编造数据
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<SDKConnectionStatus>("idle");
@@ -272,9 +284,11 @@ export function useBigModelSDK() {
     const start = Date.now();
 
     if (isMock) {
-      // Mock 模式
-      await new Promise((r) => setTimeout(r, 300 + Math.random() * 700));
-      const mockContent = getMockResponse(userContent);
+      // Mock 模式：演示模式关闭时不返回编造数据，引导配置真实模型服务
+      if (demoMode) {
+        await new Promise((r) => setTimeout(r, 300 + Math.random() * 700));
+      }
+      const mockContent = demoMode ? getMockResponse(userContent) : MOCK_DISABLED_GUIDE;
       const mockTokens = { input: userContent.length, output: mockContent.length };
 
       const assistantMsg: ChatMessage = {
@@ -403,7 +417,7 @@ export function useBigModelSDK() {
         latencyMs: latency,
       };
     }
-  }, [activeSessionId, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSessionId, sessions, demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ========== 核心: 流式发送 ==========
 
@@ -447,13 +461,15 @@ export function useBigModelSDK() {
     const start = Date.now();
 
     if (isMock) {
-      // Mock 流式
-      const mockContent = getMockResponse(userContent);
+      // Mock 流式：演示模式关闭时不逐字模拟，直接输出配置引导文案
+      const mockContent = demoMode ? getMockResponse(userContent) : MOCK_DISABLED_GUIDE;
       const chars = mockContent.split("");
       let accumulated = "";
 
       for (const char of chars) {
-        await new Promise((r) => setTimeout(r, 15 + Math.random() * 25));
+        if (demoMode) {
+          await new Promise((r) => setTimeout(r, 15 + Math.random() * 25));
+        }
         accumulated += char;
         setStreamingContent(accumulated);
         onChunk?.(char);
@@ -601,7 +617,7 @@ export function useBigModelSDK() {
         latencyMs: Date.now() - start,
       };
     }
-  }, [activeSessionId, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSessionId, sessions, demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ========== 中断请求 ==========
 
@@ -640,7 +656,14 @@ export function useBigModelSDK() {
     const start = Date.now();
 
     if (!configuredModel.apiKey && configuredModel.providerId !== "ollama") {
-      // Mock test
+      // Mock test：演示模式关闭时不返回假阳性，如实报告未配置
+      if (!demoMode) {
+        return {
+          success: false,
+          latencyMs: Date.now() - start,
+          error: "未配置 API Key（演示模式已关闭，不执行模拟连接测试）",
+        };
+      }
       await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
       return { success: true, latencyMs: Date.now() - start };
     }
@@ -681,7 +704,7 @@ export function useBigModelSDK() {
     } catch (err: unknown) {
       return { success: false, latencyMs: Date.now() - start, error: friendlyError(err, configuredModel) };
     }
-  }, []);
+  }, [demoMode]);
 
   // ========== 重置统计 ==========
 

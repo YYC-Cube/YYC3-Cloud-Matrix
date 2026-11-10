@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ChatMessage } from "../types";
 import { PROMPT_PRESETS } from "../constants";
+import { useSettingsSSOT } from "../../../store/slices/settings-ssot-slice";
 
 function generateMockResponse(userMsg: string): string {
   const lower = userMsg.toLowerCase();
@@ -66,6 +67,9 @@ export interface UseChatReturn {
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const { initialMessages, onResponse } = options;
 
+  // 演示模式总开关（Settings SSOT）：关闭时本地 Mock 回复替换为配置引导
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
+
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages ?? [WELCOME_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -93,9 +97,15 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       setInputValue("");
       setIsTyping(true);
 
-      await new Promise((r) => setTimeout(r, 800 + Math.random() * 1200));
+      // 模拟响应延迟（仅演示模式）
+      if (demoMode) {
+        await new Promise((r) => setTimeout(r, 800 + Math.random() * 1200));
+      }
 
-      const response = generateMockResponse(content);
+      // 演示模式关闭：不返回编造的集群数据，如实引导配置真实模型服务
+      const response = demoMode
+        ? generateMockResponse(content)
+        : "演示模式已关闭：AI 智能助理未接入真实模型服务。\n\n请前往「系统设置 → 模型管理」配置本地 Ollama 或云端 API Key；或在「系统设置 → 显示与界面」开启演示模式体验模拟回复。";
       const assistantMsg: ChatMessage = {
         id: `msg-${Date.now()}-resp`,
         role: "assistant",
@@ -107,7 +117,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       setIsTyping(false);
       onResponse?.(assistantMsg);
     },
-    [onResponse]
+    [demoMode, onResponse]
   );
 
   const clearChat = useCallback(() => {

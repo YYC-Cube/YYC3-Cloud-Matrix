@@ -18,6 +18,9 @@ import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import { usePatrol } from "../hooks/usePatrol";
 import { useAIDiagnostics } from "../hooks/useAIDiagnostics";
 import { useReportExporter } from "../hooks/useReportExporter";
+import { useOperationCenter } from "../hooks/useOperationCenter";
+import { useBigModelSDK } from "../hooks/useBigModelSDK";
+import type { ConfiguredModel } from "../types";
 
 function setDemoMode(v: boolean) {
   useSettingsSSOT.setState((state) => ({
@@ -88,5 +91,60 @@ describe("useReportExporter · 演示模式关闭", () => {
   it("报表历史为空（不展示模拟种子）", () => {
     const { result } = renderHook(() => useReportExporter());
     expect(result.current.recentReports).toEqual([]);
+  });
+});
+
+describe("useOperationCenter · 演示模式关闭", () => {
+  it("executeAction 不执行模拟操作、不产生日志", async () => {
+    const { result } = renderHook(() => useOperationCenter());
+    const firstAction = result.current.allActions[0];
+    await act(async () => {
+      await result.current.executeAction(firstAction.id);
+    });
+    expect(result.current.isExecuting).toBeNull();
+    expect(result.current.logs).toEqual([]);
+  });
+
+  it("操作日志为空（不展示模拟种子，含 allLogs）", () => {
+    const { result } = renderHook(() => useOperationCenter());
+    expect(result.current.logs).toEqual([]);
+    expect(result.current.allLogs).toEqual([]);
+  });
+});
+
+describe("useBigModelSDK · 演示模式关闭", () => {
+  const unconfiguredModel: ConfiguredModel = {
+    id: "model-off-1",
+    providerId: "zhipu",
+    providerLabel: "智谱 AI",
+    model: "chatglm3",
+    apiKey: "", // 空 apiKey 触发 mock 分支
+    baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+    createdAt: Date.now(),
+    lastUsed: null,
+    status: "active",
+  };
+
+  it("未配置模型时不返回编造数据，引导配置真实服务", async () => {
+    const { result } = renderHook(() => useBigModelSDK());
+    let content = "";
+    await act(async () => {
+      const res = await result.current.sendMessage(unconfiguredModel, "系统状态如何");
+      content = res.content;
+    });
+    expect(content).toContain("未配置 API Key");
+    // 不得包含 Mock 编造的系统指标
+    expect(content).not.toContain("12/13");
+    expect(content).not.toContain("78.5%");
+  });
+
+  it("连接测试不返回假阳性", async () => {
+    const { result } = renderHook(() => useBigModelSDK());
+    let res: { success: boolean; error?: string } | undefined;
+    await act(async () => {
+      res = await result.current.testConnection(unconfiguredModel);
+    });
+    expect(res?.success).toBe(false);
+    expect(res?.error).toContain("未配置 API Key");
   });
 });

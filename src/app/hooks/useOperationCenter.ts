@@ -24,6 +24,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { usePersistedList } from "./usePersistedState";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type {
   OperationCategoryType,
   OperationCategoryMeta,
@@ -137,6 +138,8 @@ function generateMockLogs(): OperationLogEntry[] {
 // ============================================================
 
 export function useOperationCenter() {
+  // 演示模式总开关（Settings SSOT）：关闭时不产出模拟日志、不执行模拟操作
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [activeCategory, setActiveCategory] = useState<OperationCategoryType | "all">("all");
   const [actions, setActions] = useState<OperationItem[]>(QUICK_ACTIONS);
   const {
@@ -159,9 +162,9 @@ export function useOperationCenter() {
     ? actions
     : actions.filter((a) => a.category === activeCategory);
 
-  // Filtered logs
+  // Filtered logs（演示模式关闭时不展示模拟日志种子，持久化数据保留）
   const filteredLogs = (() => {
-    let result = logs;
+    let result = demoMode ? logs : [];
     if (logFilter === "byCategory" && activeCategory !== "all") {
       result = result.filter((l) => l.category === activeCategory);
     }
@@ -178,6 +181,11 @@ export function useOperationCenter() {
   const executeAction = useCallback(async (actionId: string) => {
     const action = actions.find((a) => a.id === actionId);
     if (!action) {return;}
+
+    if (!demoMode) {
+      toast.info("演示模式已关闭：操作执行需要接入真实运维通道，请在系统设置中开启演示模式查看效果");
+      return;
+    }
 
     setIsExecuting(actionId);
     setActions((prev) =>
@@ -219,12 +227,17 @@ export function useOperationCenter() {
         prev.map((a) => (a.id === actionId ? { ...a, status: "pending" as const } : a))
       );
     }, 3000);
-  }, [actions, prependLog]);
+  }, [actions, demoMode, prependLog]);
 
   // Run template
   const runTemplate = useCallback(async (templateId: string) => {
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) {return;}
+
+    if (!demoMode) {
+      toast.info("演示模式已关闭：模板执行需要接入真实运维通道，请在系统设置中开启演示模式查看效果");
+      return;
+    }
 
     await upsertTemplate({ ...tpl, lastUsed: Date.now() });
 
@@ -246,7 +259,7 @@ export function useOperationCenter() {
     }
 
     toast.success(`模板「${tpl.name}」执行完成`);
-  }, [templates, upsertTemplate, prependLog]);
+  }, [templates, demoMode, upsertTemplate, prependLog]);
 
   // Add new template
   const addTemplate = useCallback((name: string, description: string, category: OperationCategoryType, steps: string[]) => {
@@ -286,7 +299,7 @@ export function useOperationCenter() {
     deleteTemplate,
     // Logs
     logs: filteredLogs,
-    allLogs: logs,
+    allLogs: demoMode ? logs : [],
     logsLoaded,
     logFilter,
     setLogFilter,
