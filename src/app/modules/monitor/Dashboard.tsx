@@ -284,6 +284,27 @@ export function Dashboard() {
   const isQPSUp = qpsTrend.startsWith("+");
   const isLatencyUp = latencyTrend.startsWith("+");
 
+  // ★ 模型负载分布：WS 真连态从真实节点聚合（按 model 分组的 tasks 占比），
+  //   模拟/未连接态回退 metrics-slice（DataEditorPanel 可编辑）
+  const isLive = ws?.connectionState === "connected";
+  const liveModelDist = useMemo(() => {
+    if (!isLive) { return []; }
+    const byModel = new Map<string, number>();
+    for (const n of nodes) {
+      if (n.status === "inactive" || !n.model) { continue; }
+      byModel.set(n.model, (byModel.get(n.model) ?? 0) + n.tasks);
+    }
+    const total = [...byModel.values()].reduce((s, v) => s + v, 0);
+    if (total <= 0) { return []; }
+    return [...byModel.entries()]
+      .map(([name, tasks], i) => ({
+        id: `live-md-${i}`,
+        name,
+        value: Math.round((tasks / total) * 100),
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [isLive, nodes]);
+
   const statCards = [
     { label: "QPS", value: liveQPS.toLocaleString(), icon: Activity, trend: qpsTrend, up: isQPSUp, color: "#00d4ff" },
     { label: "Latency", value: `${liveLatency}ms`, icon: Clock, trend: latencyTrend, up: isLatencyUp, color: "#00ff88" },
@@ -529,7 +550,19 @@ export function Dashboard() {
             <h3 className="text-[#e0f0ff]" style={{ fontSize: "0.85rem" }}>{t("monitor.modelLoadDist")}</h3>
           </div>
           {(() => {
-            const distData = modelDist;
+            // 真连态：真实负载为空（如推理服务离线）显示空态，绝不回退模拟分布
+            if (isLive && liveModelDist.length === 0) {
+              return (
+                <div
+                  className="flex items-center justify-center text-[rgba(0,212,255,0.45)]"
+                  style={{ height: isMobile ? 140 : 160, fontSize: "0.75rem" }}
+                  data-testid="model-dist-empty"
+                >
+                  {t("monitor.modelLoadEmpty")}
+                </div>
+              );
+            }
+            const distData = liveModelDist.length > 0 ? liveModelDist : modelDist;
             return (
               <>
                 <ResponsiveContainer width="100%" height={isMobile ? 140 : 160}>

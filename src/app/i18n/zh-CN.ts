@@ -147,6 +147,7 @@ const zhCN = {
     throughputChart: "推理吞吐量趋势",
     latencyChart: "延迟趋势",
     modelLoadDist: "模型负载分布",
+    modelLoadEmpty: "暂无模型负载 — 启动推理服务后自动呈现",
     radarTitle: "模型性能雷达",
     performanceTitle: "模型性能对比",
     predictionTitle: "负载预测",

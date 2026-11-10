@@ -89,7 +89,7 @@ export function useWebSocketData(): WebSocketDataState {
   const [activeNodes, setActiveNodes] = useState("7/8");
   const [gpuUtil, setGpuUtil] = useState("82.4%");
   const [tokenThroughput, setTokenThroughput] = useState("138K/s");
-  const [storageUsed] = useState("12.8TB");
+  const [storageUsed, setStorageUsed] = useState("12.8TB");
   const [throughputHistory, setThroughputHistory] = useState<ThroughputPoint[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [lastSyncTime, setLastSyncTime] = useState(
@@ -233,7 +233,8 @@ export function useWebSocketData(): WebSocketDataState {
                 setLatencyTrend(msg.payload.trend);
                 break;
               case "node_status":
-                mergeFromWS(msg.payload as NodeData[]);
+                // 真实 WS 全量快照：权威替换，清除 DEFAULT_NODES 模拟种子与已下线节点
+                mergeFromWS(msg.payload as NodeData[], { authoritative: true });
                 break;
               case "alert":
                 setAlerts((prev) => [msg.payload, ...prev].slice(0, 100));
@@ -245,6 +246,7 @@ export function useWebSocketData(): WebSocketDataState {
                 setActiveNodes(msg.payload.activeNodes);
                 setGpuUtil(msg.payload.gpuUtil);
                 setTokenThroughput(msg.payload.tokenThroughput);
+                setStorageUsed(msg.payload.storageUsed);
                 break;
               case "heartbeat_ack":
                 break;

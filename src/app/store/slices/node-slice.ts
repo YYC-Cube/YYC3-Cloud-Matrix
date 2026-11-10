@@ -41,7 +41,13 @@ interface NodeSlice {
   lastUpdateAt: string | null;
 
   setNodes: (nodes: NodeData[], source?: DataSource) => void;
-  mergeFromWS: (incoming: NodeData[]) => void;
+  /**
+   * 合并 WS 推送的节点快照
+   * @param options.authoritative 真实 WS 全量快照时为 true：
+   *   未出现在快照中的节点（含 DEFAULT_NODES 模拟种子）视为已下线并移除；
+   *   模拟数据路径不传（保持旧合并行为，保留用户手动添加的节点）
+   */
+  mergeFromWS: (incoming: NodeData[], options?: { authoritative?: boolean }) => void;
   updateNode: (id: string, updates: Partial<NodeData>) => void;
   addNode: (node: NodeData) => void;
   removeNode: (id: string) => void;
@@ -111,9 +117,15 @@ export const useNodeSlice = create<NodeSlice>()(
             });
           },
 
-          mergeFromWS: (incoming) => {
+          mergeFromWS: (incoming, options) => {
             set((state) => {
-              const merged = dataBus.mergeNodeData(state.nodes, incoming, "websocket");
+              const merged = dataBus.mergeNodeData(
+                state.nodes,
+                incoming,
+                "websocket",
+                "ws_priority",
+                options?.authoritative ? { dropAbsent: true } : undefined
+              );
               state.nodes = merged;
               state.lastSource = "websocket";
               state.lastUpdateAt = new Date().toISOString();

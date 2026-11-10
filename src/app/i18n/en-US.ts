@@ -149,6 +149,7 @@ const enUS: TranslationKeys = {
     throughputChart: "Inference Throughput Trend",
     latencyChart: "Latency Trend",
     modelLoadDist: "Model Load Distribution",
+    modelLoadEmpty: "No model load — appears automatically once inference is up",
     radarTitle: "Model Performance Radar",
     performanceTitle: "Model Performance Comparison",
     predictionTitle: "Load Prediction",

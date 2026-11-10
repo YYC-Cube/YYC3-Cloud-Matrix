@@ -7,6 +7,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "agent": "node agent/yyc3-agent.mjs",
+    "agent:install": "cp deploy/com.yyc3.agent.plist ~/Library/LaunchAgents/ && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.yyc3.agent.plist",
     "build": "tsc -p electron/tsconfig.json && vite build",
     "build:electron": "tsc -p electron/tsconfig.json && vite build && electron-builder",
     "build:mac": "tsc -p electron/tsconfig.json && vite build && electron-builder --mac",

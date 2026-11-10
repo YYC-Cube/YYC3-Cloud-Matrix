@@ -140,7 +140,8 @@ class DataBusCore {
     currentNodes: NodeData[],
     incomingNodes: NodeData[],
     source: DataSource = "websocket",
-    strategy: MergeStrategy = "ws_priority"
+    strategy: MergeStrategy = "ws_priority",
+    options?: { dropAbsent?: boolean }
   ): NodeData[] {
     const eventTimestamp = Date.now();
     const result: NodeData[] = [];
@@ -151,7 +152,11 @@ class DataBusCore {
       const incoming = incomingMap.get(current.id);
 
       if (!incoming) {
-        result.push(current);
+        // 权威模式（真实 WS 全量快照）：incoming 没有的节点视为已下线，不再保留
+        // （否则 DEFAULT_NODES 模拟种子会与真实节点永久混合）
+        if (!options?.dropAbsent) {
+          result.push(current);
+        }
         continue;
       }
 

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  YYC³ PivotMatrix Ops — 节点采集代理 macOS LaunchAgent（开机自启 · 崩溃自愈）
+
+  功能：ws://0.0.0.0:3113/ws 推送本机真实指标（CPU/内存/磁盘/Ollama），
+        前端数据看盘连接后自动从「模拟数据」切换为真实数据。
+
+  安装（或执行 pnpm agent:install）:
+    cp deploy/com.yyc3.agent.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.yyc3.agent.plist
+
+  管理:
+    launchctl kickstart -k gui/$(id -u)/com.yyc3.agent   # 重启
+    launchctl bootout gui/$(id -u)/com.yyc3.agent         # 卸载
+    curl http://localhost:3113/healthz                    # 探活
+
+  日志:
+    tail -f ~/Library/Logs/yyc3/agent.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.yyc3.agent</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/yanyu/YYC-Cube/personal/YYC3-Cloud-Matrix/agent/yyc3-agent.mjs</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/yanyu/YYC-Cube/personal/YYC3-Cloud-Matrix</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PMO_AGENT_HOST</key>
+        <string>0.0.0.0</string>
+        <key>PMO_AGENT_PORT</key>
+        <string>3113</string>
+        <key>PMO_WS_PATH</key>
+        <string>/ws</string>
+        <key>PMO_OLLAMA_BASE_URL</key>
+        <string>http://127.0.0.1:11434</string>
+        <key>PMO_INTERVAL_MS</key>
+        <string>2000</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- 异常退出后 10s 重启，避免崩溃风暴 -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/yanyu/Library/Logs/yyc3/agent.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/yanyu/Library/Logs/yyc3/agent-err.log</string>
+</dict>
+</plist>
