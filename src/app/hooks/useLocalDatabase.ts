@@ -13,6 +13,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { idbGetAll, idbPut, idbPutMany, idbDelete, idbClear } from "../lib/yyc3-storage";
 import { getAPIConfig } from "../lib/api-config";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type {
   DatabaseType,
   DBConnection,
@@ -378,6 +379,9 @@ async function decodePassword(encoded: string): Promise<string> {
 // ============================================================
 
 export function useLocalDatabase() {
+  // 演示模式总开关（Settings SSOT）：关闭时拦截所有模拟数据回退分支，
+  // 仅保留真实 API 路径；真实服务不可达时如实反馈失败
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [connections, setConnections] = useState<DBConnection[]>([]);
   const [activeConnectionId, setActiveConnectionId] = useState<string | null>(null);
   const [tables, setTables] = useState<DBTable[]>([]);
@@ -470,7 +474,12 @@ export function useLocalDatabase() {
       return;
     }
 
-    // Mock: 模拟检测
+    // Mock: 模拟检测（仅演示模式）
+    if (!demoMode) {
+      toast.info("未检测到可达的本地数据库服务（演示模式已关闭，不再生成模拟连接）");
+      setDetecting(false);
+      return;
+    }
     await new Promise(r => setTimeout(r, 2000));
 
     const mockDetected: DBConnection[] = [
@@ -496,7 +505,7 @@ export function useLocalDatabase() {
 
     toast.success(`检测到 ${mockDetected.length} 个本地数据库`);
     setDetecting(false);
-  }, [persistAllConnections]);
+  }, [demoMode, persistAllConnections]);
 
   // ── 测试连接 ──
   const testConnection = useCallback(async (id: string) => {
@@ -517,7 +526,12 @@ export function useLocalDatabase() {
       return true;
     }
 
-    // Mock
+    // Mock（仅演示模式）
+    if (!demoMode) {
+      toast.error(`连接测试失败: 数据库服务不可达 (${conn.host}:${conn.port})`);
+      setTesting(null);
+      return false;
+    }
     await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
     const success = Math.random() > 0.15;
 
@@ -529,7 +543,7 @@ export function useLocalDatabase() {
 
     setTesting(null);
     return success;
-  }, [connections]);
+  }, [connections, demoMode]);
 
   // ── ��加连接 ──
   const addConnection = useCallback((conn: Omit<DBConnection, "id" | "status" | "lastConnected" | "createdAt" | "color">) => {
@@ -599,7 +613,14 @@ export function useLocalDatabase() {
       return;
     }
 
-    // Mock 模拟
+    // Mock 模拟（仅演示模式）
+    if (!demoMode) {
+      setConnections(prev =>
+        prev.map(c => c.id === id ? { ...c, status: "disconnected" as DBConnectionStatus } : c)
+      );
+      toast.error(`连接失败: 数据库服务不可达 (${conn.host}:${conn.port})`);
+      return;
+    }
     await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
 
     setConnections(prev => {
@@ -612,7 +633,7 @@ export function useLocalDatabase() {
     setTables(MOCK_TABLES);
     persistConnection({ ...conn, lastConnected: Date.now() });
     toast.success(`已连接: ${conn.name} (模拟模式)`);
-  }, [connections, persistConnection]);
+  }, [connections, demoMode, persistConnection]);
 
   // ── 断开连接 ──
   const disconnectDB = useCallback(async (id: string) => {
@@ -647,11 +668,16 @@ export function useLocalDatabase() {
       return;
     }
 
-    // Mock
+    // Mock（仅演示模式）
+    if (!demoMode) {
+      setTableData([]);
+      setTableDataLoading(false);
+      return;
+    }
     await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
     setTableData(mockTableData(tableName, limit));
     setTableDataLoading(false);
-  }, [activeConnectionId]);
+  }, [activeConnectionId, demoMode]);
 
   // ── 执行查询 ──
   const executeQuery = useCallback(async (sql?: string) => {
@@ -674,8 +700,13 @@ export function useLocalDatabase() {
 
     if (res.ok && res.data) {
       result = res.data;
+    } else if (!demoMode) {
+      // 演示模式关闭：真实服务不可达时如实返回错误，不生成模拟结果
+      setQuerying(false);
+      toast.error("查询失败: 数据库服务不可达（演示模式已关闭，不生成模拟结果）");
+      return;
     } else {
-      // Mock
+      // Mock（仅演示模式）
       await new Promise(r => setTimeout(r, 200 + Math.random() * 500));
       result = mockQueryResult(query);
     }
@@ -695,7 +726,7 @@ export function useLocalDatabase() {
     }
 
     return result;
-  }, [sqlInput, activeConnectionId]);
+  }, [sqlInput, activeConnectionId, demoMode]);
 
   // ── 从模板执行 ──
   const executeTemplate = useCallback((template: SQLTemplate) => {
@@ -732,7 +763,11 @@ export function useLocalDatabase() {
       return;
     }
 
-    // Mock
+    // Mock（仅演示模式）
+    if (!demoMode) {
+      toast.error("备份失败: 数据库服务不可达（演示模式已关闭，不生成模拟备份）");
+      return;
+    }
     await new Promise(r => setTimeout(r, 2500 + Math.random() * 1500));
     const backup: DBBackup = {
       id: `bk-${Date.now()}`,
@@ -746,7 +781,7 @@ export function useLocalDatabase() {
     };
     setBackups(prev => [backup, ...prev]);
     toast.success(`备份完成: ${backup.fileName}`);
-  }, [connections]);
+  }, [connections, demoMode]);
 
   // ── 恢复备份 ──
   const restoreBackup = useCallback(async (backupId: string) => {
@@ -761,9 +796,13 @@ export function useLocalDatabase() {
       return;
     }
 
+    if (!demoMode) {
+      toast.error("恢复失败: 数据库服务不可达（演示模式已关闭）");
+      return;
+    }
     await new Promise(r => setTimeout(r, 3000 + Math.random() * 2000));
     toast.success(`恢复完成: ${backup.fileName} (模拟)`);
-  }, [backups]);
+  }, [backups, demoMode]);
 
   // ── 删除备份 ──
   const deleteBackup = useCallback((backupId: string) => {

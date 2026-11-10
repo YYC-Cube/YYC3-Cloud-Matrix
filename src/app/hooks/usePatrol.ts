@@ -24,6 +24,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePersistedList } from "./usePersistedState";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type {
   PatrolStatus,
   CheckStatus,
@@ -209,6 +210,8 @@ function generateInitialHistory(): PatrolResult[] {
 // ============================================================
 
 export function usePatrol() {
+  // 演示模式总开关（Settings SSOT）：关闭时不产出任何模拟巡查数据
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [patrolStatus, setPatrolStatus] = useState<PatrolStatus>("idle");
   const [currentResult, setCurrentResult] = useState<PatrolResult | null>(null);
   const [progress, setProgress] = useState(0);
@@ -236,6 +239,12 @@ export function usePatrol() {
 
   const runPatrol = useCallback(
     async (triggeredBy: "manual" | "auto" | "scheduled" = "manual") => {
+      if (!demoMode) {
+        if (triggeredBy === "manual") {
+          toast.info("演示模式已关闭：巡查需要接入真实巡检数据源，请在系统设置中开启演示模式查看效果");
+        }
+        return;
+      }
       setPatrolStatus("running");
       setProgress(0);
 
@@ -264,7 +273,7 @@ export function usePatrol() {
         toast.success(`巡查完成 — 健康度 ${result.healthScore}%`);
       }
     },
-    [prependHistory]
+    [demoMode, prependHistory]
   );
 
   // ── toggleAutoPatrol ───────────────────────────────────────
@@ -313,7 +322,7 @@ export function usePatrol() {
   // ── 自动巡查定时器 ─────────────────────────────────────────
 
   useEffect(() => {
-    if (schedule.enabled) {
+    if (schedule.enabled && demoMode) {
       autoTimerRef.current = setInterval(() => {
         runPatrol("auto");
       }, schedule.interval * 60 * 1000);
@@ -324,12 +333,13 @@ export function usePatrol() {
         autoTimerRef.current = null;
       }
     };
-  }, [schedule.enabled, schedule.interval, runPatrol]);
+  }, [schedule.enabled, schedule.interval, demoMode, runPatrol]);
 
   return {
     patrolStatus,
     currentResult,
-    history,
+    // 演示模式关闭时不展示任何模拟历史（持久化数据保留，重新开启后恢复）
+    history: demoMode ? history : [],
     schedule,
     progress,
     selectedReport,

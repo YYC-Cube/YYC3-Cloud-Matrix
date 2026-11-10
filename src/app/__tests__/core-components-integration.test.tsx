@@ -60,6 +60,7 @@ vi.mock("../modules/admin/NetworkConfig", () => ({
 }));
 
 vi.mock("../lib/api-config", () => ({
+  DEFAULT_WS_ENDPOINT: "ws://localhost:3113/ws",
   getAPIConfig: () => ({
     enableBackend: false,
     timeout: 15000,

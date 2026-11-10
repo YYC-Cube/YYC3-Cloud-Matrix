@@ -17,6 +17,7 @@ import * as React from "react";
 import { SystemSettings } from "../modules/admin/SystemSettings";
 
 vi.mock("../lib/api-config", () => ({
+  DEFAULT_WS_ENDPOINT: "ws://localhost:3113/ws",
   getAPIConfig: vi.fn(() => ({
     apiBaseUrl: "http://localhost:3000/api",
     wsEndpoint: "ws://localhost:3000/ws",

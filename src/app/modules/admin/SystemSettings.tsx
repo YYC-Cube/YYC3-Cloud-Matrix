@@ -57,6 +57,7 @@ import {
   type APIEndpoints,
 } from "../../lib/api-config";
 import { testAIConnection, type AIConnectionConfig, type ConnectionTestResult } from "../../lib/connection-test-engine";
+import { useSettingsSSOT } from "../../store/slices/settings-ssot-slice";
 import { DesignSystemPage } from "../dev/design-system/DesignSystemPage";
 import { GlassCard } from "../shared/GlassCard";
 import { NetworkConfig } from "./NetworkConfig";
@@ -109,6 +110,29 @@ function Toggle({ enabled, onChange }: ToggleProps) {
         : "left-0.5 bg-[rgba(0,180,255,0.3)]"
         }`} />
     </button>
+  );
+}
+
+// ============================================================
+// Demo Mode Toggle (SSOT runtime.toggles.demoMode)
+// 演示模式总开关：开启时巡查 / AI 诊断 / 报表导出 / 数据库管理等
+// 模块使用内置模拟数据；生产环境必须关闭（默认关闭）。
+// 该开关读写 Settings SSOT，不经旧版 useSettingsStore。
+// ============================================================
+
+function DemoModeToggle() {
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
+  const setToggle = useSettingsSSOT((s) => s.setToggle);
+  return (
+    <div className="flex items-center justify-between p-3 rounded-xl bg-[rgba(0,40,80,0.15)] border border-[rgba(0,180,255,0.06)]">
+      <div>
+        <p className="text-[#c0dcf0]" style={{ fontSize: "0.82rem" }}>演示模式</p>
+        <p className="text-[rgba(0,212,255,0.35)]" style={{ fontSize: "0.68rem" }}>
+          开启后各模块展示内置模拟数据；生产环境请保持关闭
+        </p>
+      </div>
+      <Toggle enabled={demoMode} onChange={(v) => setToggle("demoMode", v)} />
+    </div>
   );
 }
 
@@ -602,6 +626,7 @@ export function SystemSettings() {
                   </div>
                   <Toggle enabled={settings.darkMode} onChange={() => toggleSetting("darkMode")} />
                 </div>
+                <DemoModeToggle />
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[rgba(0,40,80,0.15)] border border-[rgba(0,180,255,0.06)]">
                   <div>
                     <p className="text-[#c0dcf0]" style={{ fontSize: "0.82rem" }}>数据刷新间隔</p>

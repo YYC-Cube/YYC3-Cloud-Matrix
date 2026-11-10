@@ -27,6 +27,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { usePatrol } from "../hooks/usePatrol";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 // Mock sonner toast
 vi.mock("sonner", () => ({

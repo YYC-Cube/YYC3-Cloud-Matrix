@@ -53,10 +53,18 @@ vi.mock("../lib/yyc3-storage", () => ({
 }));
 
 vi.mock("../lib/api-config", () => ({
+  DEFAULT_WS_ENDPOINT: "ws://localhost:3113/ws",
   getAPIConfig: mockGetAPIConfig,
+  setAPIConfig: vi.fn((patch: Record<string, unknown>) => ({ ...patch })),
+  resetAPIConfig: vi.fn(() => ({})),
+  onAPIConfigChange: vi.fn(() => () => {}),
 }));
 
 import { useLocalDatabase, SQL_TEMPLATES, calcBackoffDelay } from "../hooks/useLocalDatabase";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 describe("useLocalDatabase", () => {
   beforeEach(() => {

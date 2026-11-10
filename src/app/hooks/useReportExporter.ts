@@ -10,7 +10,9 @@
  */
 
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { usePersistedList } from "./usePersistedState";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // ============================================================
 // Types — centralized in types/index.ts
@@ -224,6 +226,8 @@ function exportPrintable(data: ReportData) {
 // ============================================================
 
 export function useReportExporter() {
+  // 演示模式总开关（Settings SSOT）：关闭时不产出任何模拟报表数据
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [reportType, setReportType] = useState<ExportReportType>("performance");
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -245,6 +249,10 @@ export function useReportExporter() {
   } = usePersistedList<ReportHistoryEntry>("reports", initialReports);
 
   const generateReport = useCallback(() => {
+    if (!demoMode) {
+      toast.info("演示模式已关闭：报表生成需要接入真实监控数据源，请在系统设置中开启演示模式查看效果");
+      return;
+    }
     setIsGenerating(true);
     setTimeout(() => {
       const data = generateReportData(reportType, timeRange);
@@ -254,7 +262,7 @@ export function useReportExporter() {
       );
       setIsGenerating(false);
     }, 1500);
-  }, [reportType, timeRange, prependReport]);
+  }, [demoMode, reportType, timeRange, prependReport]);
 
   const exportReport = useCallback((format: ExportFormat) => {
     if (!report) {return;}
@@ -270,7 +278,8 @@ export function useReportExporter() {
     setTimeRange,
     isGenerating,
     report,
-    recentReports,
+    // 演示模式关闭时不展示任何模拟报表历史（持久化数据保留，重新开启后恢复）
+    recentReports: demoMode ? recentReports : [],
     reportsLoaded,
     generateReport,
     exportReport,

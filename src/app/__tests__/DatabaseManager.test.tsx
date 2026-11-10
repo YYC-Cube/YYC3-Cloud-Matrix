@@ -15,6 +15,10 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as React from "react";
 import { DatabaseManager } from "../modules/ops/DatabaseManager";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：存量断言基于模拟数据行为，逐文件显式开启（生产默认关闭）
+enableDemoModeForTests();
 
 vi.mock("../hooks/useLocalDatabase", () => ({
   useLocalDatabase: vi.fn(() => ({
@@ -87,7 +91,11 @@ vi.mock("../modules/admin/InlineEditableTable", () => ({
 }));
 
 vi.mock("../lib/api-config", () => ({
+  DEFAULT_WS_ENDPOINT: "ws://localhost:3113/ws",
   getAPIConfig: vi.fn(() => ({ enableBackend: false })),
+  setAPIConfig: vi.fn((patch: Record<string, unknown>) => ({ ...patch })),
+  resetAPIConfig: vi.fn(() => ({})),
+  onAPIConfigChange: vi.fn(() => () => {}),
 }));
 
 describe("DatabaseManager", () => {

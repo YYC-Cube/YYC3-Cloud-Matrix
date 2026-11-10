@@ -10,7 +10,9 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { usePersistedList } from "./usePersistedState";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // ============================================================
 // Types — centralized in types/index.ts
@@ -167,6 +169,8 @@ function createInitialHistory(): DiagnosticHistoryEntry[] {
 // ============================================================
 
 export function useAIDiagnostics(opts: DiagnosticsOptions = {}) {
+  // 演示模式总开关（Settings SSOT）：关闭时不产出任何模拟诊断数据
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [status, setStatus] = useState<DiagnosticStatus>("idle");
   const [session, setSession] = useState<DiagnosticSession | null>(null);
   const {
@@ -186,6 +190,10 @@ export function useAIDiagnostics(opts: DiagnosticsOptions = {}) {
   }, []);
 
   const startDiagnosis = useCallback(() => {
+    if (!demoMode) {
+      toast.info("演示模式已关闭：AI 诊断需要接入真实诊断引擎，请在系统设置中开启演示模式查看效果");
+      return;
+    }
     setStatus("analyzing");
     setSession(null);
 
@@ -226,7 +234,7 @@ export function useAIDiagnostics(opts: DiagnosticsOptions = {}) {
       );
       setStatus("complete");
     }, 1800);
-  }, [opts, prependHistory]);
+  }, [demoMode, opts, prependHistory]);
 
   const executeAction = useCallback((actionId: string) => {
     setExecutingAction(actionId);
@@ -249,7 +257,8 @@ export function useAIDiagnostics(opts: DiagnosticsOptions = {}) {
   return {
     status,
     session,
-    history,
+    // 演示模式关闭时不展示任何模拟历史（持久化数据保留，重新开启后恢复）
+    history: demoMode ? history : [],
     historyLoaded,
     activeView,
     setActiveView,

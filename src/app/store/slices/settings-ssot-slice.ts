@@ -64,6 +64,8 @@ export interface SettingsToggles {
   autoUpdate: boolean;
   dataCompression: boolean;
   corsEnabled: boolean;
+  /** 演示模式：开启时各模块使用内置模拟数据；生产环境必须关闭（默认 false） */
+  demoMode: boolean;
 }
 
 export interface SettingsValues {
@@ -141,6 +143,7 @@ const DEFAULT_TOGGLES: SettingsToggles = {
   autoUpdate: false,
   dataCompression: true,
   corsEnabled: true,
+  demoMode: false,
 };
 
 const DEFAULT_VALUES: SettingsValues = {
@@ -461,6 +464,10 @@ export const useSettingsSSOT = create<SettingsSSOTSlice>()(
 
             // 品牌归一化：覆盖 legacy 归并与历史持久化两条路径（用户自定义值不受影响）
             if (state?.values) { normalizeLegacyBrand(state.values); }
+
+            // 新增开关兜底：历史持久化的 toggles 不含后续新增 key（如 demoMode），
+            // 用 DEFAULT_TOGGLES 回填缺失字段，保证新开关有确定默认值（生产语义）。
+            if (state?.toggles) { state.toggles = { ...DEFAULT_TOGGLES, ...state.toggles }; }
 
             if (_apiConfigUnsubscribe) { _apiConfigUnsubscribe(); }
             _apiConfigUnsubscribe = onAPIConfigChange((config) => {
