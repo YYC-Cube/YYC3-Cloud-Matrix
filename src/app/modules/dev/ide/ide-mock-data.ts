@@ -118,7 +118,7 @@ export function GlassCard({ children, className = "", glowColor, ...rest }: Glas
  */
 
 export const ENV = {
-  APP_NAME: "YYC3 Cloud Intelli-Matrix",
+  APP_NAME: "YYC3 PivotMatrix Ops",
   APP_VERSION: "3.2.0",
   API_BASE_URL: "http://localhost:3113",
   WS_URL: "ws://localhost:3113/ws",
@@ -350,9 +350,9 @@ export function useI18n() {
 
   return useMemo(() => ({ t, lang, toggleLang }), [t, lang, toggleLang]);
 }`,
-  "readme-md": `# YYC³ Cloud Intelli-Matrix
+  "readme-md": `# 言语云枢·智能矩阵
 
-> 本地多端推理矩阵数据库数据看盘
+> YYC³ PivotMatrix Ops 异构算力矩阵运维面板
 
 ## Features
 

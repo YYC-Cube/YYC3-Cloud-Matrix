@@ -466,10 +466,10 @@ export const VARIABLE_DEFINITIONS: VariableDefinition[] = [
     type: "string",
     category: "system",
     group: "system-general",
-    defaultValue: "YYC³ Cloud Intelli-Matrix",
+    defaultValue: "言语云枢·智能矩阵",
     required: false,
     sensitive: false,
-    placeholder: "YYC³ Cloud Intelli-Matrix",
+    placeholder: "言语云枢·智能矩阵",
     editable: true,
     version: "1.0.0",
   },
@@ -689,21 +689,72 @@ export function getAllCategories(): VariableCategory[] {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  变量值管理
+//  变量值管理 + 响应式引擎（P0：编辑即生效链路）
+//  - 模块内订阅 + window "storage" 跨标签页同步
+//  - 缓存保证快照引用稳定（useSyncExternalStore 兼容）
 // ═══════════════════════════════════════════════════════════════
 
+type VariableListener = () => void;
+
+const variableListeners = new Set<VariableListener>();
+let valuesCache: Record<string, VariableValue> | null = null;
+
+/** 写入/外部变更后调用：失效缓存并广播 */
+function notifyVariableListeners(): void {
+  valuesCache = null;
+  for (const listener of variableListeners) {
+    try {
+      listener();
+    } catch {
+      // 单个订阅者异常不阻断其余订阅
+    }
+  }
+}
+
+/**
+ * 订阅变量值变更（设置 / 重置 / 导入 / 跨标签页写入均触发）
+ * 返回取消订阅函数，供 useSyncExternalStore / useEffect 使用
+ */
+export function subscribeVariables(listener: VariableListener): () => void {
+  variableListeners.add(listener);
+  return () => {
+    variableListeners.delete(listener);
+  };
+}
+
+// 跨标签页同步：其他标签页写入同一 key 时，本标签失效缓存并通知
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) {
+      notifyVariableListeners();
+    }
+  });
+}
+
 export function loadVariableValues(): Record<string, VariableValue> {
+  if (valuesCache) {
+    return valuesCache;
+  }
+  let loaded: Record<string, VariableValue>;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    loaded = raw ? JSON.parse(raw) : {};
   } catch {
-    return {};
+    loaded = {};
   }
+  valuesCache = loaded;
+  return loaded;
+}
+
+/** 变量值快照（缓存稳定引用，供 useSyncExternalStore getSnapshot 使用） */
+export function getVariableValuesSnapshot(): Record<string, VariableValue> {
+  return loadVariableValues();
 }
 
 export function saveVariableValues(values: Record<string, VariableValue>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    valuesCache = values;
   } catch {
     // ignore
   }
@@ -726,7 +777,7 @@ export function getVariableValue(key: string): VariableValue {
 }
 
 export function setVariableValue(key: string, value: unknown, source: VariableValue["source"] = "user"): void {
-  const values = loadVariableValues();
+  const values = { ...loadVariableValues() };
   values[key] = {
     key,
     value,
@@ -734,16 +785,19 @@ export function setVariableValue(key: string, value: unknown, source: VariableVa
     updatedAt: Date.now(),
   };
   saveVariableValues(values);
+  notifyVariableListeners();
 }
 
 export function resetVariableValue(key: string): void {
-  const values = loadVariableValues();
+  const values = { ...loadVariableValues() };
   delete values[key];
   saveVariableValues(values);
+  notifyVariableListeners();
 }
 
 export function resetAllVariableValues(): void {
   localStorage.removeItem(STORAGE_KEY);
+  notifyVariableListeners();
 }
 
 export function getMergedVariableValue(key: string): unknown {

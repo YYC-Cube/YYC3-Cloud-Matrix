@@ -13,6 +13,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useWebSocketData } from "../hooks/useWebSocketData";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 class MockWebSocket {
   static OPEN = 1;
@@ -63,6 +64,8 @@ vi.mock("../lib/api-config", () => ({
   getAPIConfig: () => ({
     wsEndpoint: "ws://localhost:3113/ws",
   }),
+  // variable-center（经 settings-ssot-slice 间接引入）依赖的常量导出
+  DEFAULT_WS_ENDPOINT: "ws://localhost:3113/ws",
 }));
 
 describe("useWebSocketData", () => {
@@ -70,6 +73,8 @@ describe("useWebSocketData", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockWSInstance = null;
+    // 重置设置 SSOT 运行时，避免跨用例污染（默认值：autoRefresh=true / 5000ms）
+    useSettingsSSOT.getState().updateRuntime({ autoRefresh: true, refreshInterval: 5000 });
     (globalThis as any).WebSocket = class extends MockWebSocket {
       constructor(url: string) {
         super(url);
@@ -628,6 +633,104 @@ describe("useWebSocketData", () => {
       });
 
       expect(mockWSInstance?.readyState).toBe(MockWebSocket.CLOSED);
+    });
+  });
+
+  describe("设置 SSOT 联动（编辑即生效）", () => {
+    it("refreshInterval 应驱动模拟器节拍", () => {
+      const { result } = renderHook(() => useWebSocketData());
+
+      // WS 连接超时（8s）→ 降级模拟态，立即补一帧
+      act(() => {
+        vi.advanceTimersByTime(9000);
+      });
+      expect(result.current.connectionState).toBe("simulated");
+      const baseline = result.current.throughputHistory.length;
+
+      // 统一设置面板把刷新间隔改为 600ms —— 无需重启，定时器即时重建
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ refreshInterval: 600 });
+      });
+      act(() => {
+        vi.advanceTimersByTime(1800);
+      });
+      // 1800ms / 600ms = 3 帧新增
+      expect(result.current.throughputHistory.length).toBe(baseline + 3);
+    });
+
+    it("autoRefresh=false 时模拟态不启动周期定时器", () => {
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ autoRefresh: false, refreshInterval: 600 });
+      });
+      const { result } = renderHook(() => useWebSocketData());
+
+      act(() => {
+        vi.advanceTimersByTime(9000);
+      });
+      expect(result.current.connectionState).toBe("simulated");
+      expect(result.current.throughputHistory.length).toBe(1); // 仅补一帧
+
+      // 在重连窗口（t=13000）之前观察：若 600ms 周期定时器存在应已新增 5 帧
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(result.current.throughputHistory.length).toBe(1); // 不再增长
+    });
+
+    it("WS 真连态下修改刷新间隔不得启动模拟器", () => {
+      const { result } = renderHook(() => useWebSocketData());
+
+      act(() => {
+        vi.advanceTimersByTime(0);
+        mockWSInstance?.simulateOpen();
+      });
+      expect(result.current.connectionState).toBe("connected");
+
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ refreshInterval: 600 });
+        vi.advanceTimersByTime(5000);
+      });
+      expect(result.current.connectionState).toBe("connected");
+      expect(result.current.throughputHistory.length).toBe(0); // 无模拟帧污染
+    });
+
+    it("模拟态下关闭 autoRefresh 应立即停表，重开即恢复", () => {
+      const { result } = renderHook(() => useWebSocketData());
+
+      // t=8000 WS 超时降级模拟态（补一帧）；t=9000 时默认 5000ms 定时器尚未到点
+      act(() => {
+        vi.advanceTimersByTime(9000);
+      });
+      expect(result.current.connectionState).toBe("simulated");
+      expect(result.current.throughputHistory.length).toBe(1);
+
+      // 改间隔为 600ms —— 定时器即时重建，600ms 后新增一帧
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ refreshInterval: 600 });
+      });
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+      expect(result.current.throughputHistory.length).toBe(2);
+
+      // 关闭自动刷新 —— 立即停表（1800ms 内若定时器存活应新增 3 帧）
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ autoRefresh: false });
+      });
+      act(() => {
+        vi.advanceTimersByTime(1800);
+      });
+      expect(result.current.throughputHistory.length).toBe(2);
+
+      // 重新打开 —— 立即恢复周期刷新（1200ms / 600ms = 2 帧）
+      // 全程保持在重连窗口（t=13000）之前，隔离重连补帧干扰
+      act(() => {
+        useSettingsSSOT.getState().updateRuntime({ autoRefresh: true });
+      });
+      act(() => {
+        vi.advanceTimersByTime(1200);
+      });
+      expect(result.current.throughputHistory.length).toBe(4);
     });
   });
 });

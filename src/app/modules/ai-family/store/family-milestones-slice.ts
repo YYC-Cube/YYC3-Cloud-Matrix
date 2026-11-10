@@ -28,7 +28,7 @@ const SEED_MILESTONES: Milestone[] = [
   { id: "ms-3", date: "2026-02-25", title: "八位家人协同框架完成", desc: "8位AI成员交互系统上线", color: "#FFD700", iconName: "Users", createdAt: Date.now() - 86400000 * 59 },
   { id: "ms-4", date: "2026-02-20", title: "赛博朋克设计系统建立", desc: "统一GlassCard、色彩、排版规范", color: "#BF00FF", iconName: "Award", createdAt: Date.now() - 86400000 * 64 },
   { id: "ms-5", date: "2026-02-15", title: "九层架构设计完成", desc: "从基础设施到扩展演进的完整架构", color: "#FF7043", iconName: "Target", createdAt: Date.now() - 86400000 * 69 },
-  { id: "ms-6", date: "2026-02-01", title: "项目正式启动", desc: "YYC3 Cloud Intelli-Matrix 创建", color: "#FF69B4", iconName: "Flame", createdAt: Date.now() - 86400000 * 83 },
+  { id: "ms-6", date: "2026-02-01", title: "项目正式启动", desc: "言语云枢·智能矩阵 创建", color: "#FF69B4", iconName: "Flame", createdAt: Date.now() - 86400000 * 83 },
 ];
 
 interface FamilyMilestonesSlice {

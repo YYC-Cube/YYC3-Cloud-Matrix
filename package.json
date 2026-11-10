@@ -1,7 +1,7 @@
 {
-  "name": "yyc3-cloudpivot-intelli-matrix",
+  "name": "yyc3-pivotmatrix-ops-panel",
   "version": "3.4.1",
-  "description": "YYC³ Family 本地闭环多端推理矩阵数据看盘系统",
+  "description": "言语云枢·智能矩阵（YYC³ PivotMatrix Ops）异构算力矩阵运维面板 — 监控、巡检、告警、审计、工单闭环",
   "main": "dist-electron/main.js",
   "author": "YanYuCloudCube Team <admin@0379.email>",
   "license": "MIT",
@@ -160,8 +160,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.yyc3.cloud.intelli-matrix",
-    "productName": "YYC³ Cloud",
+    "appId": "com.yyc3.pivotmatrix.ops",
+    "productName": "YYC3 PivotMatrix Ops",
     "directories": {
       "output": "dist-electron",
       "buildResources": "resources"

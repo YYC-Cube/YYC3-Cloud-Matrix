@@ -152,7 +152,7 @@ describe("AIAssistant", () => {
     it("应渲染欢迎消息", async () => {
       openChat();
       await waitFor(() => {
-        const welcomeElements = screen.queryAllByText(/你好！我是 CP-IM AI 智能助理/);
+        const welcomeElements = screen.queryAllByText(/你好！我是言语云枢·智能矩阵 AI 智能助理/);
         expect(welcomeElements.length).toBeGreaterThan(0);
       }, { timeout: 3000 });
     });

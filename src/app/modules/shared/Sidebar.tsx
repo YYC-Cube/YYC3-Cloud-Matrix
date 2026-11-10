@@ -52,9 +52,11 @@ import {
   Zap,
 } from "lucide-react";
 import * as React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useI18n } from "../../hooks/useI18n";
+import { getNavVisibilitySnapshot, subscribePageConfigs } from "../../config";
+import { useSettingsSSOT } from "../../store/slices/settings-ssot-slice";
 import { YYC3Logo } from "./YYC3Logo";
 
 /* ── 导航数据结构 ──────────────────────────────── */
@@ -194,6 +196,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
+  // 品牌名接设置 SSOT；导航可见性接 page-config 响应式引擎（P0：编辑即生效）
+  const brandName = useSettingsSSOT((s) => s.values.brandName);
+  const navVisibility = useSyncExternalStore(subscribePageConfigs, getNavVisibilitySnapshot);
+  const visibleCategories = useMemo(
+    () =>
+      NAV_CATEGORIES
+        .map((cat) => ({
+          ...cat,
+          children: cat.children.filter((ch) => navVisibility[ch.path] !== false),
+        }))
+        .filter((cat) => cat.children.length > 0),
+    [navVisibility]
+  );
 
   const activeCatId = getActiveCategoryId(location.pathname);
   const [hoverCatId, setHoverCatId] = useState<string | null>(null);
@@ -244,14 +259,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className="text-[#00d4ff] tracking-[0.15em] whitespace-nowrap overflow-hidden"
               style={{ fontFamily: "'Orbitron', sans-serif", fontSize: "0.82rem", opacity: 0.9 }}
             >
-              YYC³
+              {brandName}
             </span>
           )}
         </div>
 
         {/* ── 导航分类 ── */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 scrollbar-none">
-          {NAV_CATEGORIES.map((cat) => {
+          {visibleCategories.map((cat) => {
             const CatIcon = cat.icon;
             const isCatActive = cat.id === activeCatId;
             const isHover = hoverCatId === cat.id;

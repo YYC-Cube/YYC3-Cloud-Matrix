@@ -1,12 +1,12 @@
 <div align="center">
 
-# YYC³ CloudPivot Intelli-Matrix
+# 言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板
 
 <img src="./public/yyc3-family.png" alt="YYC³ Family · 言启云枢 · 智启新元" width="100%" />
 
-### *言启云枢 · 智启新元 | Local Closed-Loop Multi-End Inference Matrix Data Dashboard System*
+### *万源汇枢，阵驭算力 | Converge at Pivot, Govern the Matrix*
 
-**YYC³ Family 本地闭环多端推理矩阵数据看盘系统**
+**言语云枢·智能矩阵 — 统一纳管 Apple M 系列、DGX GPU、NAS 与 BMC 节点，覆盖实时监控、巡检、告警、权限审计与工单运维**
 
 > ***YanYuCloudCube***
 > *言启象限 | 语枢未来*

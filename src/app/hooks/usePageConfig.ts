@@ -2,18 +2,26 @@
  * @file: usePageConfig.ts
  * @description: usePageConfig.ts
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v1.1.0
  * @created: 2026-04-06
- * @updated: 2026-04-08
+ * @updated: 2026-11-10
  * @status: active
  * @tags: [hook]
+ *
+ * @brief: 页面配置 Hook —— P0 修复：接入 page-config 响应式引擎
+ *
+ * @details:
+ * - useSyncExternalStore 订阅 subscribePageConfigs，编辑保存/重置/跨标签写入即时重渲染
+ * - getMergedPageConfig 返回缓存稳定引用，不触发无限重渲染
+ * - 接口保持 v1.0 形状不变（isLoading 恒 false，配置为同步本地读取）
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { useLocation } from "react-router";
 import {
   getPageConfigByPath,
   getMergedPageConfig,
+  subscribePageConfigs,
   updatePageConfig as updateConfig,
   resetPageConfig as resetConfig,
   type PageConfig,
@@ -30,61 +38,34 @@ export interface UsePageConfigResult {
 
 export function usePageConfig(): UsePageConfigResult {
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
-
-  const config = useMemo(() => {
-    const path = location.pathname === "/" ? "/" : location.pathname.replace(/^\//, "");
-    return getMergedPageConfig(getPageConfigByPath(path)?.id || "");
-  }, [location.pathname]);
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [config]);
-
-  const handleUpdateConfig = useCallback((overrides: Partial<PageConfig>) => {
-    if (config?.id) {
-      updateConfig(config.id, overrides);
-    }
-  }, [config?.id]);
-
-  const handleResetConfig = useCallback(() => {
-    if (config?.id) {
-      resetConfig(config.id);
-    }
-  }, [config?.id]);
-
-  return {
-    config: config ?? null,
-    isLoading,
-    updateConfig: handleUpdateConfig,
-    resetConfig: handleResetConfig,
-    isEditable: config?.editable ?? false,
-    storageKeys: config?.storageKeys ?? [],
-  };
+  const path = location.pathname === "/" ? "/" : location.pathname.replace(/^\//, "");
+  const pageId = getPageConfigByPath(path)?.id || "";
+  return usePageConfigById(pageId);
 }
 
 export function usePageConfigById(pageId: string): UsePageConfigResult {
-  const [isLoading, setIsLoading] = useState(true);
+  const getSnapshot = useCallback(
+    () => (pageId ? (getMergedPageConfig(pageId) ?? null) : null),
+    [pageId]
+  );
 
-  const config = useMemo(() => {
-    return getMergedPageConfig(pageId);
-  }, [pageId]);
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [config]);
+  const config = useSyncExternalStore(subscribePageConfigs, getSnapshot);
 
   const handleUpdateConfig = useCallback((overrides: Partial<PageConfig>) => {
-    updateConfig(pageId, overrides);
+    if (pageId) {
+      updateConfig(pageId, overrides);
+    }
   }, [pageId]);
 
   const handleResetConfig = useCallback(() => {
-    resetConfig(pageId);
+    if (pageId) {
+      resetConfig(pageId);
+    }
   }, [pageId]);
 
   return {
-    config: config ?? null,
-    isLoading,
+    config,
+    isLoading: false,
     updateConfig: handleUpdateConfig,
     resetConfig: handleResetConfig,
     isEditable: config?.editable ?? false,

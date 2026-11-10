@@ -12,6 +12,11 @@
 const zhCN = {
   // ======== 通用 ========
   common: {
+    // ── 品牌基础词条（命名规范 §5.3，单一真源见 config/app-brand.ts） ──
+    appName: "言语云枢·智能矩阵",
+    appFullName: "言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板",
+    appSlogan: "万源汇枢，阵驭算力",
+    appSloganOps: "矩阵统一管控，算力可视可管",
     loading: "加载中...",
     confirm: "确认",
     cancel: "取消",
@@ -1378,10 +1383,10 @@ const zhCN = {
   // ======== 404 页面 ========
   notFound: {
     title: "页面未找到",
-    desc: "请求的路径在 YYC³ Matrix Dashboard 中不存在。",
+    desc: "请求的路径在言语云枢·智能矩阵中不存在。",
     goBack: "返回上页",
     goHome: "返回首页",
-    footer: "YYC³ Cloud Intelli-Matrix · 404 NOT_FOUND",
+    footer: "言语云枢·智能矩阵 · 404 NOT_FOUND",
   },
 } as const;
 

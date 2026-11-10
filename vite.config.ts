@@ -29,6 +29,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   base: './',
+  // 命名规范 §三：环境变量前缀 PMO_（保留 VITE_ 兼容第三方与历史变量）
+  envPrefix: ['VITE_', 'PMO_'],
   plugins: [
     react(),
     tailwindcss(),

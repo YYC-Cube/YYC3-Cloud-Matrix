@@ -110,7 +110,7 @@ export function ConfigExportCenter() {
       _meta: {
         version: 2,
         exportedAt: new Date().toISOString(),
-        source: "YYC³ Cloud Intelli-Matrix",
+        source: "言语云枢·智能矩阵（YYC³ PivotMatrix Ops）",
         modules: Array.from(selectedModules),
       },
     };

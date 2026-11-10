@@ -35,7 +35,7 @@ describe("env-config", () => {
   describe("env()", () => {
     it("should return default system name", () => {
       const systemName = env("SYSTEM_NAME");
-      expect(systemName).toBe("YYC³ Cloud Intelli-Matrix");
+      expect(systemName).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     });
 
     it("should return default system version", () => {
@@ -196,14 +196,14 @@ describe("env-config", () => {
     it("should return default config", () => {
       setEnvConfig({ SYSTEM_NAME: "Custom Name" });
       const config = resetEnvConfig();
-      expect(config.SYSTEM_NAME).toBe("YYC³ Cloud Intelli-Matrix");
+      expect(config.SYSTEM_NAME).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     });
 
     it("should clear cached config", () => {
       setEnvConfig({ SYSTEM_NAME: "Cached Name" });
       resetEnvConfig();
       const name = env("SYSTEM_NAME");
-      expect(name).toBe("YYC³ Cloud Intelli-Matrix");
+      expect(name).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     });
   });
 
@@ -285,7 +285,7 @@ describe("env-config", () => {
       localStorage.setItem(ENV_STORAGE_KEY, "invalid json");
       vi.resetModules();
       const { env: envReloaded } = await import("../lib/env-config");
-      expect(envReloaded("SYSTEM_NAME")).toBe("YYC³ Cloud Intelli-Matrix");
+      expect(envReloaded("SYSTEM_NAME")).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     });
   });
 });

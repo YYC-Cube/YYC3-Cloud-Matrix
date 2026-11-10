@@ -104,7 +104,7 @@ export const QUICK_START = `
 
 export const ARCHITECTURE = `
 ┌─────────────────────────────────────────────────────────────┐
-│                  YYC³ CP-IM 架构总览                        │
+│                  YYC³ PivotMatrix Ops 架构总览                        │
 │                                                             │
 │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐   │
 │  │ React 18    │  │ TypeScript   │  │ Tailwind CSS v4 │   │

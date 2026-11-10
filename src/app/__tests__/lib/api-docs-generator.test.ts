@@ -280,7 +280,7 @@ describe("createYYC3APIDocs", () => {
     const generator = createYYC3APIDocs();
     const doc = generator.generateDocumentation();
 
-    expect(doc.title).toBe("YYC³ Cloud Intelli-Matrix API");
+    expect(doc.title).toBe("YYC³ PivotMatrix Ops API");
     expect(doc.endpoints.length).toBeGreaterThan(0);
   });
 
@@ -308,7 +308,7 @@ describe("createYYC3APIDocs", () => {
     const generator = createYYC3APIDocs();
     const markdown = generator.generateMarkdown();
 
-    expect(markdown).toContain("YYC³ Cloud Intelli-Matrix API");
+    expect(markdown).toContain("YYC³ PivotMatrix Ops API");
     expect(markdown).toContain("节点管理");
     expect(markdown).toContain("模型管理");
   });
@@ -319,7 +319,7 @@ describe("createYYC3APIDocs", () => {
 
     expect(openapi.openapi).toBe("3.0.0");
     expect((openapi.info as Record<string, unknown>).title).toBe(
-      "YYC³ Cloud Intelli-Matrix API"
+      "YYC³ PivotMatrix Ops API"
     );
     expect(openapi.paths).toBeDefined();
   });

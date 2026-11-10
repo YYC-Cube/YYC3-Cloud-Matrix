@@ -341,7 +341,7 @@ export function AIFamilyCenterPage() {
                 破局先破己 · 想赢得他人的尊重，首先要学会尊重他人
               </p>
               <p className="text-[rgba(0,212,255,0.15)] mt-4" style={{ fontSize: "0.5rem", letterSpacing: "2px" }}>
-                YYC³ Cloud Intelli-Matrix · 以人为本 · AI为核 · 纯粹为心 · 智能为驱
+                言语云枢·智能矩阵 · 以人为本 · AI为核 · 纯粹为心 · 智能为驱
               </p>
             </div>
           </FadeIn>

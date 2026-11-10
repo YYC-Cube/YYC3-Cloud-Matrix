@@ -17,6 +17,7 @@ import * as React from "react";
 import { BrowserRouter } from "react-router";
 import { TopBar } from "../modules/shared/TopBar";
 import { isGhostMode } from "../lib/supabaseClient";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type { ConnectionState } from "../types";
 
 vi.mock("../hooks/useI18n", () => ({
@@ -247,7 +248,45 @@ describe("TopBar Component", () => {
 
     const brandName = screen.getByTestId("brand-name");
     expect(brandName).toBeInTheDocument();
-    expect(brandName).toHaveTextContent("CP-IM");
+    // v3.5 起品牌名由设置 SSOT 驱动（默认 言语云枢·智能矩阵，统一设置面板可改）
+    expect(brandName).toHaveTextContent("言语云枢·智能矩阵");
+  });
+
+  it("should reactively render brand name from settings SSOT", () => {
+    renderWithRouter(<TopBar {...desktopProps} />);
+
+    const brandName = screen.getByTestId("brand-name");
+    expect(brandName).toHaveTextContent("言语云枢·智能矩阵");
+
+    // 编辑即生效：修改设置值，顶栏无刷新即时更新
+    React.act(() => {
+      useSettingsSSOT.getState().updateValue("brandName", "YYC³ TestBrand");
+    });
+    expect(brandName).toHaveTextContent("YYC³ TestBrand");
+
+    // 还原，避免污染同文件其他用例
+    React.act(() => {
+      useSettingsSSOT.getState().updateValue("brandName", "言语云枢·智能矩阵");
+    });
+  });
+
+  it("should render version badge extracted from settings SSOT systemName", () => {
+    renderWithRouter(<TopBar {...desktopProps} />);
+
+    // 默认系统名 "言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1" → 提取版本号徽标
+    const badge = screen.getByTestId("version-badge");
+    expect(badge).toHaveTextContent("v3.4.1");
+
+    // 编辑即生效：修改系统名，版本徽标无刷新即时更新
+    React.act(() => {
+      useSettingsSSOT.getState().updateValue("systemName", "言语云枢 · YYC³ PivotMatrix Ops v9.9");
+    });
+    expect(badge).toHaveTextContent("v9.9");
+
+    // 还原，避免污染同文件其他用例
+    React.act(() => {
+      useSettingsSSOT.getState().updateValue("systemName", "言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
+    });
   });
 
   it("should render brand name on mobile", () => {

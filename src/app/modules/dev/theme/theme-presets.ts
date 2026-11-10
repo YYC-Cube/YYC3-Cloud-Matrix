@@ -328,7 +328,7 @@ export interface BrandingConfig {
 }
 
 export const DEFAULT_BRANDING: BrandingConfig = {
-  systemName: "YYC³ Cloud Intelli-Matrix",
-  tagline: "本地多端推理矩阵 · 数据看盘",
+  systemName: "言语云枢·智能矩阵",
+  tagline: "万源汇枢，阵驭算力",
   backgroundUrl: "",
 };

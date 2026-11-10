@@ -23,6 +23,9 @@ export {
   getMergedPageConfig,
   resetPageConfig,
   resetAllPageConfigs,
+  subscribePageConfigs,
+  getPageConfigOverride,
+  getNavVisibilitySnapshot,
   type PageConfig,
   type PageCategory,
   type PageLayout,
@@ -64,3 +67,6 @@ export {
   type AnimationToken,
   type DesignSystemOverrides,
 } from "./design-system";
+
+// 品牌常量（A1 主选命名单一真源）
+export { APP_BRAND, type AppBrand } from "./app-brand";

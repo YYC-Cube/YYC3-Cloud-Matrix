@@ -1,7 +1,7 @@
 {
-  "name": "YYC³ 本地多端推理矩阵数据库 · 数据看盘",
-  "short_name": "YYC³ Matrix",
-  "description": "YYC³ Family 本地闭环多端推理矩阵数据看盘系统 — M4 Max + iMac + NAS 集群实时监控",
+  "name": "言语云枢·智能矩阵 | YYC³ PivotMatrix Ops",
+  "short_name": "言语云枢·智能矩阵",
+  "description": "异构算力矩阵统一运维面板 — 监控、巡检、告警、审计、工单闭环",
   "theme_color": "#060e1f",
   "background_color": "#060e1f",
   "display": "standalone",

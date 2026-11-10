@@ -19,6 +19,7 @@ import {
   I18nContext,
   SUPPORTED_LOCALES,
 } from "../hooks/useI18n";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 describe("SUPPORTED_LOCALES", () => {
   it("should have zh-CN locale", () => {
@@ -38,6 +39,8 @@ describe("useI18nProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // 重置设置 SSOT 语言，避免 setLocale 写穿造成的跨用例污染
+    useSettingsSSOT.getState().updateValue("language", "zh-CN");
   });
 
   afterEach(() => {

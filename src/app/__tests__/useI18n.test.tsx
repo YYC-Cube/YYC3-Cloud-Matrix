@@ -41,6 +41,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { useI18nProvider, SUPPORTED_LOCALES } from "../hooks/useI18n";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // Mock localStorage
 const storage: Record<string, string> = {};
@@ -53,6 +54,8 @@ vi.stubGlobal("localStorage", {
 describe("useI18n", () => {
   beforeEach(() => {
     Object.keys(storage).forEach((k) => delete storage[k]);
+    // 重置设置 SSOT 语言，避免 setLocale 写穿造成的跨用例污染
+    useSettingsSSOT.getState().updateValue("language", "zh-CN");
   });
 
   afterEach(() => {
@@ -98,6 +101,45 @@ describe("useI18n", () => {
         result.current.setLocale("zh-CN");
       });
       expect(result.current.t("common.loading")).toBe("加载中...");
+    });
+
+    it("setLocale 应写穿到设置 SSOT（单一数据源）", () => {
+      const { result } = renderHook(() => useI18nProvider());
+      act(() => {
+        result.current.setLocale("en-US");
+      });
+      expect(useSettingsSSOT.getState().values.language).toBe("en-US");
+    });
+
+    it("设置 SSOT 改语言应即时驱动界面语言（编辑即生效）", () => {
+      const { result } = renderHook(() => useI18nProvider());
+      expect(result.current.locale).toBe("zh-CN");
+
+      // 模拟统一设置面板修改语言
+      act(() => {
+        useSettingsSSOT.getState().updateValue("language", "en-US");
+      });
+      expect(result.current.locale).toBe("en-US");
+      expect(result.current.t("common.loading")).toBe("Loading...");
+      // 同步持久化到独立语言键
+      expect(storage["yyc3_locale"]).toBe("en-US");
+
+      act(() => {
+        useSettingsSSOT.getState().updateValue("language", "zh-CN");
+      });
+      expect(result.current.locale).toBe("zh-CN");
+    });
+
+    it("非法 SSOT 语言值应被守卫忽略", () => {
+      const { result } = renderHook(() => useI18nProvider());
+      act(() => {
+        useSettingsSSOT.getState().updateValue("language", "fr-FR");
+      });
+      expect(result.current.locale).toBe("zh-CN");
+      // 还原
+      act(() => {
+        useSettingsSSOT.getState().updateValue("language", "zh-CN");
+      });
     });
   });
 

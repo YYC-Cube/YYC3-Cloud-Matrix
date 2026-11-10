@@ -35,7 +35,7 @@ export function PWAInstallPrompt() {
           <YYC3Logo size="sm" showStatus={false} glow={false} />
           <div className="flex-1 min-w-0">
             <p className="text-[#e0f0ff] mb-1" style={{ fontSize: "0.85rem" }}>
-              安装 CP-IM Cloud
+              安装 言语云枢·智能矩阵
             </p>
             <p
               className="text-[rgba(0,212,255,0.4)] mb-3"

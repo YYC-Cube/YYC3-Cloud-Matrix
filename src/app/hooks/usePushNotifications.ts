@@ -71,10 +71,10 @@ export function usePushNotifications() {
   const sendAlert = useCallback(
     (level: AlertLevel, message: string, detail?: string) => {
       const titles: Record<AlertLevel, string> = {
-        info: "CP-IM 信息",
-        warning: "CP-IM 告警",
-        error: "CP-IM 错误",
-        critical: "CP-IM 严重告警",
+        info: "智能矩阵 信息",
+        warning: "智能矩阵 告警",
+        error: "智能矩阵 错误",
+        critical: "智能矩阵 严重告警",
       };
 
       return showNotification(titles[level], {

@@ -10,6 +10,7 @@
  */
 
 import { DEFAULT_WS_ENDPOINT } from "./api-config";
+import { APP_BRAND } from "../config/app-brand";
 
 // ============================================================
 // 类型定义
@@ -80,7 +81,7 @@ export interface EnvConfig {
 // ============================================================
 
 const DEFAULTS: EnvConfig = {
-  SYSTEM_NAME: "YYC³ Cloud Intelli-Matrix",
+  SYSTEM_NAME: `${APP_BRAND.fullNameZh} v3.4.1`,
   SYSTEM_VERSION: "3.4.1",
   SYSTEM_BUILD: "2026.04.16",
 
@@ -142,22 +143,39 @@ const ENV_STORAGE_KEY = "yyc3_env_config";
 function loadEnvOverrides(): Partial<EnvConfig> {
   const overrides: Partial<EnvConfig> = {};
   try {
-    // 1. 从 Vite 环境变量读取 (VITE_YYC3_ 前缀)
+    // 1. 从 Vite 环境变量读取
+    //    前缀优先级：PMO_（命名规范 §三 标准前缀）> VITE_YYC3_（历史兼容）
+    //    注：vite.config.ts 需配置 envPrefix: ["VITE_", "PMO_"] 才会暴露 PMO_ 变量
     // @ts-expect-error - Vite env
     const metaEnv = import.meta.env;
-    if (metaEnv.VITE_YYC3_SYSTEM_NAME) { overrides.SYSTEM_NAME = metaEnv.VITE_YYC3_SYSTEM_NAME; }
-    if (metaEnv.VITE_YYC3_SYSTEM_VERSION) { overrides.SYSTEM_VERSION = metaEnv.VITE_YYC3_SYSTEM_VERSION; }
-    if (metaEnv.VITE_YYC3_API_BASE_URL) { overrides.API_BASE_URL = metaEnv.VITE_YYC3_API_BASE_URL; }
-    if (metaEnv.VITE_YYC3_WS_ENDPOINT) { overrides.WS_ENDPOINT = metaEnv.VITE_YYC3_WS_ENDPOINT; }
-    if (metaEnv.VITE_YYC3_OLLAMA_BASE_URL) { overrides.OLLAMA_BASE_URL = metaEnv.VITE_YYC3_OLLAMA_BASE_URL; }
-    if (metaEnv.VITE_YYC3_OLLAMA_PROXY_PATH) { overrides.OLLAMA_PROXY_PATH = metaEnv.VITE_YYC3_OLLAMA_PROXY_PATH; }
-    if (metaEnv.VITE_YYC3_CLUSTER_ID) { overrides.CLUSTER_ID = metaEnv.VITE_YYC3_CLUSTER_ID; }
-    if (metaEnv.VITE_YYC3_STORAGE_PREFIX) { overrides.STORAGE_PREFIX = metaEnv.VITE_YYC3_STORAGE_PREFIX; }
-    if (metaEnv.VITE_YYC3_ENABLE_MOCK) { overrides.ENABLE_MOCK_MODE = metaEnv.VITE_YYC3_ENABLE_MOCK === "true"; }
-    if (metaEnv.VITE_YYC3_ENABLE_DEBUG) { overrides.ENABLE_DEBUG = metaEnv.VITE_YYC3_ENABLE_DEBUG === "true"; }
-    if (metaEnv.VITE_YYC3_ZHIPU_API_KEY) { overrides.ZHIPU_API_KEY = metaEnv.VITE_YYC3_ZHIPU_API_KEY; }
-    if (metaEnv.VITE_YYC3_DEEPSEEK_API_KEY) { overrides.DEEPSEEK_API_KEY = metaEnv.VITE_YYC3_DEEPSEEK_API_KEY; }
-    if (metaEnv.VITE_YYC3_OLLAMA_BASE_URL) { overrides.OLLAMA_BASE_URL = metaEnv.VITE_YYC3_OLLAMA_BASE_URL; }
+    /** PMO_ 优先、VITE_YYC3_ 回落的取值助手 */
+    const pick = (pmoKey: string, legacyKey: string): string | undefined =>
+      metaEnv[pmoKey] ?? metaEnv[legacyKey];
+
+    const systemName = pick("PMO_SYSTEM_NAME", "VITE_YYC3_SYSTEM_NAME");
+    if (systemName) { overrides.SYSTEM_NAME = systemName; }
+    const systemVersion = pick("PMO_SYSTEM_VERSION", "VITE_YYC3_SYSTEM_VERSION");
+    if (systemVersion) { overrides.SYSTEM_VERSION = systemVersion; }
+    const apiBaseUrl = pick("PMO_API_BASE", "VITE_YYC3_API_BASE_URL");
+    if (apiBaseUrl) { overrides.API_BASE_URL = apiBaseUrl; }
+    const wsEndpoint = pick("PMO_WS_ENDPOINT", "VITE_YYC3_WS_ENDPOINT");
+    if (wsEndpoint) { overrides.WS_ENDPOINT = wsEndpoint; }
+    const ollamaBaseUrl = pick("PMO_OLLAMA_BASE_URL", "VITE_YYC3_OLLAMA_BASE_URL");
+    if (ollamaBaseUrl) { overrides.OLLAMA_BASE_URL = ollamaBaseUrl; }
+    const ollamaProxyPath = pick("PMO_OLLAMA_PROXY_PATH", "VITE_YYC3_OLLAMA_PROXY_PATH");
+    if (ollamaProxyPath) { overrides.OLLAMA_PROXY_PATH = ollamaProxyPath; }
+    const clusterId = pick("PMO_CLUSTER_ID", "VITE_YYC3_CLUSTER_ID");
+    if (clusterId) { overrides.CLUSTER_ID = clusterId; }
+    const storagePrefix = pick("PMO_STORAGE_PREFIX", "VITE_YYC3_STORAGE_PREFIX");
+    if (storagePrefix) { overrides.STORAGE_PREFIX = storagePrefix; }
+    const enableMock = pick("PMO_ENABLE_MOCK", "VITE_YYC3_ENABLE_MOCK");
+    if (enableMock) { overrides.ENABLE_MOCK_MODE = enableMock === "true"; }
+    const enableDebug = pick("PMO_ENABLE_DEBUG", "VITE_YYC3_ENABLE_DEBUG");
+    if (enableDebug) { overrides.ENABLE_DEBUG = enableDebug === "true"; }
+    const zhipuKey = pick("PMO_ZHIPU_API_KEY", "VITE_YYC3_ZHIPU_API_KEY");
+    if (zhipuKey) { overrides.ZHIPU_API_KEY = zhipuKey; }
+    const deepseekKey = pick("PMO_DEEPSEEK_API_KEY", "VITE_YYC3_DEEPSEEK_API_KEY");
+    if (deepseekKey) { overrides.DEEPSEEK_API_KEY = deepseekKey; }
     if (metaEnv.MODE) { overrides.NODE_ENV = metaEnv.MODE; }
   } catch { /* Vite env not available */ }
 

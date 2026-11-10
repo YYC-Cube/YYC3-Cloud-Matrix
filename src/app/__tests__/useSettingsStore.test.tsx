@@ -31,7 +31,7 @@ describe("useSettingsStore", () => {
   it("should initialize with default values", () => {
     const { result } = renderHook(() => useSettingsStore());
 
-    expect(result.current.values.systemName).toBe("YYC³ Cloud Intelli-Matrix v3.2");
+    expect(result.current.values.systemName).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     expect(result.current.values.clusterId).toBe("CN-EAST-PROD-01");
     expect(result.current.values.language).toBe("zh-CN");
   });
@@ -93,7 +93,7 @@ describe("useSettingsStore", () => {
       result.current.resetSettings();
     });
 
-    expect(result.current.values.systemName).toBe("YYC³ Cloud Intelli-Matrix v3.2");
+    expect(result.current.values.systemName).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
   });
 
   it("should persist settings to localStorage", () => {

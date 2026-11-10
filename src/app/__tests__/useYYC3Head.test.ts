@@ -40,7 +40,7 @@ describe("useYYC3Head", () => {
 
   it("should set document title", () => {
     renderHook(() => useYYC3Head());
-    expect(document.title).toBe("YYC³ Cloud Intelli-Matrix · 数据看盘");
+    expect(document.title).toBe("言语云枢·智能矩阵");
   });
 
   it("should add favicon links", () => {
@@ -96,7 +96,7 @@ describe("useYYC3Head", () => {
     expect(capable?.getAttribute("content")).toBe("yes");
     
     expect(title).toBeInTheDocument();
-    expect(title?.getAttribute("content")).toBe("YYC³ Cloud");
+    expect(title?.getAttribute("content")).toBe("言语云枢·智能矩阵");
   });
 
   it("should set description meta", () => {
@@ -105,7 +105,7 @@ describe("useYYC3Head", () => {
     const description = document.querySelector('meta[name="description"]');
     
     expect(description).toBeInTheDocument();
-    expect(description?.getAttribute("content")).toContain("YYC³ Cloud Intelli-Matrix");
+    expect(description?.getAttribute("content")).toContain("言语云枢 · YYC³ PivotMatrix Ops");
   });
 
   it("should set og meta tags", () => {
@@ -117,10 +117,10 @@ describe("useYYC3Head", () => {
     const ogType = document.querySelector('meta[property="og:type"]');
     
     expect(ogTitle).toBeInTheDocument();
-    expect(ogTitle?.getAttribute("content")).toBe("YYC³ Cloud Intelli-Matrix");
+    expect(ogTitle?.getAttribute("content")).toBe("言语云枢·智能矩阵 | YYC³ PivotMatrix Ops");
     
     expect(ogDescription).toBeInTheDocument();
-    expect(ogDescription?.getAttribute("content")).toContain("本地闭环多端推理矩阵数据看盘系统");
+    expect(ogDescription?.getAttribute("content")).toContain("矩阵统一管控，算力可视可管");
     
     expect(ogImage).toBeInTheDocument();
     expect(ogType?.getAttribute("content")).toBe("website");

@@ -232,7 +232,7 @@ export class DocsGenerator {
     sections.push({
       id: "overview",
       title: "系统架构",
-      content: "## 整体架构\n\nYYC³ Cloud Intelli-Matrix 采用现代化的前端架构设计，支持 Web 和桌面双端部署。\n\n### 核心设计原则\n\n- **五高**: 高可用、高性能、高安全、高扩展、高智能\n- **五标**: 标准化、规范化、自动化、可视化、智能化\n- **五化**: 流程化、文档化、工具化、数字化、生态化",
+      content: "## 整体架构\n\n言语云枢·智能矩阵（YYC³ PivotMatrix Ops）采用现代化的前端架构设计，支持 Web 和桌面双端部署。\n\n### 核心设计原则\n\n- **五高**: 高可用、高性能、高安全、高扩展、高智能\n- **五标**: 标准化、规范化、自动化、可视化、智能化\n- **五化**: 流程化、文档化、工具化、数字化、生态化",
       order: 1,
       subsections: [],
     });

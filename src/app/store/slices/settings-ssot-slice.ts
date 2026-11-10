@@ -37,6 +37,7 @@ import {
   resetAPIConfig as resetAPIEndpoints, setAPIConfig,
   type APIEndpoints
 } from '../../lib/api-config';
+import { APP_BRAND } from '../../config/app-brand';
 import { onEnvConfigChange } from '../../lib/env-config';
 import { captureError } from '../../lib/error-handler';
 
@@ -143,9 +144,9 @@ const DEFAULT_TOGGLES: SettingsToggles = {
 };
 
 const DEFAULT_VALUES: SettingsValues = {
-  systemName: "YYC³ Cloud Intelli-Matrix v3.4",
+  systemName: `${APP_BRAND.fullNameZh} v3.4.1`,
   clusterId: "CN-EAST-PROD-01",
-  brandName: "YanYuCloudCube",
+  brandName: APP_BRAND.nameZh,
   brandSlogan1: "言启象限 | 语枢未来",
   brandSlogan2: "言启千行代码 | 语枢万物智能",
   brandSlogan3: "万象归元于云枢 | 深栈智启新纪元",
@@ -222,6 +223,20 @@ interface SettingsSSOTActions {
   exportAll: () => string;
   importAll: (json: string) => boolean;
   getVariableValue: (key: string) => VariableValue;
+}
+
+/**
+ * 品牌升级归一化（A1 主选命名落地）：
+ * 仅当值仍是旧默认品牌时替换为新默认，用户自定义值不做覆盖。
+ * 供 persist migrate（v1→v2）与 legacy 归并（onRehydrateStorage）两处复用。
+ */
+function normalizeLegacyBrand(values: Partial<SettingsValues>): void {
+  if (values.brandName === "YanYuCloudCube") {
+    values.brandName = APP_BRAND.nameZh;
+  }
+  if (typeof values.systemName === "string" && /^YYC³? Cloud Intelli-Matrix/.test(values.systemName)) {
+    values.systemName = DEFAULT_VALUES.systemName;
+  }
 }
 
 function migrateFromLegacyStores(): Partial<SettingsSSOTState> {
@@ -422,13 +437,19 @@ export const useSettingsSSOT = create<SettingsSSOTSlice>()(
       })),
       {
         name: 'yyc3-settings-ssot',
-        version: 1,
+        version: 2,
         migrate: (persisted, version) => {
+          let state = persisted as SettingsSSOTState;
           if (version < 1) {
             const legacy = migrateFromLegacyStores();
-            return Object.assign({}, persisted as Record<string, unknown>, legacy) as SettingsSSOTState;
+            state = Object.assign({}, state, legacy) as SettingsSSOTState;
           }
-          return persisted as SettingsSSOTState;
+          if (version < 2) {
+            // 品牌升级迁移（A1 主选命名落地）
+            const values = (state as unknown as { values?: Partial<SettingsValues> }).values;
+            if (values) { normalizeLegacyBrand(values); }
+          }
+          return state;
         },
         onRehydrateStorage: () => {
           return (state) => {
@@ -437,6 +458,9 @@ export const useSettingsSSOT = create<SettingsSSOTSlice>()(
               Object.assign(state, legacy);
               state._migrated = true;
             }
+
+            // 品牌归一化：覆盖 legacy 归并与历史持久化两条路径（用户自定义值不受影响）
+            if (state?.values) { normalizeLegacyBrand(state.values); }
 
             if (_apiConfigUnsubscribe) { _apiConfigUnsubscribe(); }
             _apiConfigUnsubscribe = onAPIConfigChange((config) => {

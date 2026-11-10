@@ -933,7 +933,9 @@ export function getNavGroups(): Record<string, PageConfig[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  页面配置持久化（自编辑支持）
+//  页面配置持久化（自编辑支持）+ 响应式引擎（P0：编辑即生效）
+//  - 模块内订阅 + window "storage" 跨标签页同步
+//  - 双层缓存保证快照引用稳定（useSyncExternalStore 兼容，防无限重渲染）
 // ═══════════════════════════════════════════════════════════════
 
 interface PageConfigOverride {
@@ -942,58 +944,128 @@ interface PageConfigOverride {
   updatedAt: number;
 }
 
+type PageConfigListener = () => void;
+
+const pageConfigListeners = new Set<PageConfigListener>();
+let overridesCache: Record<string, PageConfigOverride> | null = null;
+const mergedCache = new Map<string, PageConfig>();
+let navVisibilityCache: Record<string, boolean> | null = null;
+
+/** 写入/外部变更后调用：失效缓存并广播 */
+function notifyPageConfigListeners(): void {
+  overridesCache = null;
+  mergedCache.clear();
+  navVisibilityCache = null;
+  for (const listener of pageConfigListeners) {
+    try {
+      listener();
+    } catch {
+      // 单个订阅者异常不阻断其余订阅
+    }
+  }
+}
+
+/**
+ * 订阅页面配置变更（编辑保存 / 重置 / 跨标签页写入均触发）
+ * 返回取消订阅函数，供 useSyncExternalStore / useEffect 使用
+ */
+export function subscribePageConfigs(listener: PageConfigListener): () => void {
+  pageConfigListeners.add(listener);
+  return () => {
+    pageConfigListeners.delete(listener);
+  };
+}
+
+// 跨标签页同步：其他标签页写入同一 key 时，本标签失效缓存并通知
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) {
+      notifyPageConfigListeners();
+    }
+  });
+}
+
 export function loadPageConfigOverrides(): Record<string, PageConfigOverride> {
+  if (overridesCache) {
+    return overridesCache;
+  }
+  let loaded: Record<string, PageConfigOverride>;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    loaded = raw ? JSON.parse(raw) : {};
   } catch {
-    return {};
+    loaded = {};
   }
+  overridesCache = loaded;
+  return loaded;
 }
 
 export function savePageConfigOverrides(overrides: Record<string, PageConfigOverride>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    overridesCache = overrides;
   } catch {
     // ignore
   }
+}
+
+/** 读取某页面的显式覆盖项（无覆盖返回 undefined）——供「仅编辑后才生效」语义使用 */
+export function getPageConfigOverride(pageId: string): Partial<PageConfig> | undefined {
+  return loadPageConfigOverrides()[pageId]?.overrides;
+}
+
+/** 导航可见性快照（path → showInNav，缓存稳定引用，供 useSyncExternalStore 使用） */
+export function getNavVisibilitySnapshot(): Record<string, boolean> {
+  if (navVisibilityCache) {
+    return navVisibilityCache;
+  }
+  const map: Record<string, boolean> = {};
+  for (const page of Object.values(PAGE_REGISTRY)) {
+    map[page.path] = getMergedPageConfig(page.id)?.sidebar.showInNav ?? true;
+  }
+  navVisibilityCache = map;
+  return map;
 }
 
 export function updatePageConfig(pageId: string, overrides: Partial<PageConfig>): PageConfig | null {
   const baseConfig = PAGE_REGISTRY[pageId];
   if (!baseConfig) {return null;}
 
-  const allOverrides = loadPageConfigOverrides();
+  const allOverrides = { ...loadPageConfigOverrides() };
   allOverrides[pageId] = {
     pageId,
     overrides: { ...allOverrides[pageId]?.overrides, ...overrides },
     updatedAt: Date.now(),
   };
   savePageConfigOverrides(allOverrides);
+  notifyPageConfigListeners();
 
-  return { ...baseConfig, ...allOverrides[pageId].overrides };
+  return getMergedPageConfig(pageId) ?? null;
 }
 
 export function getMergedPageConfig(pageId: string): PageConfig | undefined {
+  const cached = mergedCache.get(pageId);
+  if (cached) {
+    return cached;
+  }
+
   const baseConfig = PAGE_REGISTRY[pageId];
   if (!baseConfig) {return undefined;}
 
-  const overrides = loadPageConfigOverrides();
-  const pageOverride = overrides[pageId];
-
-  if (pageOverride) {
-    return { ...baseConfig, ...pageOverride.overrides };
-  }
-
-  return baseConfig;
+  const pageOverride = loadPageConfigOverrides()[pageId];
+  const merged = pageOverride ? { ...baseConfig, ...pageOverride.overrides } : baseConfig;
+  mergedCache.set(pageId, merged);
+  return merged;
 }
 
 export function resetPageConfig(pageId: string): void {
-  const overrides = loadPageConfigOverrides();
+  const overrides = { ...loadPageConfigOverrides() };
   delete overrides[pageId];
   savePageConfigOverrides(overrides);
+  notifyPageConfigListeners();
 }
 
 export function resetAllPageConfigs(): void {
   localStorage.removeItem(STORAGE_KEY);
+  notifyPageConfigListeners();
 }

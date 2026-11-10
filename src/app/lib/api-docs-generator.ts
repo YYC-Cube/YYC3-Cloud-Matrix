@@ -259,8 +259,8 @@ export class APIDocsGenerator {
 export function createYYC3APIDocs(): APIDocsGenerator {
   const generator = new APIDocsGenerator({
     version: "1.0.0",
-    title: "YYC³ Cloud Intelli-Matrix API",
-    description: "YYC³ Cloud Intelli-Matrix 企业级智能矩阵管理系统 API 文档",
+    title: "YYC³ PivotMatrix Ops API",
+    description: "言语云枢·智能矩阵（YYC³ PivotMatrix Ops）异构算力矩阵运维面板 API 文档",
     baseUrl: "http://localhost:3118/api",
   });
 

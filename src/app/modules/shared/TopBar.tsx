@@ -54,10 +54,12 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { getNavVisibilitySnapshot, subscribePageConfigs } from "../../config";
 import { useI18n } from "../../hooks/useI18n";
 import { isGhostMode } from "../../lib/supabaseClient";
+import { useSettingsSSOT } from "../../store/slices/settings-ssot-slice";
 import type { ConnectionState } from "../../types";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -196,6 +198,26 @@ export function TopBar({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useI18n();
+  // 品牌名接设置 SSOT（统一设置面板修改即时生效）
+  const brandName = useSettingsSSOT((s) => s.values.brandName);
+  // 系统名接设置 SSOT：提取版本号作为顶栏副标（如 "言语云枢 · YYC³ PivotMatrix Ops … v3.4.1" → "v3.4.1"）
+  const systemName = useSettingsSSOT((s) => s.values.systemName);
+  const versionBadge = useMemo(() => {
+    const m = /v(\d+\.\d+[\d.]*)/i.exec(systemName);
+    return m ? `v${m[1]}` : null;
+  }, [systemName]);
+  // 导航可见性接 page-config 响应式引擎（页面配置编辑器改 showInNav 即时生效）
+  const navVisibility = useSyncExternalStore(subscribePageConfigs, getNavVisibilitySnapshot);
+  const visibleMobileNav = useMemo(
+    () =>
+      MOBILE_NAV
+        .map((cat) => ({
+          ...cat,
+          children: cat.children.filter((ch) => navVisibility[ch.path] !== false),
+        }))
+        .filter((cat) => cat.children.length > 0),
+    [navVisibility]
+  );
   const ghost = isGhostMode();
   const [searchFocused, setSearchFocused] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -262,18 +284,22 @@ export function TopBar({
           )}
 
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => navigate("/")}>
+          <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => navigate("/")} title={isDesktop ? systemName : undefined}>
             {!isDesktop && <YYC3Logo size="xs" showStatus={false} glow={false} />}
             <span
               data-testid="brand-name"
               className="text-[#00d4ff] tracking-[0.15em]"
               style={{ fontFamily: "'Orbitron', sans-serif", fontSize: isDesktop ? "0.88rem" : "0.82rem" }}
             >
-              {isDesktop ? "CP-IM" : "YYC³"}
+              {isDesktop ? brandName : "YYC³"}
             </span>
-            {isDesktop && (
-              <span className="text-[rgba(0,212,255,0.2)] hidden xl:inline" style={{ fontSize: "0.55rem", letterSpacing: "0.06em" }}>
-                v3.2
+            {isDesktop && versionBadge && (
+              <span
+                data-testid="version-badge"
+                className="text-[rgba(0,212,255,0.2)] hidden xl:inline"
+                style={{ fontSize: "0.55rem", letterSpacing: "0.06em" }}
+              >
+                {versionBadge}
               </span>
             )}
           </div>
@@ -585,7 +611,7 @@ export function TopBar({
 
               {/* ── 导航分类（手风琴） ── */}
               <div className="flex-1 overflow-y-auto px-3 pb-4">
-                {MOBILE_NAV.map((cat) => {
+                {visibleMobileNav.map((cat) => {
                   const CatIcon = cat.icon;
                   const isExpanded = expandedCatId === cat.id;
                   const hasActive = cat.children.some((c) => c.path === location.pathname);

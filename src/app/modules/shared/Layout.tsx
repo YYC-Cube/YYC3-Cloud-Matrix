@@ -24,8 +24,27 @@ import { IntegratedTerminal } from "../dev/IntegratedTerminal";
 import { useWebSocketData } from "../../hooks/useWebSocketData";
 import { useMobileView } from "../../hooks/useMobileView";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { usePageConfig } from "../../hooks/usePageConfig";
+import { getPageConfigOverride, type PageLayout } from "../../config";
 import { AuthContext } from "../../lib/authContext";
 import { WebSocketContext, ViewContext } from "../../lib/view-context";
+
+/** 页面布局配置 → Tailwind 类映射（仅显式覆盖时接管，默认保持现状） */
+const MAX_W_CLASS: Record<PageLayout["maxWidth"], string> = {
+  sm: "max-w-screen-sm",
+  md: "max-w-screen-md",
+  lg: "max-w-screen-lg",
+  xl: "max-w-screen-xl",
+  "2xl": "max-w-screen-2xl",
+  full: "",
+};
+
+const PAD_CLASS: Record<PageLayout["padding"], string> = {
+  none: "p-0",
+  sm: "p-2",
+  md: "p-4",
+  lg: "p-6",
+};
 
 /**
  * 路由懒加载 Suspense fallback — 赛博朋克风格加载指示器
@@ -54,6 +73,17 @@ export function Layout() {
   const [terminalOpen, setTerminalOpen] = useState(false);
 
   const isDesktop = !view.isMobile && !view.isTablet;
+
+  // 页面配置消费（P0：面板编辑即生效）
+  // showHeader/showSidebar：注册表默认全 true，仅显式编辑为 false 时隐藏
+  // showBottomNav/maxWidth/padding：注册表默认与现状不一致，仅显式覆盖时接管
+  const { config: pageConfig } = usePageConfig();
+  const pageOverride = pageConfig ? getPageConfigOverride(pageConfig.id) : undefined;
+  const showHeader = pageConfig?.layout.showHeader ?? true;
+  const showSidebar = pageConfig?.layout.showSidebar ?? true;
+  const showBottomNav = pageOverride?.layout?.showBottomNav ?? true;
+  const maxWidthCls = pageOverride?.layout?.maxWidth ? MAX_W_CLASS[pageOverride.layout.maxWidth] : "";
+  const paddingCls = pageOverride?.layout?.padding ? PAD_CLASS[pageOverride.layout.padding] : null;
 
   const stableView = useMemo(() => view, [view]);
 
@@ -101,7 +131,8 @@ export function Layout() {
           </div>
 
           <div className="relative z-10 flex flex-col h-full">
-            {/* TopBar: minimal, always on top */}
+            {/* TopBar: minimal, always on top（page-config layout.showHeader 可关闭） */}
+            {showHeader && (
             <TopBar
               connectionState={wsData.connectionState}
               isSimulated={wsData.isSimulated}
@@ -118,11 +149,12 @@ export function Layout() {
               onToggleTerminal={() => setTerminalOpen(prev => !prev)}
               onOpenCommandPalette={() => setCommandPaletteOpen(true)}
             />
+            )}
 
             {/* Main area: Sidebar (desktop) + Content */}
             <div className="flex flex-1 overflow-hidden">
-              {/* Sidebar: desktop only */}
-              {isDesktop && (
+              {/* Sidebar: desktop only（page-config layout.showSidebar 可关闭） */}
+              {isDesktop && showSidebar && (
                 <Sidebar
                   collapsed={sidebarCollapsed}
                   onToggle={() => setSidebarCollapsed((prev) => !prev)}
@@ -131,20 +163,24 @@ export function Layout() {
 
               {/* Page content */}
               <div className={`flex-1 overflow-auto ${
-                location.pathname.startsWith("/ai-family")
-                  ? ""
-                  : view.isMobile ? "px-3 pt-2 pb-[72px]" : view.isTablet ? "px-4 pt-3 pb-[72px]" : "p-4"
+                paddingCls ?? (
+                  location.pathname.startsWith("/ai-family")
+                    ? ""
+                    : view.isMobile ? "px-3 pt-2 pb-[72px]" : view.isTablet ? "px-4 pt-3 pb-[72px]" : "p-4"
+                )
               }`}>
-                <ErrorBoundary level="module" source="PageContent">
-                  <Suspense fallback={<RouteFallback />}>
-                    <Outlet />
-                  </Suspense>
-                </ErrorBoundary>
+                <div className={maxWidthCls ? `${maxWidthCls} mx-auto w-full` : "w-full"}>
+                  <ErrorBoundary level="module" source="PageContent">
+                    <Suspense fallback={<RouteFallback />}>
+                      <Outlet />
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
               </div>
             </div>
 
-            {/* Bottom Nav - mobile & tablet only */}
-            {(view.isMobile || view.isTablet) && <BottomNav />}
+            {/* Bottom Nav - mobile & tablet only（page-config 显式覆盖可关闭） */}
+            {(view.isMobile || view.isTablet) && showBottomNav && <BottomNav />}
           </div>
 
           {/* AI 智能助理浮窗 */}

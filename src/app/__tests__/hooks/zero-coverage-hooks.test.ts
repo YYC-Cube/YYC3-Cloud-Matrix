@@ -40,17 +40,24 @@ describe("useClock", () => {
 
 describe("useVariables", () => {
   it("should return variables interface", async () => {
-    vi.doMock("../../config/variable-center", () => ({
-      VARIABLE_DEFINITIONS: [],
-      getVariableDefinition: vi.fn(() => undefined),
-      getVariablesByCategory: vi.fn(() => []),
-      getVariableValue: vi.fn(() => ({ key: "test", value: "default", source: "default", updatedAt: Date.now() })),
-      setVariableValue: vi.fn(),
-      resetVariableValue: vi.fn(),
-      validateVariable: vi.fn(() => ({ valid: true, errors: [] })),
-      loadVariableValues: vi.fn(() => ({})),
-      VariableCategory: {},
-    }));
+    vi.doMock("../../config/variable-center", () => {
+      // 快照必须返回稳定引用（每次新建对象会触发 useSyncExternalStore 无限循环）
+      const stableSnapshot: Record<string, never> = {};
+      return {
+        VARIABLE_DEFINITIONS: [],
+        getVariableDefinition: vi.fn(() => undefined),
+        getVariablesByCategory: vi.fn(() => []),
+        getVariableValue: vi.fn(() => ({ key: "test", value: "default", source: "default", updatedAt: Date.now() })),
+        setVariableValue: vi.fn(),
+        resetVariableValue: vi.fn(),
+        validateVariable: vi.fn(() => ({ valid: true, errors: [] })),
+        loadVariableValues: vi.fn(() => ({})),
+        // v1.1 响应式引擎接口适配
+        getVariableValuesSnapshot: vi.fn(() => stableSnapshot),
+        subscribeVariables: vi.fn(() => () => {}),
+        VariableCategory: {},
+      };
+    });
     const { useVariables } = await import("../../hooks/useVariables");
     const { result } = renderHook(() => useVariables());
     expect(result.current.values).toBeDefined();

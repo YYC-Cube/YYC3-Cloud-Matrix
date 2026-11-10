@@ -242,11 +242,11 @@ describe("theme-presets", () => {
     });
 
     it("should have correct system name", () => {
-      expect(DEFAULT_BRANDING.systemName).toBe("YYC³ Cloud Intelli-Matrix");
+      expect(DEFAULT_BRANDING.systemName).toBe("言语云枢·智能矩阵");
     });
 
     it("should have correct tagline", () => {
-      expect(DEFAULT_BRANDING.tagline).toBe("本地多端推理矩阵 · 数据看盘");
+      expect(DEFAULT_BRANDING.tagline).toBe("万源汇枢，阵驭算力");
     });
 
     it("should have empty background URL by default", () => {

@@ -34,7 +34,7 @@ const MILESTONES = [
   { date: "2025-02-25", title: "八位家人协同框架完成", desc: "8位AI成员交互系统上线", color: "#FFD700", icon: Users },
   { date: "2025-02-20", title: "赛博朋克设计系统建立", desc: "统一GlassCard、色彩、排版规范", color: "#BF00FF", icon: Award },
   { date: "2025-02-15", title: "九层架构设计完成", desc: "从基础设施到扩展演进的完整架构", color: "#FF7043", icon: Target },
-  { date: "2025-02-01", title: "项目正式启动", desc: "YYC3 Cloud Intelli-Matrix 创建", color: "#FF69B4", icon: Flame },
+  { date: "2025-02-01", title: "项目正式启动", desc: "言语云枢·智能矩阵 创建", color: "#FF69B4", icon: Flame },
 ];
 
 const WEEKLY_STATS = [

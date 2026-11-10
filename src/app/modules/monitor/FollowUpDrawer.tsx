@@ -465,7 +465,7 @@ export function FollowUpDrawer({
         {/* ======== Footer ======== */}
         <div className="shrink-0 p-3 border-t border-[rgba(0,180,255,0.08)] flex items-center justify-between">
           <span className="text-[rgba(0,212,255,0.2)]" style={{ fontSize: "0.62rem" }}>
-            CP-IM Follow-up System v1.0
+            PivotMatrix Ops Follow-up System v1.0
           </span>
           <div className="flex items-center gap-2">
             <button

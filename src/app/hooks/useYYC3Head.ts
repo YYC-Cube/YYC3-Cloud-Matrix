@@ -10,14 +10,15 @@
  */
 
 import { useEffect } from "react";
+import { APP_BRAND } from "../config/app-brand";
 import { icons, iconsCDN } from "../lib/yyc3-icons";
 
 export function useYYC3Head() {
   useEffect(() => {
     // ----------------------------------------------------------
-    // 页面标题
+    // 页面标题（命名规范 §7.5：页签固定为「言语云枢·智能矩阵」，不追加英文或副标题）
     // ----------------------------------------------------------
-    document.title = "YYC³ Cloud Intelli-Matrix · 数据看盘";
+    document.title = APP_BRAND.nameZh;
 
     // ----------------------------------------------------------
     // 辅助: 创建或更新 <link> 标签
@@ -82,14 +83,15 @@ export function useYYC3Head() {
     upsertMeta("theme-color", "#060e1f");
     upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
     upsertMeta("apple-mobile-web-app-capable", "yes");
-    upsertMeta("apple-mobile-web-app-title", "YYC³ Cloud");
+    upsertMeta("apple-mobile-web-app-title", APP_BRAND.nameZh);
 
     // ----------------------------------------------------------
     // SEO / OG 基础 (本地系统用不上, 但规范化)
     // ----------------------------------------------------------
-    upsertMeta("description", "YYC³ Cloud Intelli-Matrix — 本地多端推理矩阵数据库数据看盘 — M4 Max + iMac + NAS 集群实时监控");
-    upsertMeta("og:title", "YYC³ Cloud Intelli-Matrix");
-    upsertMeta("og:description", "本地闭环多端推理矩阵数据看盘系统");
+    upsertMeta("description", `${APP_BRAND.fullNameZh}，统一纳管 Apple M 系列、DGX GPU、NAS 与 BMC 节点，覆盖实时监控、巡检、告警、权限审计与工单运维`);
+    upsertMeta("og:title", `${APP_BRAND.nameZh} | YYC³ PivotMatrix Ops`);
+    upsertMeta("og:site_name", APP_BRAND.nameZh);
+    upsertMeta("og:description", APP_BRAND.sloganOpsZh);
     upsertMeta("og:image", icons.webAppChrome512);
     upsertMeta("og:type", "website");
 

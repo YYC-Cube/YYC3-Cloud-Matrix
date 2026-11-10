@@ -200,7 +200,7 @@ describe("useBigModelSDK", () => {
         return await result.current.sendMessage(mockModel, "你好");
       });
 
-      expect(response.content).toContain("YYC3 Cloud Intelli-Matrix");
+      expect(response.content).toContain("言语云枢·智能矩阵");
       expect(response.finishReason).toBe("stop");
       expect(result.current.connectionStatus).toBe("connected");
       expect(result.current.sessions[0].messages).toHaveLength(2);
@@ -263,7 +263,7 @@ describe("useBigModelSDK", () => {
         });
       });
 
-      expect(response.content).toContain("YYC3 Cloud Intelli-Matrix");
+      expect(response.content).toContain("言语云枢·智能矩阵");
       expect(chunks.length).toBeGreaterThan(0);
       expect(result.current.streaming).toBe(false);
       expect(result.current.streamingContent).toBe("");

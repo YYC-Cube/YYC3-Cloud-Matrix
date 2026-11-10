@@ -39,7 +39,7 @@ describe("PWAInstallPrompt", () => {
 
     render(<PWAInstallPrompt />);
 
-    expect(screen.queryByText("安装 CP-IM Cloud")).not.toBeInTheDocument();
+    expect(screen.queryByText("安装 言语云枢·智能矩阵")).not.toBeInTheDocument();
   });
 
   it("should not render when cannot install", () => {
@@ -52,7 +52,7 @@ describe("PWAInstallPrompt", () => {
 
     render(<PWAInstallPrompt />);
 
-    expect(screen.queryByText("安装 CP-IM Cloud")).not.toBeInTheDocument();
+    expect(screen.queryByText("安装 言语云枢·智能矩阵")).not.toBeInTheDocument();
   });
 
   it("should render when can install and not installed", () => {
@@ -65,7 +65,7 @@ describe("PWAInstallPrompt", () => {
 
     render(<PWAInstallPrompt />);
 
-    expect(screen.getByText("安装 CP-IM Cloud")).toBeInTheDocument();
+    expect(screen.getByText("安装 言语云枢·智能矩阵")).toBeInTheDocument();
     expect(screen.getByText("添加到桌面，获得原生应用体验，支持离线使用")).toBeInTheDocument();
     const installButtons = screen.getAllByText("安装到桌面");
     expect(installButtons.length).toBeGreaterThan(0);

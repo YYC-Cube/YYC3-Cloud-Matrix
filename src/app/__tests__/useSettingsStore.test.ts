@@ -39,7 +39,7 @@ describe("useSettingsStore", () => {
     expect(result.current.values).toBeDefined();
     expect(result.current.settings.autoScale).toBe(true);
     expect(result.current.settings.darkMode).toBe(true);
-    expect(result.current.values.systemName).toBe("YYC³ Cloud Intelli-Matrix v3.2");
+    expect(result.current.values.systemName).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
   });
 
   it("should toggle setting", () => {
@@ -93,7 +93,7 @@ describe("useSettingsStore", () => {
       result.current.resetSettings();
     });
 
-    expect(result.current.values.systemName).toBe("YYC³ Cloud Intelli-Matrix v3.2");
+    expect(result.current.values.systemName).toBe("言语云枢 · YYC³ PivotMatrix Ops 异构算力矩阵运维面板 v3.4.1");
     expect(result.current.settings.autoScale).toBe(true);
   });
 

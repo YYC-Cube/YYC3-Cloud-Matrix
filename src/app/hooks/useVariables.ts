@@ -2,14 +2,21 @@
  * @file: useVariables.ts
  * @description: useVariables.ts
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v1.1.0
  * @created: 2026-04-06
- * @updated: 2026-04-08
+ * @updated: 2026-11-10
  * @status: active
  * @tags: [hook]
+ *
+ * @brief: 变量中心 Hook —— P0 修复：接入 variable-center 响应式引擎
+ *
+ * @details:
+ * - useSyncExternalStore 订阅 subscribeVariables，任何一处 set/reset/import 即时广播
+ * - 快照为缓存稳定引用，杜绝无限重渲染
+ * - 对外接口保持 v1.0 形状（values/get/set/reset/validate/reload/hasChanges）
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   VARIABLE_DEFINITIONS,
   getVariableDefinition,
@@ -18,7 +25,8 @@ import {
   setVariableValue,
   resetVariableValue,
   validateVariable,
-  loadVariableValues,
+  getVariableValuesSnapshot,
+  subscribeVariables,
   type VariableCategory,
   type VariableDefinition,
   type VariableValue,
@@ -41,32 +49,29 @@ export interface UseVariablesResult {
 }
 
 export function useVariables(options: UseVariablesOptions = {}): UseVariablesResult {
-  const { category, autoLoad = true } = options;
+  const { category } = options;
 
-  const [values, setValues] = useState<Record<string, VariableValue>>({});
+  // 响应式快照：任何写入即时反映（v1.0 需手动 reload，v1.1 自动）
+  const snapshot = useSyncExternalStore(subscribeVariables, getVariableValuesSnapshot);
   const [hasChanges, setHasChanges] = useState(false);
 
   const definitions = useMemo(() => {
     return category ? getVariablesByCategory(category) : VARIABLE_DEFINITIONS;
   }, [category]);
 
-  const reload = useCallback(() => {
-    const loadedValues = loadVariableValues();
+  // 合并存储值与默认值，组装完整 values 视图
+  const values = useMemo(() => {
     const allValues: Record<string, VariableValue> = {};
-
     for (const def of definitions) {
-      allValues[def.key] = loadedValues[def.key] || getVariableValue(def.key);
+      allValues[def.key] = snapshot[def.key] || getVariableValue(def.key);
     }
+    return allValues;
+  }, [definitions, snapshot]);
 
-    setValues(allValues);
+  const reload = useCallback(() => {
+    // v1.1 起快照自动同步，reload 仅为兼容旧调用方保留
     setHasChanges(false);
-  }, [definitions]);
-
-  useEffect(() => {
-    if (autoLoad) {
-      reload();
-    }
-  }, [autoLoad, reload]);
+  }, []);
 
   const get = useCallback(
     (key: string): unknown => {
@@ -77,32 +82,11 @@ export function useVariables(options: UseVariablesOptions = {}): UseVariablesRes
 
   const set = useCallback((key: string, value: unknown) => {
     setVariableValue(key, value, "user");
-    setValues((prev) => ({
-      ...prev,
-      [key]: {
-        key,
-        value,
-        source: "user",
-        updatedAt: Date.now(),
-      },
-    }));
     setHasChanges(true);
   }, []);
 
   const reset = useCallback((key: string) => {
     resetVariableValue(key);
-    const def = getVariableDefinition(key);
-    if (def) {
-      setValues((prev) => ({
-        ...prev,
-        [key]: {
-          key,
-          value: def.defaultValue,
-          source: "default",
-          updatedAt: Date.now(),
-        },
-      }));
-    }
     setHasChanges(true);
   }, []);
 
@@ -133,21 +117,25 @@ export interface UseVariableResult {
 }
 
 export function useVariable(key: string): UseVariableResult {
-  const [value, setValue] = useState<unknown>(() => getVariableValue(key).value);
+  const snapshot = useSyncExternalStore(subscribeVariables, getVariableValuesSnapshot);
   const definition = useMemo(() => getVariableDefinition(key), [key]);
+
+  const storedValue = useMemo(() => {
+    return snapshot[key] ?? getVariableValue(key);
+  }, [snapshot, key]);
+
+  const value = storedValue.value;
 
   const set = useCallback(
     (newValue: unknown) => {
       setVariableValue(key, newValue, "user");
-      setValue(newValue);
     },
     [key]
   );
 
   const reset = useCallback(() => {
     resetVariableValue(key);
-    setValue(definition?.defaultValue);
-  }, [key, definition]);
+  }, [key]);
 
   const validate = useCallback(
     (val: unknown) => {
@@ -156,42 +144,26 @@ export function useVariable(key: string): UseVariableResult {
     [key]
   );
 
-  const storedValue = getVariableValue(key);
-  const isDefault = storedValue.source === "default";
-  const isModified = storedValue.source === "user";
-
   return {
     value,
     definition,
     set,
     reset,
     validate,
-    isDefault,
-    isModified,
+    isDefault: storedValue.source === "default",
+    isModified: storedValue.source === "user",
   };
 }
 
 export function useVariableValue<T = unknown>(key: string, defaultValue?: T): T {
   const definition = getVariableDefinition(key);
-  const [value, setValue] = useState<T>(() => {
-    const stored = getVariableValue(key);
-    return (stored.value as T) ?? (defaultValue ?? (definition?.defaultValue as T));
-  });
+  const snapshot = useSyncExternalStore(subscribeVariables, getVariableValuesSnapshot);
 
-  useEffect(() => {
-    const stored = getVariableValue(key);
-    if (stored.source !== "default") {
-      setValue(stored.value as T);
+  return useMemo(() => {
+    const stored = snapshot[key];
+    if (stored && stored.source !== "default") {
+      return stored.value as T;
     }
-  }, [key]);
-
-  const _setVariable = useCallback(
-    (newValue: T) => {
-      setVariableValue(key, newValue, "user");
-      setValue(newValue);
-    },
-    [key]
-  );
-
-  return value;
+    return (defaultValue ?? (definition?.defaultValue as T)) as T;
+  }, [snapshot, key, defaultValue, definition]);
 }

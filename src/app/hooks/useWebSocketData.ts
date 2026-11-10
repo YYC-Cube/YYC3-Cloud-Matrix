@@ -37,6 +37,7 @@ import type {
 import { getAPIConfig } from "../lib/api-config";
 import { dataBus } from "../lib/data-bus";
 import { useNodeSlice } from "../store/slices/node-slice";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // ============================================================
 // Simulated Data Generator — 从 useNodeSlice 读取初始数据
@@ -75,7 +76,7 @@ function generateThroughputPoint(): ThroughputPoint {
 // ============================================================
 
 const MAX_THROUGHPUT_HISTORY = 60;
-const SIMULATE_INTERVAL_MS = 2000;
+const DEFAULT_SIMULATE_INTERVAL_MS = 2000;
 const RECONNECT_DELAY_MS = 5000;
 
 export function useWebSocketData(): WebSocketDataState {
@@ -97,6 +98,18 @@ export function useWebSocketData(): WebSocketDataState {
 
   // ★ 核心：接入统一节点 Store — 节点数据从此处获取
   const { nodes: sliceNodes, mergeFromWS } = useNodeSlice();
+
+  // 设置 SSOT 驱动：刷新间隔与自动刷新开关（统一设置面板修改即时生效）
+  const autoRefresh = useSettingsSSOT((s) => s.runtime.autoRefresh);
+  const refreshInterval = useSettingsSSOT((s) => s.runtime.refreshInterval);
+  const simulateIntervalMs =
+    Number.isFinite(refreshInterval) && refreshInterval >= 500
+      ? refreshInterval
+      : DEFAULT_SIMULATE_INTERVAL_MS;
+  const autoRefreshRef = useRef(autoRefresh);
+  autoRefreshRef.current = autoRefresh;
+  const simulateIntervalRef = useRef(simulateIntervalMs);
+  simulateIntervalRef.current = simulateIntervalMs;
 
   const wsRef = useRef<WebSocket | null>(null);
   const simulateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -137,6 +150,20 @@ export function useWebSocketData(): WebSocketDataState {
     setLastSyncTime(new Date().toLocaleString("zh-CN", { hour12: false }));
   }, [mergeFromWS]);
 
+  // 设置变更即时生效：间隔/开关变化时重启模拟定时器
+  // ★ 仅在模拟态（connectionState === "simulated"）管理定时器；
+  //   WS 真连态绝不启动模拟器，避免污染真实数据
+  useEffect(() => {
+    if (connectionState !== "simulated") { return; }
+    if (simulateTimerRef.current) {
+      clearInterval(simulateTimerRef.current);
+      simulateTimerRef.current = null;
+    }
+    if (autoRefresh) {
+      simulateTimerRef.current = setInterval(runSimulation, simulateIntervalMs);
+    }
+  }, [connectionState, autoRefresh, simulateIntervalMs, runSimulation]);
+
   // ----- lifecycle -----
   // ★ v3.0 修复：先尝试WS连接，仅在失败后启动模拟器
   // 不再"启动即双跑"，消除模拟数据污染真实数据的竞争窗口
@@ -147,8 +174,14 @@ export function useWebSocketData(): WebSocketDataState {
     const startSimulation = () => {
       if (cancelled) { return; }
       if (simulateTimerRef.current) { return; }
+      if (!autoRefreshRef.current) {
+        // 自动刷新关闭：仅补一帧数据，不启动周期模拟
+        setConnectionState("simulated");
+        runSimulation();
+        return;
+      }
       setConnectionState("simulated");
-      simulateTimerRef.current = setInterval(runSimulation, SIMULATE_INTERVAL_MS);
+      simulateTimerRef.current = setInterval(runSimulation, simulateIntervalRef.current);
       runSimulation();
     };
 

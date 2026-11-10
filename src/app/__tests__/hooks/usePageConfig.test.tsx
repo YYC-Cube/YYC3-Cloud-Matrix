@@ -34,6 +34,10 @@ vi.mock("../../config", () => {
     }),
     updatePageConfig: vi.fn(),
     resetPageConfig: vi.fn(),
+    // v1.1 响应式引擎接口适配（mock 为无操作订阅）
+    subscribePageConfigs: vi.fn(() => () => {}),
+    getPageConfigOverride: vi.fn(() => undefined),
+    getNavVisibilitySnapshot: vi.fn(() => ({})),
   };
 });
 

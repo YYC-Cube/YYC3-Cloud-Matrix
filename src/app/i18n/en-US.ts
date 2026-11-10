@@ -14,6 +14,11 @@ import type { TranslationKeys } from "./zh-CN";
 const enUS: TranslationKeys = {
   // ======== Common ========
   common: {
+    // ── Brand entries (naming spec §5.3, SSOT: config/app-brand.ts) ──
+    appName: "PivotMatrix Ops",
+    appFullName: "YYC³ PivotMatrix Ops — Heterogeneous Compute Matrix Operations Panel",
+    appSlogan: "Converge at Pivot, Govern the Matrix",
+    appSloganOps: "Unified Matrix Control for Heterogeneous Compute",
     loading: "Loading...",
     confirm: "Confirm",
     cancel: "Cancel",
@@ -1369,10 +1374,10 @@ const enUS: TranslationKeys = {
   // ======== 404 Page ========
   notFound: {
     title: "Page Not Found",
-    desc: "The requested path does not exist in YYC³ Matrix Dashboard.",
+    desc: "The requested path does not exist in PivotMatrix Ops.",
     goBack: "Go Back",
     goHome: "Go Home",
-    footer: "YYC³ Cloud Intelli-Matrix · 404 NOT_FOUND",
+    footer: "PivotMatrix Ops · 404 NOT_FOUND",
   },
 } as const;
 
