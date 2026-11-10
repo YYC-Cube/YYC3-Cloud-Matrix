@@ -110,7 +110,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   handleCopyError = (): void => {
     const { error, errorInfo, appError } = this.state;
     const report = [
-      `=== CP-IM 错误报告 ===`,
+      `=== 言语云枢·智能矩阵 错误报告 ===`,
       `时间: ${new Date().toISOString()}`,
       `错误ID: ${appError?.id || "N/A"}`,
       `分类: ${appError?.category || "RUNTIME"}`,
@@ -219,7 +219,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                     系统异常
                   </h2>
                   <p className="text-[rgba(0,212,255,0.4)]" style={{ fontSize: "0.75rem" }}>
-                    CP-IM 捕获到一个运行时错误
+                    言语云枢·智能矩阵 捕获到一个运行时错误
                   </p>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <div className="flex items-center gap-2">
                 <YYC3LogoSvg size={16} showText={false} />
                 <span className="text-[rgba(0,212,255,0.2)]" style={{ fontSize: "0.65rem" }}>
-                  CP-IM ErrorBoundary v1.0
+                  PivotMatrix Ops ErrorBoundary v1.0
                 </span>
               </div>
               <span className="text-[rgba(0,212,255,0.2)]" style={{ fontSize: "0.65rem" }}>

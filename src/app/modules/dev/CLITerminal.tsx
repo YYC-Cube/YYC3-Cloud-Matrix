@@ -84,7 +84,7 @@ export function CLITerminal() {
             {t("nav.terminal")}
           </h2>
           <p className="text-[rgba(0,212,255,0.35)]" style={{ fontSize: "0.7rem" }}>
-            CP-IM CLI · {t("nav.terminal")} · {t("nav.ide")}
+            PivotMatrix Ops CLI · {t("nav.terminal")} · {t("nav.ide")}
           </p>
         </div>
       </div>

@@ -291,7 +291,7 @@ export function TopBar({
               className="text-[#00d4ff] tracking-[0.15em]"
               style={{ fontFamily: "'Orbitron', sans-serif", fontSize: isDesktop ? "0.88rem" : "0.82rem" }}
             >
-              {isDesktop ? brandName : "YYC³"}
+              {brandName}
             </span>
             {isDesktop && versionBadge && (
               <span

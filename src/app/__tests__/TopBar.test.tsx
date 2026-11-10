@@ -294,7 +294,8 @@ describe("TopBar Component", () => {
 
     const brandName = screen.getByTestId("brand-name");
     expect(brandName).toBeInTheDocument();
-    expect(brandName).toHaveTextContent("YYC\u00b3");
+    // 移动端与桌面端统一走设置 SSOT 品牌名（命名规范 §三 简称统一）
+    expect(brandName).toHaveTextContent("言语云枢·智能矩阵");
   });
 
   it("should render all monitor category items", () => {
