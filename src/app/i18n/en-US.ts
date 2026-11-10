@@ -52,6 +52,7 @@ const enUS: TranslationKeys = {
     more: "More",
     logout: "Sign Out",
     notifications: "Notifications",
+    noNotifications: "No notifications",
     copied: "Copied to clipboard",
   },
 

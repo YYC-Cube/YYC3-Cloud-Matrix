@@ -5,8 +5,14 @@
  * @version: v1.0.0
  * @created: 2026-04-25
  * @updated: 2026-04-25
- * @status: active
+ * @status: deprecated
  * @tags: [hooks],[database]
+ *
+ * @deprecated 2026-11-10 数据 API 架构审核（kimi）：
+ * 零生产消费者（grep -r "useDbData" src/app --include="*.tsx" = 仅测试），
+ * 依赖的 family-db-bridge（DB Proxy localhost:3299）服务端不存在于本仓库，
+ * 属死链路。真实节点/告警数据请使用 useWebSocketData（yyc3-agent WS 通道）。
+ * 计划：确认无隐藏依赖后物理删除。
  */
 
 import { useCallback, useEffect, useState } from "react";

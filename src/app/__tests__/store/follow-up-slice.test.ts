@@ -1,151 +1,140 @@
 /**
  * @file: follow-up-slice.test.ts
- * @description: YYC³ Follow-Up Slice 单元测试 · 待办事项管理
+ * @description: YYC³ Follow-Up Slice 单元测试 · 告警工单域（真实事件驱动，零硬编码种子）
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v2.0.0
  * @created: 2026-04-16
- * @updated: 2026-04-16
+ * @updated: 2026-11-10
  * @status: active
  * @tags: [auto-generated]
+ *
+ * @changelog:
+ * - v2.0.0 (2026-11-10): 按「禁止硬编码」政策移除 DEFAULT_FOLLOWUPS 假种子断言，
+ *   初始状态应为空；新增 ingestWSAlert 幂等摄入专项（真实 WS 告警 → 工单）
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useFollowUpSlice } from '../../store/slices/follow-up-slice';
 import type { FollowUpRecord } from '../../types';
+import type { AlertData } from '../../types/websocket-types';
+
+/** 构造测试工单 */
+function makeFu(taskId: string, overrides: Partial<FollowUpRecord> = {}): Omit<FollowUpRecord, 'id' | 'createdAt'> {
+  return {
+    taskId,
+    taskName: `任务-${taskId}`,
+    assignee: 'tester',
+    assigneeName: '测试员',
+    priority: 'medium',
+    status: 'pending',
+    dueDate: Date.now() + 86400000,
+    updatedAt: Date.now(),
+    category: 'feature',
+    ...overrides,
+  };
+}
 
 describe('useFollowUpSlice', () => {
   beforeEach(() => {
-    // 清理额外添加的待办事项
-    const currentFollowUps = useFollowUpSlice.getState().followUps;
-    currentFollowUps.forEach(fu => {
-      if (!fu.id.startsWith('fu-001') && !fu.id.startsWith('fu-002')) {
-        useFollowUpSlice.getState().removeFollowUp(fu.id);
-      }
-    });
+    // 每个用例从空状态开始（政策：无硬编码种子）
+    useFollowUpSlice.setState({ followUps: [] });
+  });
 
-    // 重置所有默认待办事项的状态
-    useFollowUpSlice.getState().followUps.forEach(fu => {
-      if (fu.status === 'completed') {
-        useFollowUpSlice.getState().updateFollowUp(fu.id, {
-          status: fu.taskId === 'TASK-042' ? 'in_progress' as any : 'pending' as any,
-          completedAt: undefined,
-        });
-      }
+  describe('初始状态（零硬编码政策）', () => {
+    it('初始工单列表应为空 — 数据仅来自真实事件/用户操作', () => {
+      const { followUps } = useFollowUpSlice.getState();
+      expect(followUps).toHaveLength(0);
     });
   });
 
-  describe('初始状态', () => {
-    it('应该包含2个默认待办事项', () => {
+  describe('ingestWSAlert（真实告警摄入）', () => {
+    const alert: AlertData = {
+      id: 'a-001',
+      level: 'critical',
+      message: '内存占用超过阈值 90%',
+      source: 'yyc3-agent',
+      timestamp: Date.now(),
+    };
+
+    it('WS 告警应生成一张 pending 工单', () => {
+      const created = useFollowUpSlice.getState().ingestWSAlert(alert);
+      expect(created).toBe(true);
+
       const { followUps } = useFollowUpSlice.getState();
-      expect(followUps).toHaveLength(2);
+      expect(followUps).toHaveLength(1);
+      expect(followUps[0].taskId).toBe('ALERT-yyc3-agent-a-001');
+      expect(followUps[0].taskName).toBe('内存占用超过阈值 90%');
+      expect(followUps[0].status).toBe('pending');
+      expect(followUps[0].assignee).toBe('system');
     });
 
-    it('应该包含 GPU 温度告警处理任务', () => {
+    it('告警级别应正确映射优先级（critical→critical, error→high, warning→medium, info→low）', () => {
+      const levels = [
+        { level: 'critical', priority: 'critical' },
+        { level: 'error', priority: 'high' },
+        { level: 'warning', priority: 'medium' },
+        { level: 'info', priority: 'low' },
+      ] as const;
+      levels.forEach(({ level, priority }, i) => {
+        useFollowUpSlice.getState().ingestWSAlert({ ...alert, id: `lv-${i}`, level });
+      });
       const { followUps } = useFollowUpSlice.getState();
-      const tempAlert = followUps.find(f => f.taskName.includes('温度告警'));
-      expect(tempAlert).toBeDefined();
-      expect(tempAlert?.priority).toBe('high');
-      expect(tempAlert?.status).toBe('in_progress');
-    });
-
-    it('应该包含模型版本升级任务', () => {
-      const { followUps } = useFollowUpSlice.getState();
-      const modelUpgrade = followUps.find(f => f.taskName.includes('模型版本升级'));
-      expect(modelUpgrade).toBeDefined();
-      expect(modelUpgrade?.priority).toBe('medium');
-      expect(modelUpgrade?.status).toBe('pending');
-    });
-
-    it('所有默认待办事项应该有有效的截止日期', () => {
-      const { followUps } = useFollowUpSlice.getState();
-      const now = Date.now();
-
-      followUps.forEach(fu => {
-        expect(fu.dueDate).toBeGreaterThan(now); // 截止日期应该在将来
-        expect(typeof fu.dueDate).toBe('number');
+      levels.forEach(({ priority }, i) => {
+        expect(followUps.find(f => f.taskId === `ALERT-yyc3-agent-lv-${i}`)?.priority).toBe(priority);
       });
     });
 
-    it('所有待办事项应该有创建时间', () => {
-      const { followUps } = useFollowUpSlice.getState();
+    it('同一 source+alertId 重复推送应幂等去重，不重复建单', () => {
+      expect(useFollowUpSlice.getState().ingestWSAlert(alert)).toBe(true);
+      expect(useFollowUpSlice.getState().ingestWSAlert(alert)).toBe(false);
+      expect(useFollowUpSlice.getState().ingestWSAlert({ ...alert, timestamp: Date.now() + 1000 })).toBe(false);
+      expect(useFollowUpSlice.getState().followUps).toHaveLength(1);
+    });
 
-      followUps.forEach(fu => {
-        expect(fu.createdAt).toBeDefined();
-        expect(typeof fu.createdAt).toBe('number');
-        expect(fu.createdAt).toBeGreaterThan(0);
-      });
+    it('不同告警源/ID 应分别建单', () => {
+      useFollowUpSlice.getState().ingestWSAlert(alert);
+      useFollowUpSlice.getState().ingestWSAlert({ ...alert, id: 'a-002' });
+      useFollowUpSlice.getState().ingestWSAlert({ ...alert, source: 'other-agent' });
+      expect(useFollowUpSlice.getState().followUps).toHaveLength(3);
+    });
+
+    it('新告警工单应排在列表最前', () => {
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-OLD'));
+      useFollowUpSlice.getState().ingestWSAlert(alert);
+      expect(useFollowUpSlice.getState().followUps[0].taskId).toBe('ALERT-yyc3-agent-a-001');
     });
   });
 
   describe('addFollowUp', () => {
     it('应该添加新待办事项并自动生成 ID', () => {
-      const newFu: Omit<FollowUpRecord, 'id' | 'createdAt'> = {
-        taskId: 'TASK-999',
-        taskName: '测试任务',
-        assignee: 'test_user',
-        assigneeName: '测试用户',
-        priority: 'low' as any,
-        status: 'pending' as any,
-        dueDate: Date.now() + 86400000,
-        notes: '这是一个测试任务',
-        updatedAt: Date.now(),
-        category: 'feature' as any,
-      };
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-999', { taskName: '测试任务' }));
 
-      useFollowUpSlice.getState().addFollowUp(newFu);
-
-      const { followUps } = useFollowUpSlice.getState();
-      const added = followUps.find(f => f.taskId === 'TASK-999');
+      const added = useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-999');
 
       expect(added).toBeDefined();
       expect(added?.taskName).toBe('测试任务');
-      expect(added?.id).toMatch(/^fu-\d+$/);
+      expect(added?.id).toMatch(/^fu-\d+-[a-z0-9]+$/);
       expect(added?.createdAt).toBeDefined();
     });
 
     it('应该自动设置 createdAt 时间戳', () => {
       const beforeAdd = Date.now();
-
-      useFollowUpSlice.getState().addFollowUp({
-        taskId: 'TASK-TIMESTAMP',
-        taskName: '时间戳测试',
-        assignee: 'tester',
-        assigneeName: '测试员',
-        priority: 'medium' as any,
-        status: 'pending' as any,
-        dueDate: Date.now() + 86400000,
-        updatedAt: Date.now(),
-        category: 'feature' as any,
-      });
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-TIMESTAMP'));
 
       const added = useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-TIMESTAMP');
-
-      if (added) {
-        expect(added.createdAt).toBeGreaterThanOrEqual(beforeAdd);
-      }
+      expect(added?.createdAt).toBeGreaterThanOrEqual(beforeAdd);
     });
 
     it('应该增加待办事项总数', () => {
       const beforeCount = useFollowUpSlice.getState().followUps.length;
-
-      useFollowUpSlice.getState().addFollowUp({
-        taskId: 'TASK-COUNT',
-        taskName: '计数测试',
-        assignee: 'counter',
-        assigneeName: '计数器',
-        priority: 'low' as any,
-        status: 'pending' as any,
-        dueDate: Date.now() + 86400000,
-        updatedAt: Date.now(),
-        category: 'feature' as any,
-      });
-
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-COUNT'));
       expect(useFollowUpSlice.getState().followUps.length).toBe(beforeCount + 1);
     });
   });
 
   describe('updateFollowUp', () => {
     it('应该更新指定 ID 的待办事项', () => {
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-UPD', { taskName: '温度告警复核' }));
       const fuId = useFollowUpSlice.getState().followUps[0].id;
 
       useFollowUpSlice.getState().updateFollowUp(fuId, {
@@ -154,31 +143,27 @@ describe('useFollowUpSlice', () => {
       });
 
       const updated = useFollowUpSlice.getState().followUps.find(f => f.id === fuId);
-
       expect(updated?.priority).toBe('critical');
       expect(updated?.notes).toBe('更新后的备注');
-      expect(updated?.taskName).toContain('温度告警'); // 未更新字段保持不变
+      expect(updated?.taskName).toBe('温度告警复核'); // 未更新字段保持不变
     });
 
     it('更新不存在的 ID 不应影响其他待办事项', () => {
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-KEEP'));
       const beforeCount = useFollowUpSlice.getState().followUps.length;
 
-      useFollowUpSlice.getState().updateFollowUp('non-existent', {
-        priority: 'critical',
-      });
+      useFollowUpSlice.getState().updateFollowUp('non-existent', { priority: 'critical' });
 
       expect(useFollowUpSlice.getState().followUps.length).toBe(beforeCount);
     });
 
     it('应该支持部分字段更新', () => {
-      const fuId = useFollowUpSlice.getState().followUps[1].id;
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-PART', { priority: 'medium' }));
+      const fuId = useFollowUpSlice.getState().followUps[0].id;
 
-      useFollowUpSlice.getState().updateFollowUp(fuId, {
-        status: 'in_progress' as any,
-      });
+      useFollowUpSlice.getState().updateFollowUp(fuId, { status: 'in_progress' });
 
       const updated = useFollowUpSlice.getState().followUps.find(f => f.id === fuId);
-
       expect(updated?.status).toBe('in_progress');
       expect(updated?.priority).toBe('medium'); // 其他字段不变
     });
@@ -186,30 +171,15 @@ describe('useFollowUpSlice', () => {
 
   describe('removeFollowUp', () => {
     it('应该删除指定 ID 的待办事项', () => {
-      // 先添加一个临时待办事项
-      useFollowUpSlice.getState().addFollowUp({
-        taskId: 'TASK-DELETE',
-        taskName: '待删除任务',
-        assignee: 'deleter',
-        assigneeName: '删除者',
-        priority: 'low' as any,
-        status: 'pending' as any,
-        dueDate: Date.now() + 86400000,
-        notes: '',
-        updatedAt: Date.now(),
-        category: 'feature' as any,
-      });
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-DELETE'));
 
       const tempFu = useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-DELETE');
+      const beforeCount = useFollowUpSlice.getState().followUps.length;
 
-      if (tempFu) {
-        const beforeCount = useFollowUpSlice.getState().followUps.length;
+      useFollowUpSlice.getState().removeFollowUp(tempFu!.id);
 
-        useFollowUpSlice.getState().removeFollowUp(tempFu.id);
-
-        expect(useFollowUpSlice.getState().followUps.length).toBe(beforeCount - 1);
-        expect(useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-DELETE')).toBeUndefined();
-      }
+      expect(useFollowUpSlice.getState().followUps.length).toBe(beforeCount - 1);
+      expect(useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-DELETE')).toBeUndefined();
     });
 
     it('删除不存在的 ID 不应报错', () => {
@@ -221,45 +191,44 @@ describe('useFollowUpSlice', () => {
 
   describe('completeFollowUp', () => {
     it('应该将待办事项标记为已完成', () => {
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-DONE'));
       const fuId = useFollowUpSlice.getState().followUps[0].id;
 
       useFollowUpSlice.getState().completeFollowUp(fuId);
 
       const completed = useFollowUpSlice.getState().followUps.find(f => f.id === fuId);
-
       expect(completed?.status).toBe('completed');
       expect(completed?.completedAt).toBeDefined();
       expect(typeof completed?.completedAt).toBe('number');
     });
 
     it('完成时应该记录完成时间戳', () => {
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-DONE-TS'));
       const beforeComplete = Date.now();
-      const fuId = useFollowUpSlice.getState().followUps[1].id;
+      const fuId = useFollowUpSlice.getState().followUps[0].id;
 
       useFollowUpSlice.getState().completeFollowUp(fuId);
 
       const completed = useFollowUpSlice.getState().followUps.find(f => f.id === fuId);
-
-      if (completed) {
-        expect(completed.completedAt).toBeGreaterThanOrEqual(beforeComplete);
-      }
+      expect(completed?.completedAt).toBeGreaterThanOrEqual(beforeComplete);
     });
 
     it('完成操作不应影响其他待办事项', () => {
-      const targetId = useFollowUpSlice.getState().followUps[0].id;
-      const otherFus = useFollowUpSlice.getState().followUps.slice(1);
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-A'));
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-B'));
+      const [a, b] = useFollowUpSlice.getState().followUps;
 
-      useFollowUpSlice.getState().completeFollowUp(targetId);
+      useFollowUpSlice.getState().completeFollowUp(a.id);
 
-      otherFus.forEach(fu => {
-        expect(fu.status).not.toBe('completed'); // 其他待办事项状态不变
-      });
+      const unchanged = useFollowUpSlice.getState().followUps.find(f => f.id === b.id);
+      expect(unchanged?.status).toBe('pending');
     });
   });
 
   describe('边界情况和数据完整性', () => {
     it('优先级应该是有效的值', () => {
       const validPriorities = ['low', 'medium', 'high', 'critical'];
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-V1'));
       const { followUps } = useFollowUpSlice.getState();
 
       followUps.forEach(fu => {
@@ -269,6 +238,7 @@ describe('useFollowUpSlice', () => {
 
     it('状态应该是有效的值', () => {
       const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-V2'));
       const { followUps } = useFollowUpSlice.getState();
 
       followUps.forEach(fu => {
@@ -276,17 +246,12 @@ describe('useFollowUpSlice', () => {
       });
     });
 
-    it('分类应该是有效的', () => {
-      const validCategories = ['maintenance', 'optimization', 'testing', 'deployment'];
-      const { followUps } = useFollowUpSlice.getState();
-
-      followUps.forEach(fu => {
-        expect(validCategories).toContain(fu.category);
-      });
-    });
-
     it('截止日期应该是将来的时间戳', () => {
       const now = Date.now();
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-V3'));
+      useFollowUpSlice.getState().ingestWSAlert({
+        id: 'v4', level: 'warning', message: 'm', source: 's', timestamp: now,
+      });
       const { followUps } = useFollowUpSlice.getState();
 
       followUps.forEach(fu => {
@@ -297,27 +262,14 @@ describe('useFollowUpSlice', () => {
 
   describe('集成场景', () => {
     it('完整的待办事项生命周期：添加 → 更新 → 完成', () => {
-      // 1. 添加新的待办事项
-      useFollowUpSlice.getState().addFollowUp({
-        taskId: 'TASK-LIFECYCLE',
-        taskName: '生命周期测试任务',
-        assignee: 'lifecycle_user',
-        assigneeName: '生命周期用户',
-        priority: 'high' as any,
-        status: 'pending' as any,
-        dueDate: Date.now() + 86400000,
-        notes: '初始备注',
-        updatedAt: Date.now(),
-        category: 'feature' as any,
-      });
+      useFollowUpSlice.getState().addFollowUp(makeFu('TASK-LIFECYCLE', { notes: '初始备注' }));
 
       const newFu = useFollowUpSlice.getState().followUps.find(f => f.taskId === 'TASK-LIFECYCLE');
       expect(newFu).toBeDefined();
 
       if (newFu) {
-        // 2. 更新待办事项
         useFollowUpSlice.getState().updateFollowUp(newFu.id, {
-          status: 'in_progress' as any,
+          status: 'in_progress',
           notes: '开始执行任务',
         });
 
@@ -325,7 +277,6 @@ describe('useFollowUpSlice', () => {
         expect(updated?.status).toBe('in_progress');
         expect(updated?.notes).toBe('开始执行任务');
 
-        // 3. 完成待办事项
         useFollowUpSlice.getState().completeFollowUp(newFu.id);
 
         const completed = useFollowUpSlice.getState().followUps.find(f => f.id === newFu.id);
@@ -337,25 +288,12 @@ describe('useFollowUpSlice', () => {
     it('批量管理多个待办事项', () => {
       const initialCount = useFollowUpSlice.getState().followUps.length;
 
-      // 批量添加3个待办事项
       for (let i = 1; i <= 3; i++) {
-        useFollowUpSlice.getState().addFollowUp({
-          taskId: `TASK-BATCH-${i}`,
-          taskName: `批量任务${i}`,
-          assignee: `batch_user_${i}`,
-          assigneeName: `批量用户${i}`,
-          priority: 'medium' as any,
-          status: 'pending' as any,
-          dueDate: Date.now() + 86400000 * i,
-          notes: '',
-          updatedAt: Date.now(),
-          category: 'feature' as any,
-        });
+        useFollowUpSlice.getState().addFollowUp(makeFu(`TASK-BATCH-${i}`));
       }
 
       expect(useFollowUpSlice.getState().followUps.length).toBe(initialCount + 3);
 
-      // 批量完成所有新增的待办事项
       const batchFus = useFollowUpSlice.getState().followUps.filter(
         f => f.taskId.startsWith('TASK-BATCH-')
       );
@@ -364,11 +302,32 @@ describe('useFollowUpSlice', () => {
         useFollowUpSlice.getState().completeFollowUp(fu.id);
       });
 
-      // 验证所有批量待办事项都已完成
       batchFus.forEach(fu => {
         const completed = useFollowUpSlice.getState().followUps.find(f => f.id === fu.id);
         expect(completed?.status).toBe('completed');
       });
+    });
+
+    it('真实告警 → 工单 → 处理闭环：agent 告警可被人工跟进完成', () => {
+      // 模拟 agent 推送「推理服务离线」告警
+      useFollowUpSlice.getState().ingestWSAlert({
+        id: 'ollama-down',
+        level: 'error',
+        message: 'Ollama 推理服务离线',
+        source: 'yyc3-agent',
+        timestamp: Date.now(),
+      });
+
+      const fu = useFollowUpSlice.getState().followUps[0];
+      expect(fu.priority).toBe('high');
+      expect(fu.status).toBe('pending');
+
+      // 运维认领 → 处理 → 完成
+      useFollowUpSlice.getState().updateFollowUp(fu.id, { status: 'in_progress', assigneeName: '运维' });
+      useFollowUpSlice.getState().completeFollowUp(fu.id);
+
+      const done = useFollowUpSlice.getState().followUps.find(f => f.id === fu.id);
+      expect(done?.status).toBe('completed');
     });
   });
 });

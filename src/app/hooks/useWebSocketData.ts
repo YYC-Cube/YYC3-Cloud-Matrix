@@ -37,6 +37,7 @@ import type {
 import { getAPIConfig } from "../lib/api-config";
 import { dataBus } from "../lib/data-bus";
 import { useNodeSlice } from "../store/slices/node-slice";
+import { useFollowUpSlice } from "../store/slices/follow-up-slice";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
 // ============================================================
@@ -238,6 +239,8 @@ export function useWebSocketData(): WebSocketDataState {
                 break;
               case "alert":
                 setAlerts((prev) => [msg.payload, ...prev].slice(0, 100));
+                // 真实告警 → 告警工单域持久化（幂等去重），TopBar/巡查/协同全局面板共享
+                useFollowUpSlice.getState().ingestWSAlert(msg.payload);
                 break;
               case "throughput_history":
                 setThroughputHistory(msg.payload.slice(-MAX_THROUGHPUT_HISTORY));

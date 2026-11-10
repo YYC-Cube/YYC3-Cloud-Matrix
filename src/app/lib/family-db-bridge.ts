@@ -5,8 +5,17 @@
  * @version: v1.1.0
  * @created: 2026-04-25
  * @updated: 2026-04-25
- * @status: active
+ * @status: deprecated
  * @tags: [lib],[database],[ai-family]
+ *
+ * @deprecated 2026-11-10 数据 API 架构审核（kimi）：
+ * 本模块依赖外部 DB Proxy 服务（localhost:3299 → 本机 PostgreSQL），
+ * 该服务不存在于本仓库（deploy/ 仅有 :3118 server.mjs 与 :3113 yyc3-agent），
+ * 属悬空依赖。唯一消费者 useDbData 无任何生产页面引用（grep 验证 = 0），
+ * 且「本地 PostgreSQL + 外部代理进程」与《YYC³ 数据本地化与安全隔离核心设计》
+ * 的「纯前端 localStorage/IndexedDB 无后端」原则冲突。
+ * 保留文件仅供历史参考；新代码请走 yyc3-agent WS 通道或本地持久化域。
+ * 计划：确认无隐藏依赖后物理删除本文件与 useDbData.ts。
  */
 
 export interface DbNodeStatus {

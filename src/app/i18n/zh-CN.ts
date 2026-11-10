@@ -50,6 +50,7 @@ const zhCN = {
     more: "更多",
     logout: "退出登录",
     notifications: "通知",
+    noNotifications: "暂无通知",
     copied: "已复制到剪贴板",
   },
 

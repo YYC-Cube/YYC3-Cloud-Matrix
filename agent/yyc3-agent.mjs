@@ -93,6 +93,8 @@ let prevSnapshot = null;
 const throughputHistory = [];
 /** 已发出的边沿告警状态 */
 const alertState = { ollamaDown: false, memHigh: false, diskHigh: false };
+/** 当前活跃告警条件快照（新客户端连入时回放，边沿告警一次性会漏连） */
+let activeAlerts = [];
 
 function trendOf(current, baseline) {
   if (!baseline || baseline <= 0) { return current > 0 ? "+100.0%" : "+0.0%"; }
@@ -174,6 +176,36 @@ async function collectSnapshot() {
     pushAlert("warning", `磁盘占用 ${disk.percent}% 超过阈值 ${CONFIG.diskAlertThreshold}%`);
   }
   alertState.diskHigh = disk !== null && disk.percent > CONFIG.diskAlertThreshold;
+
+  // 活跃告警条件快照：与边沿触发解耦，表达「此刻仍处于告警态」的条件集合
+  activeAlerts = [];
+  if (!ollama.online) {
+    activeAlerts.push({
+      id: "active-ollama-down",
+      level: "warning",
+      message: `Ollama 推理服务离线（${CONFIG.ollamaBaseUrl}）— ${ollama.error ?? "不可达"}`,
+      source: "yyc3-agent",
+      timestamp: Date.now(),
+    });
+  }
+  if (alertState.memHigh) {
+    activeAlerts.push({
+      id: "active-mem-high",
+      level: "critical",
+      message: `内存占用 ${mem}% 超过阈值 ${CONFIG.memAlertThreshold}%`,
+      source: "yyc3-agent",
+      timestamp: Date.now(),
+    });
+  }
+  if (alertState.diskHigh && disk) {
+    activeAlerts.push({
+      id: "active-disk-high",
+      level: "warning",
+      message: `磁盘占用 ${disk.percent}% 超过阈值 ${CONFIG.diskAlertThreshold}%`,
+      source: "yyc3-agent",
+      timestamp: Date.now(),
+    });
+  }
 
   const snapshot = {
     node,
@@ -257,6 +289,10 @@ function handleWsUpgrade(req, socket) {
     send({ type: "qps_update", payload: snap.qps });
     send({ type: "latency_update", payload: snap.latency });
     send({ type: "throughput_history", payload: throughputHistory.slice(-CONFIG.maxThroughputHistory) });
+    // 回放当前活跃告警：边沿告警只广播一次，后连入的客户端需要获知现存告警条件
+    for (const alert of activeAlerts) {
+      send({ type: "alert", payload: alert });
+    }
   }).catch(() => { /* ignore */ });
 
   const decode = createFrameDecoder();

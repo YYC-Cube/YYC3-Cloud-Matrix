@@ -58,6 +58,7 @@ import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } fro
 import { useLocation, useNavigate } from "react-router";
 import { getNavVisibilitySnapshot, subscribePageConfigs } from "../../config";
 import { useI18n } from "../../hooks/useI18n";
+import { useAlerts } from "../../stores/global-store";
 import { isGhostMode } from "../../lib/supabaseClient";
 import { useSettingsSSOT } from "../../store/slices/settings-ssot-slice";
 import type { ConnectionState } from "../../types";
@@ -219,6 +220,28 @@ export function TopBar({
     [navVisibility]
   );
   const ghost = isGhostMode();
+  // ★ 通知铃铛接告警工单域 SSOT（真实 WS 告警经 useWebSocketData.ingestWSAlert 写入），
+  //   替代历史硬编码假通知（badge 写死 3 + 3 条虚构消息）
+  const { followUps: notifFollowUps } = useAlerts();
+  const activeNotifCount = useMemo(
+    () => notifFollowUps.filter((f) => f.status === "active").length,
+    [notifFollowUps]
+  );
+  const notifItems = useMemo(
+    () => [...notifFollowUps].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5),
+    [notifFollowUps]
+  );
+  const formatRelativeTime = useMemo(
+    () => (ts: number) => {
+      const diffMin = Math.floor((Date.now() - ts) / 60000);
+      if (diffMin < 1) { return t("common.justNow"); }
+      if (diffMin < 60) { return t("common.minutesAgo", { n: diffMin }); }
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) { return t("common.hoursAgo", { n: diffH }); }
+      return t("common.daysAgo", { n: Math.floor(diffH / 24) });
+    },
+    [t]
+  );
   const [searchFocused, setSearchFocused] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -404,13 +427,15 @@ export function TopBar({
               className="relative p-1.5 rounded-lg hover:bg-[rgba(0,212,255,0.05)] transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               <Bell className="w-4 h-4 text-[rgba(0,212,255,0.45)]" />
-              <span
-                data-testid="notification-badge"
-                className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-[#ff3366] flex items-center justify-center shadow-[0_0_6px_rgba(255,51,102,0.4)]"
-                style={{ fontSize: "0.45rem", color: "white" }}
-              >
-                3
-              </span>
+              {activeNotifCount > 0 && (
+                <span
+                  data-testid="notification-badge"
+                  className="absolute top-0.5 right-0.5 min-w-3 h-3 px-0.5 rounded-full bg-[#ff3366] flex items-center justify-center shadow-[0_0_6px_rgba(255,51,102,0.4)]"
+                  style={{ fontSize: "0.45rem", color: "white" }}
+                >
+                  {activeNotifCount > 99 ? "99+" : activeNotifCount}
+                </span>
+              )}
             </button>
 
             {/* 通知下拉：移动端底部弹出，桌面端右对齐 */}
@@ -447,20 +472,26 @@ export function TopBar({
                     <h4 className="text-[rgba(0,212,255,0.6)] mb-2" style={{ fontSize: "0.68rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                       {t("common.notifications")}
                     </h4>
-                    {[
-                      { msg: "GPU-A100-03 推理延迟异常", time: t("common.minutesAgo", { n: 2 }), type: "warn" },
-                      { msg: "LLaMA-70B 部署完成", time: t("common.minutesAgo", { n: 15 }), type: "success" },
-                      { msg: "存储集群 C2 容量预警 (85%)", time: t("common.hoursAgo", { n: 1 }), type: "error" },
-                    ].map((n, i) => (
-                      <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-[rgba(0,180,255,0.04)] cursor-pointer mb-0.5 transition-colors min-h-[48px]">
-                        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.type === "warn" ? "bg-[#ffdd00]" : n.type === "success" ? "bg-[#00ff88]" : "bg-[#ff3366]"
-                          }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[#c0dcf0]" style={{ fontSize: "0.78rem" }}>{n.msg}</p>
-                          <p className="text-[rgba(0,212,255,0.3)]" style={{ fontSize: "0.62rem" }}>{n.time}</p>
-                        </div>
+                    {notifItems.length === 0 ? (
+                      <div
+                        className="flex items-center justify-center py-6 text-[rgba(0,212,255,0.35)]"
+                        style={{ fontSize: "0.72rem" }}
+                        data-testid="notification-empty"
+                      >
+                        {t("common.noNotifications")}
                       </div>
-                    ))}
+                    ) : (
+                      notifItems.map((n) => (
+                        <div key={n.id} className="flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-[rgba(0,180,255,0.04)] cursor-pointer mb-0.5 transition-colors min-h-[48px]">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.severity === "warning" ? "bg-[#ffdd00]" : n.severity === "critical" || n.severity === "error" ? "bg-[#ff3366]" : "bg-[#00d4ff]"
+                            }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#c0dcf0] truncate" style={{ fontSize: "0.78rem" }}>{n.title}</p>
+                            <p className="text-[rgba(0,212,255,0.3)]" style={{ fontSize: "0.62rem" }}>{formatRelativeTime(n.timestamp)}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                     {isMobile && <div className="h-[env(safe-area-inset-bottom,0px)]" />}
                   </motion.div>
                 </>

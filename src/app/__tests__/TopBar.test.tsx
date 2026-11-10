@@ -18,6 +18,7 @@ import { BrowserRouter } from "react-router";
 import { TopBar } from "../modules/shared/TopBar";
 import { isGhostMode } from "../lib/supabaseClient";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
+import { useFollowUpSlice } from "../store/slices/follow-up-slice";
 import type { ConnectionState } from "../types";
 
 vi.mock("../hooks/useI18n", () => ({
@@ -95,6 +96,8 @@ describe("TopBar Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // 告警工单域重置为空，保证 badge 断言不受其他用例/持久化污染
+    useFollowUpSlice.setState({ followUps: [] });
   });
 
   afterEach(() => {
@@ -236,11 +239,22 @@ describe("TopBar Component", () => {
     expect(initials).toHaveTextContent("TE");
   });
 
-  it("should render notification badge", () => {
-    renderWithRouter(<TopBar {...desktopProps} />);
+  it("should show notification badge only when real alerts exist（禁止硬编码假徽标）", () => {
+    // 无告警时：不渲染 badge（替代历史写死 "3" 的假徽标）
+    const { unmount } = renderWithRouter(<TopBar {...desktopProps} />);
+    expect(screen.queryByTestId("notification-badge")).not.toBeInTheDocument();
+    unmount();
 
-    expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
-    expect(screen.getByTestId("notification-badge")).toHaveTextContent("3");
+    // 有活跃告警时：badge 显示真实数量
+    useFollowUpSlice.getState().ingestWSAlert({
+      id: "test-alert",
+      level: "warning",
+      message: "测试告警",
+      source: "vitest",
+      timestamp: Date.now(),
+    });
+    renderWithRouter(<TopBar {...desktopProps} />);
+    expect(screen.getByTestId("notification-badge")).toHaveTextContent("1");
   });
 
   it("should render brand name on desktop", () => {

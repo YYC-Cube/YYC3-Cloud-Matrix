@@ -12,15 +12,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { FollowUpRecord } from '../../types';
+import type { AlertData } from '../../types/websocket-types';
 
-const DEFAULT_FOLLOWUPS: FollowUpRecord[] = [
-  { id: "fu-001", taskId: "TASK-042", taskName: "GPU-A100-03 温度告警处理", assignee: "ops_li", assigneeName: "李运维", priority: "high", status: "in_progress", dueDate: Date.now() + 86400000, notes: "需要检查散热系统", createdAt: Date.now() - 3600000, updatedAt: Date.now(), category: "maintenance" },
-  { id: "fu-002", taskId: "TASK-043", taskName: "LLaMA-70B 模型版本升级", assignee: "dev_wang", assigneeName: "王开发", priority: "medium", status: "pending", dueDate: Date.now() + 172800000, createdAt: Date.now() - 7200000, updatedAt: Date.now(), category: "optimization" },
-];
+/** 告警级别 → 工单优先级映射 */
+const ALERT_LEVEL_TO_PRIORITY: Record<AlertData["level"], FollowUpRecord["priority"]> = {
+  critical: "critical",
+  error: "high",
+  warning: "medium",
+  info: "low",
+};
 
 export interface FollowUpSlice {
   followUps: FollowUpRecord[];
   addFollowUp: (fu: Omit<FollowUpRecord, 'id' | 'createdAt'>) => void;
+  /**
+   * 摄入 WS 真实告警（幂等）：同一 source+alertId 只生成一张工单。
+   * 真实告警事件流入口 — agent 推送的 alert 消息经此持久化，
+   * 替代历史 DEFAULT_FOLLOWUPS 假种子（已按「禁止硬编码」原则清除）。
+   * @returns true=新建工单，false=重复告警被去重
+   */
+  ingestWSAlert: (alert: AlertData) => boolean;
   updateFollowUp: (id: string, updates: Partial<FollowUpRecord>) => void;
   removeFollowUp: (id: string) => void;
   completeFollowUp: (id: string) => void;
@@ -29,10 +40,43 @@ export interface FollowUpSlice {
 export const useFollowUpSlice = create<FollowUpSlice>()(
   persist(
     (set) => ({
-      followUps: DEFAULT_FOLLOWUPS,
+      followUps: [],
       addFollowUp: (fu) => set((s) => ({
-        followUps: [...s.followUps, { ...fu, id: `fu-${Date.now()}`, createdAt: Date.now(), updatedAt: Date.now() }],
+        followUps: [...s.followUps, {
+          ...fu,
+          // 同毫秒连发时 Date.now() 会撞 ID（曾致 completeFollowUp 误伤同 ID 工单），追加随机段防碰撞
+          id: `fu-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }],
       })),
+      ingestWSAlert: (alert) => {
+        let created = false;
+        set((s) => {
+          const taskId = `ALERT-${alert.source}-${alert.id}`;
+          if (s.followUps.some((f) => f.taskId === taskId)) {
+            return s; // 幂等去重：同一告警不重复建单
+          }
+          created = true;
+          const now = Date.now();
+          const record: FollowUpRecord = {
+            id: `fu-${now}-${Math.random().toString(36).slice(2, 8)}`,
+            taskId,
+            taskName: alert.message,
+            assignee: "system",
+            assigneeName: alert.source,
+            priority: ALERT_LEVEL_TO_PRIORITY[alert.level] ?? "medium",
+            status: "pending",
+            dueDate: now + 86400000,
+            notes: `WS 实时告警 · 来源 ${alert.source} · ${new Date(alert.timestamp || now).toLocaleString("zh-CN", { hour12: false })}`,
+            createdAt: alert.timestamp || now,
+            updatedAt: now,
+            category: "maintenance",
+          };
+          return { ...s, followUps: [record, ...s.followUps].slice(0, 200) };
+        });
+        return created;
+      },
       updateFollowUp: (id, updates) => set((s) => ({
         followUps: s.followUps.map((f) => f.id === id ? { ...f, ...updates } : f),
       })),
