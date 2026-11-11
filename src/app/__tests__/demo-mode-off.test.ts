@@ -4,7 +4,7 @@
  *
  * 覆盖范围：
  * - Settings SSOT 生产默认值 demoMode === false
- * - usePatrol：关闭时不产生模拟巡查结果、历史为空
+ * - usePatrol：关闭时执行真实巡检（slice 派生，无模拟数据）、历史为空
  * - useAIDiagnostics：关闭时不产生模拟诊断会话、历史为空
  * - useReportExporter：关闭时不生成模拟报表、报表历史为空
  *
@@ -47,13 +47,17 @@ describe("Settings SSOT · 演示模式默认值", () => {
 });
 
 describe("usePatrol · 演示模式关闭", () => {
-  it("runPatrol 不产生模拟巡查结果", async () => {
+  it("runPatrol 执行真实巡检（chk-real- 派生，无 demo 前缀）", async () => {
     const { result } = renderHook(() => usePatrol());
     await act(async () => {
       await result.current.runPatrol("manual");
     });
-    expect(result.current.currentResult).toBeNull();
-    expect(result.current.patrolStatus).toBe("idle");
+    const r = result.current.currentResult;
+    // 2026-11-11 起：demoMode 关闭 = 真实巡检（slice 派生），不再拒绝执行
+    expect(r).not.toBeNull();
+    expect(r!.id.startsWith("demo-")).toBe(false);
+    expect(r!.checks.every((c) => c.id.startsWith("chk-real-"))).toBe(true);
+    expect(result.current.patrolStatus).toBe("completed");
   });
 
   it("历史记录为空（不展示模拟种子）", () => {

@@ -65,9 +65,9 @@ describe("usePatrol", () => {
       expect(result.current.currentResult).toBeNull();
     });
 
-    it("history 应有初始数据", () => {
+    it("history 初始为空（零硬编码种子，2026-11-11 政策）", () => {
       const { result } = renderHook(() => usePatrol());
-      expect(result.current.history.length).toBeGreaterThan(0);
+      expect(result.current.history).toEqual([]);
     });
 
     it("schedule 应默认启用，间隔 15 分钟", () => {
@@ -146,6 +146,72 @@ describe("usePatrol", () => {
       });
 
       expect(result.current.currentResult!.triggeredBy).toBe("auto");
+    });
+  });
+
+  // ----------------------------------------------------------
+  // 真实巡查（demoMode 关闭 → 从 slice 真实派生）
+  // ----------------------------------------------------------
+
+  describe("真实巡查（demoMode 关闭）", () => {
+    it("检查项从 node/follow-up/log slice 真实派生", async () => {
+      const { useNodeSlice } = await import("../store/slices/node-slice");
+      const { useFollowUpSlice } = await import("../store/slices/follow-up-slice");
+      const { useSettingsSSOT } = await import("../store/slices/settings-ssot-slice");
+
+      useNodeSlice.getState().setNodes([
+        { id: "N1", status: "active", gpu: 60, mem: 50, temp: 55, model: "m1", tasks: 3 },
+        { id: "N2", status: "inactive", gpu: 0, mem: 2, temp: 30, model: "", tasks: 0 },
+      ], "initialization");
+      useFollowUpSlice.setState({ followUps: [] });
+      useSettingsSSOT.getState().setToggle("demoMode", false);
+
+      try {
+        const { result } = renderHook(() => usePatrol());
+        await act(async () => {
+          await result.current.runPatrol("manual");
+        });
+
+        const r = result.current.currentResult!;
+        // 7 项真实检查，ID 以 chk-real- 前缀标识，结果不带 demo- 前缀
+        expect(r.totalChecks).toBe(7);
+        expect(r.id.startsWith("demo-")).toBe(false);
+        expect(r.checks.every((c) => c.id.startsWith("chk-real-"))).toBe(true);
+        // 在线率 1/2 = 50%（<80% → critical）；无告警工单 → pass
+        const online = r.checks.find((c) => c.id === "chk-real-online");
+        expect(online?.value).toBe("50%");
+        expect(online?.status).toBe("critical");
+        const alerts = r.checks.find((c) => c.id === "chk-real-alerts");
+        expect(alerts?.value).toBe("0 单");
+        expect(alerts?.status).toBe("pass");
+      } finally {
+        useSettingsSSOT.getState().setToggle("demoMode", true);
+        useNodeSlice.getState().setNodes([], "initialization");
+      }
+    });
+
+    it("无节点时节点类检查项标记 skipped 而非编造数值", async () => {
+      const { useNodeSlice } = await import("../store/slices/node-slice");
+      const { useSettingsSSOT } = await import("../store/slices/settings-ssot-slice");
+
+      useNodeSlice.getState().setNodes([], "initialization");
+      useSettingsSSOT.getState().setToggle("demoMode", false);
+
+      try {
+        const { result } = renderHook(() => usePatrol());
+        await act(async () => {
+          await result.current.runPatrol("manual");
+        });
+
+        const r = result.current.currentResult!;
+        const nodeChecks = r.checks.filter((c) =>
+          ["chk-real-online", "chk-real-gpu", "chk-real-temp", "chk-real-mem"].includes(c.id)
+        );
+        expect(nodeChecks.every((c) => c.status === "skipped")).toBe(true);
+        expect(nodeChecks.every((c) => c.value === "无节点")).toBe(true);
+      } finally {
+        useSettingsSSOT.getState().setToggle("demoMode", true);
+      }
     });
   });
 
