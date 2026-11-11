@@ -14,6 +14,11 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useWebSocketData } from "../hooks/useWebSocketData";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
+import { enableDemoModeForTests } from "./helpers/demo-mode";
+
+// 演示模式：模拟回退用例基于演示数据行为，显式开启（生产默认关闭）
+enableDemoModeForTests();
+
 
 class MockWebSocket {
   static OPEN = 1;
@@ -102,42 +107,43 @@ describe("useWebSocketData", () => {
 
     it("should provide initial liveQPS", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.liveQPS).toBe(3842);
+      // 空态初值：无真实来源时显示 0/占位符，不显示编造数字
+      expect(result.current.liveQPS).toBe(0);
     });
 
     it("should provide initial liveLatency", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.liveLatency).toBe(48);
+      expect(result.current.liveLatency).toBe(0);
     });
 
     it("should provide initial activeNodes", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.activeNodes).toBe("7/8");
+      expect(result.current.activeNodes).toBe("0/0");
     });
 
     it("should provide initial gpuUtil", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.gpuUtil).toBe("82.4%");
+      expect(result.current.gpuUtil).toBe("-");
     });
 
     it("should provide initial tokenThroughput", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.tokenThroughput).toBe("138K/s");
+      expect(result.current.tokenThroughput).toBe("-");
     });
 
     it("should provide initial storageUsed", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.storageUsed).toBe("12.8TB");
+      expect(result.current.storageUsed).toBe("-");
     });
 
     it("should provide initial qpsTrend", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.qpsTrend).toBe("+12.3%");
+      expect(result.current.qpsTrend).toBe("-");
     });
 
     it("should provide initial latencyTrend", () => {
       const { result } = renderHook(() => useWebSocketData());
-      expect(result.current.latencyTrend).toBe("-5.2%");
+      expect(result.current.latencyTrend).toBe("-");
     });
 
     it("should provide empty alerts array", () => {

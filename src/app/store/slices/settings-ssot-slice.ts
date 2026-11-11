@@ -84,6 +84,7 @@ export interface SettingsValues {
   scaleUpThreshold: string;
   scaleDownThreshold: string;
   wsEndpoint: string;
+  wsToken: string;
   wsReconnectInterval: string;
   wsMaxReconnect: string;
   wsHeartbeatInterval: string;
@@ -162,6 +163,7 @@ const DEFAULT_VALUES: SettingsValues = {
   scaleUpThreshold: "85",
   scaleDownThreshold: "30",
   wsEndpoint: DEFAULT_WS_ENDPOINT,
+  wsToken: "",
   wsReconnectInterval: "5000",
   wsMaxReconnect: "10",
   wsHeartbeatInterval: "30000",

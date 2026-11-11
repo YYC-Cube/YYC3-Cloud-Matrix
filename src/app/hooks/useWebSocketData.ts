@@ -85,14 +85,15 @@ const RECONNECT_DELAY_MS = 5000;
 export function useWebSocketData(): WebSocketDataState {
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [reconnectCount, setReconnectCount] = useState(0);
-  const [liveQPS, setLiveQPS] = useState(3842);
-  const [qpsTrend, setQpsTrend] = useState("+12.3%");
-  const [liveLatency, setLiveLatency] = useState(48);
-  const [latencyTrend, setLatencyTrend] = useState("-5.2%");
-  const [activeNodes, setActiveNodes] = useState("7/8");
-  const [gpuUtil, setGpuUtil] = useState("82.4%");
-  const [tokenThroughput, setTokenThroughput] = useState("138K/s");
-  const [storageUsed, setStorageUsed] = useState("12.8TB");
+  // 初值空态化：一切数据禁止硬编码，WS 真实快照到达前显示空态而非编造数字
+  const [liveQPS, setLiveQPS] = useState(0);
+  const [qpsTrend, setQpsTrend] = useState("-");
+  const [liveLatency, setLiveLatency] = useState(0);
+  const [latencyTrend, setLatencyTrend] = useState("-");
+  const [activeNodes, setActiveNodes] = useState("0/0");
+  const [gpuUtil, setGpuUtil] = useState("-");
+  const [tokenThroughput, setTokenThroughput] = useState("-");
+  const [storageUsed, setStorageUsed] = useState("-");
   const [throughputHistory, setThroughputHistory] = useState<ThroughputPoint[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [lastSyncTime, setLastSyncTime] = useState(
@@ -105,6 +106,14 @@ export function useWebSocketData(): WebSocketDataState {
   // 设置 SSOT 驱动：刷新间隔与自动刷新开关（统一设置面板修改即时生效）
   const autoRefresh = useSettingsSSOT((s) => s.runtime.autoRefresh);
   const refreshInterval = useSettingsSSOT((s) => s.runtime.refreshInterval);
+  // 演示模式总开关：关闭时 WS 不可达不启动模拟器（如实显示断开状态）
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
+  // WS 访问令牌（配合 yyc3-agent 鉴权，空表示未配置）
+  const wsToken = useSettingsSSOT((s) => s.values.wsToken);
+  const demoModeRef = useRef(demoMode);
+  demoModeRef.current = demoMode;
+  const wsTokenRef = useRef(wsToken);
+  wsTokenRef.current = wsToken;
   const simulateIntervalMs =
     Number.isFinite(refreshInterval) && refreshInterval >= 500
       ? refreshInterval
@@ -156,8 +165,17 @@ export function useWebSocketData(): WebSocketDataState {
   // 设置变更即时生效：间隔/开关变化时重启模拟定时器
   // ★ 仅在模拟态（connectionState === "simulated"）管理定时器；
   //   WS 真连态绝不启动模拟器，避免污染真实数据
+  // ★ 演示模式关闭时：停掉模拟器并转为断开态（不产出模拟数据）
   useEffect(() => {
     if (connectionState !== "simulated") { return; }
+    if (!demoMode) {
+      if (simulateTimerRef.current) {
+        clearInterval(simulateTimerRef.current);
+        simulateTimerRef.current = null;
+      }
+      setConnectionState("disconnected");
+      return;
+    }
     if (simulateTimerRef.current) {
       clearInterval(simulateTimerRef.current);
       simulateTimerRef.current = null;
@@ -165,7 +183,7 @@ export function useWebSocketData(): WebSocketDataState {
     if (autoRefresh) {
       simulateTimerRef.current = setInterval(runSimulation, simulateIntervalMs);
     }
-  }, [connectionState, autoRefresh, simulateIntervalMs, runSimulation]);
+  }, [connectionState, autoRefresh, simulateIntervalMs, demoMode, runSimulation]);
 
   // ----- lifecycle -----
   // ★ v3.0 修复：先尝试WS连接，仅在失败后启动模拟器
@@ -177,6 +195,11 @@ export function useWebSocketData(): WebSocketDataState {
     const startSimulation = () => {
       if (cancelled) { return; }
       if (simulateTimerRef.current) { return; }
+      if (!demoModeRef.current) {
+        // 演示模式关闭：WS 不可达时如实显示断开状态，不生成模拟数据
+        setConnectionState("disconnected");
+        return;
+      }
       if (!autoRefreshRef.current) {
         // 自动刷新关闭：仅补一帧数据，不启动周期模拟
         setConnectionState("simulated");
@@ -190,7 +213,12 @@ export function useWebSocketData(): WebSocketDataState {
 
     const tryConnectWS = () => {
       if (cancelled) { return; }
-      const wsUrl = getAPIConfig().wsEndpoint;
+      const base = getAPIConfig().wsEndpoint;
+      // WS 访问令牌：非空时拼接到连接 URL（yyc3-agent 校验）
+      const token = wsTokenRef.current?.trim();
+      const wsUrl = token
+        ? `${base}${base.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`
+        : base;
       setConnectionState("connecting");
 
       try {

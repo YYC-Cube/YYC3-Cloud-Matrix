@@ -137,9 +137,47 @@ function DemoModeToggle() {
 }
 
 // ============================================================
-// Editable field component
+// WS Token Field (SSOT values.wsToken)
+// WS 访问令牌输入框：yyc3-agent 的 WS 通道鉴权令牌，
+// 与 agent 端 ~/.yyc3-cloud-matrix/agent-token（或 PMO_AGENT_TOKEN）一致。
+// 该字段读写 Settings SSOT，不经旧版 useSettingsStore。
 // ============================================================
 
+function WsTokenField() {
+  const wsToken = useSettingsSSOT((s) => s.values.wsToken);
+  const updateValue = useSettingsSSOT((s) => s.updateValue);
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="p-3 rounded-xl bg-[rgba(0,40,80,0.15)] border border-[rgba(0,180,255,0.06)]">
+      <p className="text-[#c0dcf0] mb-1" style={{ fontSize: "0.82rem" }}>WS 访问令牌</p>
+      <p className="text-[rgba(0,212,255,0.35)] mb-2" style={{ fontSize: "0.68rem" }}>
+        与节点代理 agent-token 一致；留空表示未启用鉴权连接
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type={visible ? "text" : "password"}
+          title="WS 访问令牌"
+          value={wsToken}
+          onChange={(e) => updateValue("wsToken", e.target.value)}
+          placeholder="粘贴 agent 令牌（~/.yyc3-cloud-matrix/agent-token）"
+          className="flex-1 px-3 py-1.5 rounded-lg bg-[rgba(0,40,80,0.4)] border border-[rgba(0,180,255,0.15)] text-[#00d4ff] focus:outline-none font-mono"
+          style={{ fontSize: "0.75rem" }}
+        />
+        <button
+          title={visible ? "隐藏" : "显示"}
+          onClick={() => setVisible((v) => !v)}
+          className="px-2 py-1.5 rounded-lg bg-[rgba(0,40,80,0.4)] border border-[rgba(0,180,255,0.15)] text-[rgba(0,212,255,0.6)] hover:text-[#00d4ff]"
+        >
+          {visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Editable field component
+// ============================================================
 interface EditableFieldProps {
   label: string;
   description?: string;
@@ -947,6 +985,7 @@ export function SystemSettings() {
             </h3>
             <div className="space-y-3">
               <EditableField label="WebSocket 端点" value={values.wsEndpoint} onChange={v => updateValue("wsEndpoint", v)} mono description="实时数据推送 WebSocket 服务地址" />
+              <WsTokenField />
               <div className="flex items-center justify-between p-3 rounded-xl bg-[rgba(0,40,80,0.15)] border border-[rgba(0,180,255,0.06)]">
                 <div>
                   <p className="text-[#c0dcf0]" style={{ fontSize: "0.82rem" }}>自动重连</p>

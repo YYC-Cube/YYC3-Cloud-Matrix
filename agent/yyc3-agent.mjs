@@ -27,9 +27,10 @@
  * - 心跳：收到 {type:"heartbeat"} 即回 heartbeat_ack
  *
  * 环境变量（命名规范 §三 PMO_ 前缀）：
- *   PMO_AGENT_HOST      监听地址（默认 0.0.0.0）
+ *   PMO_AGENT_HOST      监听地址（默认 127.0.0.1 仅本机；局域网接入显式设 0.0.0.0）
  *   PMO_AGENT_PORT      监听端口（默认 3113）
  *   PMO_WS_PATH         WS 路径（默认 /ws）
+ *   PMO_AGENT_TOKEN     WS 访问令牌（默认读 ~/.yyc3-cloud-matrix/agent-token，不存在则自动生成）
  *   PMO_OLLAMA_BASE_URL Ollama 地址（默认 http://127.0.0.1:11434）
  *   PMO_NODE_ID         节点标识（默认主机名大写）
  *   PMO_INTERVAL_MS     推送间隔（默认 2000，下限 500）
@@ -42,6 +43,8 @@
 
 import http from "node:http";
 import os from "node:os";
+import crypto from "node:crypto";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -66,7 +69,8 @@ import {
 // ============================================================
 
 const CONFIG = Object.freeze({
-  host: process.env.PMO_AGENT_HOST || "0.0.0.0",
+  // 安全默认：仅绑定回环地址；需要局域网接入时显式设 PMO_AGENT_HOST=0.0.0.0
+  host: process.env.PMO_AGENT_HOST || "127.0.0.1",
   port: Number.parseInt(process.env.PMO_AGENT_PORT || "3113", 10),
   wsPath: process.env.PMO_WS_PATH || "/ws",
   ollamaBaseUrl: process.env.PMO_OLLAMA_BASE_URL || "http://127.0.0.1:11434",
@@ -76,6 +80,34 @@ const CONFIG = Object.freeze({
   memAlertThreshold: 90,
   diskAlertThreshold: 85,
 });
+
+// ============================================================
+// WS 访问令牌（鉴权）
+// 优先级：PMO_AGENT_TOKEN 环境变量 > ~/.yyc3-cloud-matrix/agent-token 文件
+// > 自动生成随机令牌并写入该文件（0600）。
+// 前端在「系统设置 → WebSocket → WS 访问令牌」填入同一令牌即可连接。
+// ============================================================
+
+function loadOrCreateToken() {
+  const envToken = (process.env.PMO_AGENT_TOKEN || "").trim();
+  if (envToken) {
+    return { token: envToken, source: "env:PMO_AGENT_TOKEN" };
+  }
+  const dir = path.join(os.homedir(), ".yyc3-cloud-matrix");
+  const file = path.join(dir, "agent-token");
+  try {
+    const existing = fs.readFileSync(file, "utf8").trim();
+    if (existing) {
+      return { token: existing, source: file };
+    }
+  } catch { /* 文件不存在则创建 */ }
+  const generated = crypto.randomBytes(24).toString("hex");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(file, generated + "\n", { mode: 0o600 });
+  return { token: generated, source: file };
+}
+
+const AUTH = loadOrCreateToken();
 
 const TAG = "[yyc3-agent]";
 const log = (...args) => console.log(TAG, ...args);
@@ -364,6 +396,17 @@ server.on("upgrade", (req, socket) => {
     socket.destroy();
     return;
   }
+  // WS 鉴权：?token= 必须与服务端令牌一致（时序安全比较）
+  const presented = url.searchParams.get("token") ?? "";
+  const a = Buffer.from(presented);
+  const b = Buffer.from(AUTH.token);
+  const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (!ok) {
+    warn(`拒绝未授权 WS 连接（${req.socket.remoteAddress ?? "unknown"}）`);
+    socket.write("HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nunauthorized: invalid or missing token\n");
+    socket.destroy();
+    return;
+  }
   handleWsUpgrade(req, socket);
 });
 
@@ -390,9 +433,10 @@ async function main() {
     server.listen(CONFIG.port, CONFIG.host, resolve);
   });
   log(`言语云枢·智能矩阵 节点代理已启动`);
-  log(`  WS:        ws://${CONFIG.host}:${CONFIG.port}${CONFIG.wsPath}`);
+  log(`  WS:        ws://${CONFIG.host}:${CONFIG.port}${CONFIG.wsPath}?token=<agent-token>`);
   log(`  Health:    http://${CONFIG.host}:${CONFIG.port}/healthz`);
   log(`  Node:      ${CONFIG.nodeId} · 间隔 ${CONFIG.intervalMs}ms · Ollama ${CONFIG.ollamaBaseUrl}`);
+  log(`  Auth:      令牌来源 ${AUTH.source}（前端「系统设置 → WebSocket → WS 访问令牌」填入同一令牌）`);
   timer = setInterval(() => {
     pushSnapshot().catch((err) => warn("采集失败：", err instanceof Error ? err.message : err));
   }, CONFIG.intervalMs);
