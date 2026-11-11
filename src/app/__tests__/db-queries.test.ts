@@ -89,7 +89,7 @@ describe("db-queries", () => {
       expect(deleted).toBe(false);
     });
 
-    it("should reset models to defaults", () => {
+    it("should reset models to empty (no demo seeds)", () => {
       const newModel = {
         name: "Custom Model",
         provider: "Custom",
@@ -102,8 +102,7 @@ describe("db-queries", () => {
       dbQueries.addDbModel(newModel);
       const reset = dbQueries.resetDbModels();
 
-      expect(reset.length).toBeGreaterThan(0);
-      expect(reset.every((m) => m.name !== "Custom Model")).toBe(true);
+      expect(reset.length).toBe(0);
     });
   });
 
@@ -165,7 +164,7 @@ describe("db-queries", () => {
       expect(deleted).toBe(false);
     });
 
-    it("should reset agents to defaults", () => {
+    it("should reset agents to empty (no demo seeds)", () => {
       const newAgent = {
         name: "Custom Agent",
         name_cn: "自定义代理",
@@ -177,8 +176,7 @@ describe("db-queries", () => {
       dbQueries.addDbAgent(newAgent);
       const reset = dbQueries.resetDbAgents();
 
-      expect(reset.length).toBeGreaterThan(0);
-      expect(reset.every((a) => a.name !== "Custom Agent")).toBe(true);
+      expect(reset.length).toBe(0);
     });
   });
 
@@ -246,7 +244,7 @@ describe("db-queries", () => {
       expect(deleted).toBe(false);
     });
 
-    it("should reset nodes to defaults", () => {
+    it("should reset nodes to empty (no demo seeds)", () => {
       const newNode = {
         hostname: "Custom Node",
         gpu_util: 50,
@@ -260,37 +258,42 @@ describe("db-queries", () => {
       dbQueries.addDbNode(newNode);
       const reset = dbQueries.resetDbNodes();
 
-      expect(reset.length).toBeGreaterThan(0);
-      expect(reset.every((n) => n.hostname !== "Custom Node")).toBe(true);
+      expect(reset.length).toBe(0);
     });
   });
 
   describe("Query Functions", () => {
-    it("should get active models", async () => {
+    it("should start with an empty model list (no demo seeds)", async () => {
       const result = await dbQueries.getActiveModels();
 
       expect(result.data).toBeDefined();
       expect(result.error).toBeNull();
-      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.data.length).toBe(0);
     });
 
-    it("should get recent logs", async () => {
+    it("should return empty recent logs (no fabricated telemetry)", async () => {
       const result = await dbQueries.getRecentLogs(10);
 
       expect(result.data).toBeDefined();
       expect(result.error).toBeNull();
-      expect(result.data.length).toBe(10);
+      expect(result.data.length).toBe(0);
     });
 
-    it("should get model stats", async () => {
-      const models = await dbQueries.getActiveModels();
-      const modelId = models.data[0].id;
+    it("should return null stats without a real telemetry source", async () => {
+      const added = dbQueries.addDbModel({
+        name: "Stats Model",
+        provider: "Test",
+        tier: "primary" as const,
+        avg_latency_ms: 100,
+        throughput: 1000,
+        created_at: new Date().toISOString(),
+      });
 
-      const result = await dbQueries.getModelStats(modelId);
+      const result = await dbQueries.getModelStats(added.id);
 
-      expect(result.data).toBeDefined();
+      // 模型存在但无真实推理统计来源 — 如实返回 null
+      expect(result.data).toBeNull();
       expect(result.error).toBeNull();
-      expect(result.data?.avgLatency).toBeGreaterThan(0);
     });
 
     it("should return null stats for non-existent model", async () => {
@@ -300,38 +303,60 @@ describe("db-queries", () => {
       expect(result.error).toBeNull();
     });
 
-    it("should get nodes status", async () => {
+    it("should start with an empty node list (no demo seeds)", async () => {
       const result = await dbQueries.getNodesStatus();
 
       expect(result.data).toBeDefined();
       expect(result.error).toBeNull();
-      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.data.length).toBe(0);
     });
 
     it("should get active agents", async () => {
+      dbQueries.addDbAgent({
+        name: "Active Agent",
+        name_cn: "活跃代理",
+        role: "coding" as const,
+        description: "Test",
+        is_active: true,
+      });
+      dbQueries.addDbAgent({
+        name: "Inactive Agent",
+        name_cn: "停用代理",
+        role: "ops" as const,
+        description: "Test",
+        is_active: false,
+      });
+
       const result = await dbQueries.getActiveAgents();
 
       expect(result.data).toBeDefined();
       expect(result.error).toBeNull();
+      expect(result.data.length).toBe(1);
       expect(result.data.every((a) => a.is_active)).toBe(true);
     });
 
-    it("should get all agents", async () => {
+    it("should start with an empty agent list (no demo seeds)", async () => {
       const result = await dbQueries.getAllAgents();
 
       expect(result.data).toBeDefined();
       expect(result.error).toBeNull();
-      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.data.length).toBe(0);
     });
 
     it("should get model by id", async () => {
-      const models = await dbQueries.getActiveModels();
-      const modelId = models.data[0].id;
+      const added = dbQueries.addDbModel({
+        name: "ById Model",
+        provider: "Test",
+        tier: "primary" as const,
+        avg_latency_ms: 100,
+        throughput: 1000,
+        created_at: new Date().toISOString(),
+      });
 
-      const result = await dbQueries.getModelById(modelId);
+      const result = await dbQueries.getModelById(added.id);
 
       expect(result.data).toBeDefined();
-      expect(result.data?.id).toBe(modelId);
+      expect(result.data?.id).toBe(added.id);
     });
 
     it("should return null for non-existent model", async () => {
@@ -342,13 +367,20 @@ describe("db-queries", () => {
     });
 
     it("should get node by id", async () => {
-      const nodes = await dbQueries.getNodesStatus();
-      const nodeId = nodes.data[0].id;
+      const added = dbQueries.addDbNode({
+        hostname: "ById-Node",
+        gpu_util: 50,
+        mem_util: 50,
+        temp_celsius: 60,
+        model_deployed: "Test Model",
+        active_tasks: 5,
+        status: "active" as const,
+      });
 
-      const result = await dbQueries.getNodeById(nodeId);
+      const result = await dbQueries.getNodeById(added.id);
 
       expect(result.data).toBeDefined();
-      expect(result.data?.id).toBe(nodeId);
+      expect(result.data?.id).toBe(added.id);
     });
 
     it("should return null for non-existent node", async () => {
@@ -476,6 +508,31 @@ describe("db-queries", () => {
 
       const data = JSON.parse(stored!);
       expect(data.some((n: NodeStatusRecord) => n.hostname === "Persistent Node")).toBe(true);
+    });
+  });
+
+  describe("Legacy Seed Cleanup", () => {
+    it("should purge legacy demo seeds while keeping user entries", async () => {
+      localStorage.setItem("yyc3_db_models", JSON.stringify([
+        { id: "m1", name: "LLaMA-70B", provider: "Meta", tier: "primary", avg_latency_ms: 120, throughput: 850, created_at: "2025-01-15T08:00:00Z" },
+        { id: "m-1700000000000", name: "User Model", provider: "Custom", tier: "standby", avg_latency_ms: 50, throughput: 100, created_at: new Date().toISOString() },
+      ]));
+      localStorage.setItem("yyc3_db_nodes", JSON.stringify([
+        { id: "n1", hostname: "GPU-A100-01", gpu_util: 72, mem_util: 65, temp_celsius: 68, model_deployed: "LLaMA-70B", active_tasks: 12, status: "active" },
+      ]));
+
+      // 全新模块实例以触发首次加载的清理逻辑
+      vi.resetModules();
+      const fresh = await import("../lib/db-queries");
+
+      const models = await fresh.getActiveModels();
+      expect(models.data.some((m) => m.id === "m1")).toBe(false);
+      expect(models.data.some((m) => m.id === "m-1700000000000")).toBe(true);
+
+      const nodes = await fresh.getNodesStatus();
+      expect(nodes.data.length).toBe(0);
+      // 全为假种子的键应被移除
+      expect(localStorage.getItem("yyc3_db_nodes")).toBeNull();
     });
   });
 

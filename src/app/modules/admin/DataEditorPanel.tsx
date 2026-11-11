@@ -388,7 +388,7 @@ export function DataEditorPanel() {
     else if (activeTab === "nodes") { resetDbNodes(); }
     else if (activeTab === "agents") { resetDbAgents(); }
     loadData();
-    toast.info("已恢复默认数据", { style: toastStyle });
+    toast.info("已清空当前数据", { style: toastStyle });
   }, [activeTab, loadData]);
 
   // ═══ 批量删除 ═══
@@ -910,7 +910,7 @@ function LiveNodesTab({ isMobile, searchQuery, editingId, editDraft, showAddForm
     <GlassCard className="p-4 overflow-x-auto">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[#ff6600]" style={{ fontSize: "0.75rem" }}>Dashboard 实时节点 · 修改后刷新首页可见</p>
-        <button onClick={() => { resetNodes(); toast.info("已恢复默认"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
+        <button onClick={() => { resetNodes(); toast.info("已清空"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
       </div>
       {showAddForm && (
         <div className="p-3 mb-3 rounded-xl bg-[rgba(255,102,0,0.06)] border border-[rgba(255,102,0,0.15)]">
@@ -966,7 +966,7 @@ function ModelPerfTab({ isMobile, searchQuery, editingId, editDraft, showAddForm
     <GlassCard className="p-4 overflow-x-auto">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[#ffdd00]" style={{ fontSize: "0.75rem" }}>Dashboard 模型性能对比 · 影响首页柱状图</p>
-        <button onClick={() => { setModelPerf([]); toast.info("已恢复默认"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
+        <button onClick={() => { setModelPerf([]); toast.info("已清空"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
       </div>
       {showAddForm && (
         <div className="p-3 mb-3 rounded-xl bg-[rgba(255,221,0,0.04)] border border-[rgba(255,221,0,0.15)]">
@@ -1017,7 +1017,7 @@ function RecentOpsTab({ isMobile, searchQuery, editingId, editDraft, showAddForm
     <GlassCard className="p-4 overflow-x-auto">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[#ff3366]" style={{ fontSize: "0.75rem" }}>Dashboard 最近操作 · 影响首页操作列表</p>
-        <button onClick={() => { clearRecentOps(); toast.info("已恢复默认"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
+        <button onClick={() => { clearRecentOps(); toast.info("已清空"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
       </div>
       {showAddForm && (
         <div className="p-3 mb-3 rounded-xl bg-[rgba(255,51,102,0.04)] border border-[rgba(255,51,102,0.15)]">
@@ -1068,7 +1068,7 @@ function RadarDataTab({ isMobile, searchQuery, editingId, editDraft, showAddForm
     <GlassCard className="p-4 overflow-x-auto">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[#00ccaa]" style={{ fontSize: "0.75rem" }}>Dashboard 雷达对比数据 · 影响首页雷达图</p>
-        <button onClick={() => { setRadarData([]); toast.info("已恢复默认"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
+        <button onClick={() => { setRadarData([]); toast.info("已清空"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
       </div>
       {showAddForm && (
         <div className="p-3 mb-3 rounded-xl bg-[rgba(0,204,170,0.04)] border border-[rgba(0,204,170,0.15)]">
@@ -1120,7 +1120,7 @@ function ModelDistTab({ isMobile, searchQuery, editingId, editDraft, showAddForm
           <p className="text-[#cc66ff]" style={{ fontSize: "0.75rem" }}>Dashboard 模型分布 · 影响首页饼图</p>
           <span className="px-2 py-0.5 rounded-full bg-[rgba(204,102,255,0.08)] text-[rgba(204,102,255,0.6)]" style={{ fontSize: "0.6rem" }}>总计: {total}</span>
         </div>
-        <button onClick={() => { setModelDist([]); toast.info("已恢复默认"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
+        <button onClick={() => { setModelDist([]); toast.info("已清空"); }} className="px-2 py-1 rounded-lg text-[#ffaa00] bg-[rgba(255,170,0,0.08)]" style={{ fontSize: "0.68rem" }}><RotateCcw className="w-3 h-3 inline mr-1" />重置</button>
       </div>
       {showAddForm && (
         <div className="p-3 mb-3 rounded-xl bg-[rgba(204,102,255,0.04)] border border-[rgba(204,102,255,0.15)]">

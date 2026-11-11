@@ -32,45 +32,45 @@ const AGENTS_KEY = "yyc3_db_agents";
 const NODES_KEY = "yyc3_db_nodes";
 
 // ============================================================
-// 默认 Mock 数据 (仅首次初始化使用)
+// 历史假种子清理 (v1 → v2 真实化)
+// 早期版本首次访问即写入 LLaMA-70B 等演示条目；现按 ID 精确
+// 清除这些遗留条目，用户自建数据 (时间戳 ID) 完整保留。
 // ============================================================
 
-const DEFAULT_MODELS: Model[] = [
-  { id: "m1", name: "LLaMA-70B", provider: "Meta", tier: "primary", avg_latency_ms: 120, throughput: 850, created_at: "2025-01-15T08:00:00Z" },
-  { id: "m2", name: "Qwen-72B", provider: "Alibaba", tier: "primary", avg_latency_ms: 135, throughput: 780, created_at: "2025-01-20T10:00:00Z" },
-  { id: "m3", name: "GPT-4o", provider: "OpenAI", tier: "secondary", avg_latency_ms: 200, throughput: 620, created_at: "2025-02-01T12:00:00Z" },
-  { id: "m4", name: "Claude-3.5", provider: "Anthropic", tier: "secondary", avg_latency_ms: 180, throughput: 700, created_at: "2025-02-05T09:00:00Z" },
-  { id: "m5", name: "Mistral-7B", provider: "Mistral", tier: "standby", avg_latency_ms: 45, throughput: 1200, created_at: "2025-02-10T14:00:00Z" },
-];
+const LEGACY_FAKE_MODEL_IDS = new Set(["m1", "m2", "m3", "m4", "m5"]);
+const LEGACY_FAKE_AGENT_IDS = new Set(["a1", "a2", "a3", "a4", "a5"]);
+const LEGACY_FAKE_NODE_IDS = new Set(["n1", "n2", "n3", "n4", "n5"]);
 
-const DEFAULT_AGENTS: Agent[] = [
-  { id: "a1", name: "CodeAssist", name_cn: "代码助手", role: "coding", description: "代码生成与审查", is_active: true },
-  { id: "a2", name: "DataAnalyst", name_cn: "数据分析师", role: "analysis", description: "数据分析与可视化", is_active: true },
-  { id: "a3", name: "DocWriter", name_cn: "文档撰写员", role: "writing", description: "技术文档生成", is_active: true },
-  { id: "a4", name: "SecurityGuard", name_cn: "安全守卫", role: "security", description: "安全审计与漏洞检测", is_active: false },
-  { id: "a5", name: "DevOpsBot", name_cn: "运维机器人", role: "ops", description: "自动化运维", is_active: true },
-];
+const LEGACY_FAKE_IDS: Record<string, Set<string>> = {
+  [MODELS_KEY]: LEGACY_FAKE_MODEL_IDS,
+  [AGENTS_KEY]: LEGACY_FAKE_AGENT_IDS,
+  [NODES_KEY]: LEGACY_FAKE_NODE_IDS,
+};
 
-const DEFAULT_NODES: NodeStatusRecord[] = [
-  { id: "n1", hostname: "GPU-A100-01", gpu_util: 72, mem_util: 65, temp_celsius: 68, model_deployed: "LLaMA-70B", active_tasks: 12, status: "active" },
-  { id: "n2", hostname: "GPU-A100-02", gpu_util: 85, mem_util: 78, temp_celsius: 74, model_deployed: "Qwen-72B", active_tasks: 8, status: "active" },
-  { id: "n3", hostname: "GPU-A100-03", gpu_util: 92, mem_util: 88, temp_celsius: 82, model_deployed: "LLaMA-70B", active_tasks: 15, status: "warning" },
-  { id: "n4", hostname: "GPU-A100-04", gpu_util: 45, mem_util: 40, temp_celsius: 55, model_deployed: "Mistral-7B", active_tasks: 5, status: "active" },
-  { id: "n5", hostname: "GPU-A100-05", gpu_util: 0, mem_util: 10, temp_celsius: 35, model_deployed: "", active_tasks: 0, status: "inactive" },
-];
+/** 过滤掉历史假种子条目；有变更则写回，全空则删键 */
+function sanitizeLegacy<T extends { id: string }>(key: string, rows: T[]): T[] {
+  const fakeIds = LEGACY_FAKE_IDS[key];
+  if (!fakeIds) {return rows;}
+  const kept = rows.filter((r) => !fakeIds.has(r.id));
+  if (kept.length === rows.length) {return rows;}
+  try {
+    if (kept.length === 0) {localStorage.removeItem(key);}
+    else {localStorage.setItem(key, JSON.stringify(kept));}
+  } catch { /* ignore */ }
+  return kept;
+}
 
 // ============================================================
 // localStorage CRUD 工具层
 // ============================================================
 
-function loadData<T>(key: string, defaults: T[]): T[] {
+function loadData<T extends { id: string }>(key: string): T[] {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) {return JSON.parse(raw);}
+    if (raw) {return sanitizeLegacy(key, JSON.parse(raw) as T[]);}
   } catch { /* ignore */ }
-  // 首次: 写入默认值
-  try { localStorage.setItem(key, JSON.stringify(defaults)); } catch { /* ignore */ }
-  return [...defaults];
+  // 无后端设计: 无数据即空数组，绝不写入演示种子
+  return [];
 }
 
 function saveData<T>(key: string, data: T[]): void {
@@ -86,17 +86,17 @@ let _agents: Agent[] | null = null;
 let _nodes: NodeStatusRecord[] | null = null;
 
 function getModels(): Model[] {
-  if (!_models) {_models = loadData<Model>(MODELS_KEY, DEFAULT_MODELS);}
+  if (!_models) {_models = loadData<Model>(MODELS_KEY);}
   return _models;
 }
 
 function getAgents(): Agent[] {
-  if (!_agents) {_agents = loadData<Agent>(AGENTS_KEY, DEFAULT_AGENTS);}
+  if (!_agents) {_agents = loadData<Agent>(AGENTS_KEY);}
   return _agents;
 }
 
 function getNodes(): NodeStatusRecord[] {
-  if (!_nodes) {_nodes = loadData<NodeStatusRecord>(NODES_KEY, DEFAULT_NODES);}
+  if (!_nodes) {_nodes = loadData<NodeStatusRecord>(NODES_KEY);}
   return _nodes;
 }
 
@@ -199,19 +199,19 @@ export function deleteDbNode(id: string): boolean {
 // ============================================================
 
 export function resetDbModels(): Model[] {
-  _models = DEFAULT_MODELS.map((m) => ({ ...m }));
+  _models = [];
   persistModels();
   return _models;
 }
 
 export function resetDbAgents(): Agent[] {
-  _agents = DEFAULT_AGENTS.map((a) => ({ ...a }));
+  _agents = [];
   persistAgents();
   return _agents;
 }
 
 export function resetDbNodes(): NodeStatusRecord[] {
-  _nodes = DEFAULT_NODES.map((n) => ({ ...n }));
+  _nodes = [];
   persistNodes();
   return _nodes;
 }
@@ -243,29 +243,6 @@ export function importDbData(jsonStr: string): boolean {
 }
 
 // ============================================================
-// 推理日志生成 (仍为运行时生成, 无需持久化)
-// ============================================================
-
-function generateMockLogs(count: number): InferenceLog[] {
-  const statuses: Array<"success" | "error" | "timeout"> = ["success", "error", "timeout"];
-  const modelIds = getModels().map((m) => m.id);
-  const agentIds = getAgents().filter((a) => a.is_active).map((a) => a.id);
-
-  if (modelIds.length === 0 || agentIds.length === 0) {return [];}
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `log-${String(i + 1).padStart(5, "0")}`,
-    model_id: modelIds[i % modelIds.length],
-    agent_id: agentIds[i % agentIds.length],
-    latency_ms: Math.floor(Math.random() * 300) + 20,
-    tokens_in: Math.floor(Math.random() * 2000) + 100,
-    tokens_out: Math.floor(Math.random() * 4000) + 200,
-    status: i % 10 === 9 ? statuses[1] : i % 15 === 14 ? statuses[2] : statuses[0],
-    created_at: new Date(Date.now() - i * 60_000).toISOString(),
-  }));
-}
-
-// ============================================================
 // Query Functions (API 兼容 — 签名不变)
 // ============================================================
 
@@ -275,27 +252,27 @@ export async function getActiveModels(): Promise<{ data: Model[]; error: null }>
   return { data: [...getModels()], error: null };
 }
 
-/** 获取最近推理日志 */
-export async function getRecentLogs(limit = 100): Promise<{ data: InferenceLog[]; error: null }> {
-  return { data: generateMockLogs(limit), error: null };
+/**
+ * 获取最近推理日志
+ * 本地无真实推理遥测源（模型服务端接入后由其提供），返回空数组，
+ * 绝不生成 Math.random() 演示日志。
+ */
+export async function getRecentLogs(_limit = 100): Promise<{ data: InferenceLog[]; error: null }> {
+  return { data: [], error: null };
 }
 
-/** 获取模型统计 */
+/**
+ * 获取模型统计
+ * 本地无真实遥测源（totalRequests / totalTokens / successRate 需由
+ * 模型服务端上报），模型存在但无统计数据时如实返回 null。
+ */
 export async function getModelStats(
   modelId: string
 ): Promise<{ data: ModelStats | null; error: null }> {
   const model = getModels().find((m) => m.id === modelId);
   if (!model) {return { data: null, error: null };}
-
-  return {
-    data: {
-      avgLatency: model.avg_latency_ms,
-      totalRequests: Math.floor(Math.random() * 50000) + 10000,
-      totalTokens: Math.floor(Math.random() * 5_000_000) + 1_000_000,
-      successRate: 95 + Math.random() * 4.5,
-    },
-    error: null,
-  };
+  // 无真实推理统计来源 — 返回 null，由 UI 呈现空态
+  return { data: null, error: null };
 }
 
 /** 获取节点状态 */
