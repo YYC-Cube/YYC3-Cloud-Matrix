@@ -1094,6 +1094,7 @@ const enUS: TranslationKeys = {
     notifyChannels: "Notify Channels",
     autoActionLabel: "Auto Action (optional)",
     selectNodes: "Select Target Nodes",
+    noAvailableNodes: "No online nodes — connect a device via node agent first, or keep existing rule targets",
     formRequired: "Please fill required fields",
     addThreshold: "Add Threshold",
     removeThreshold: "Remove Threshold",

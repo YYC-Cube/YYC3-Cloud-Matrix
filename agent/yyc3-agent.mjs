@@ -23,7 +23,8 @@
  * - WS 服务：ws://<host>:3113/ws，讲前端既有 WSMessage 协议（前端零改动）
  * - 健康检查：GET /healthz → JSON（生产探活）
  * - 采集：CPU / 内存 / 磁盘 / Ollama 推理服务状态（详见 lib/collectors.mjs）
- * - 告警：Ollama 上下线、内存 >90%、磁盘 >85% 边沿触发 alert 消息
+ * - 告警：Ollama 上下线（内置）+ 动态阈值规则（前端「告警规则」面板编辑即生效）
+ * - 规则下发：GET/PUT /rules（?token= 或 Bearer 鉴权），持久化 ~/.yyc3-cloud-matrix/alert-rules.json
  * - 心跳：收到 {type:"heartbeat"} 即回 heartbeat_ack
  *
  * 环境变量（命名规范 §三 PMO_ 前缀）：
@@ -77,8 +78,6 @@ const CONFIG = Object.freeze({
   nodeId: (process.env.PMO_NODE_ID || os.hostname().replace(/\.local$/, "").toUpperCase()),
   intervalMs: Math.max(500, Number.parseInt(process.env.PMO_INTERVAL_MS || "2000", 10)),
   maxThroughputHistory: 60,
-  memAlertThreshold: 90,
-  diskAlertThreshold: 85,
 });
 
 // ============================================================
@@ -109,6 +108,201 @@ function loadOrCreateToken() {
 
 const AUTH = loadOrCreateToken();
 
+// ============================================================
+// 动态告警规则（前端「告警规则」面板双向闭环）
+// - 规则由前端通过 PUT /rules 下发，写入 ~/.yyc3-cloud-matrix/alert-rules.json 持久化
+// - 规则文件不存在时使用内置默认阈值（保证开箱即有兜底告警）；
+//   一旦前端下发过（哪怕空数组），规则文件即成为唯一事实源
+// - 规则可评估指标：cpu / memory / disk（agent 本机可实测）；
+//   gpu / latency / network / error_rate / throughput 由前端本地评估，agent 忽略
+// ============================================================
+
+const RULES_FILE = path.join(os.homedir(), ".yyc3-cloud-matrix", "alert-rules.json");
+
+/** 内置兜底规则（仅在规则文件不存在时使用） */
+const DEFAULT_AGENT_RULES = [
+  {
+    id: "agent-builtin-mem",
+    name: "内存使用率过高",
+    severity: "critical",
+    enabled: true,
+    thresholds: [{ metric: "memory", condition: "gt", value: 90, unit: "%" }],
+    cooldownMinutes: 0,
+    targets: ["*"],
+  },
+  {
+    id: "agent-builtin-disk",
+    name: "磁盘空间不足",
+    severity: "warning",
+    enabled: true,
+    thresholds: [{ metric: "disk", condition: "gt", value: 85, unit: "%" }],
+    cooldownMinutes: 0,
+    targets: ["*"],
+  },
+];
+
+/** agent 可实测的指标 → 从快照取值 */
+const MEASURABLE_METRICS = new Set(["cpu", "memory", "disk"]);
+
+function loadAgentRules() {
+  try {
+    const raw = fs.readFileSync(RULES_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.rules)) {
+      return { rules: parsed.rules, source: RULES_FILE };
+    }
+  } catch { /* 文件不存在或损坏 → 用内置兜底 */ }
+  return { rules: DEFAULT_AGENT_RULES, source: "builtin-defaults" };
+}
+
+const RULES = loadAgentRules();
+/** 每规则+指标的边沿/冷却状态：key = `${ruleId}:${metric}` */
+const ruleStates = new Map();
+
+const CONDITION_OPS = {
+  gt: (v, t) => v > t,
+  gte: (v, t) => v >= t,
+  lt: (v, t) => v < t,
+  lte: (v, t) => v <= t,
+  eq: (v, t) => v === t,
+  neq: (v, t) => v !== t,
+};
+
+const CONDITION_LABEL = { gt: ">", gte: ">=", lt: "<", lte: "<=", eq: "=", neq: "!=" };
+
+function metricValueOf(metric, { cpu, mem, disk }) {
+  if (metric === "cpu") { return cpu; }
+  if (metric === "memory") { return mem; }
+  if (metric === "disk") { return disk ? disk.percent : null; }
+  return null;
+}
+
+function ruleTargetsThisNode(rule) {
+  if (!Array.isArray(rule.targets) || rule.targets.length === 0) { return true; }
+  return rule.targets.includes("*") || rule.targets.includes(CONFIG.nodeId);
+}
+
+/**
+ * 评估动态规则，返回本轮新触发的告警
+ * @param {{cpu:number|null, mem:number|null, disk:object|null}} measured
+ * @returns {{fired: object[], active: object[]}}
+ */
+function evaluateAgentRules(measured) {
+  const fired = [];
+  const active = [];
+  const now = Date.now();
+
+  for (const rule of RULES.rules) {
+    if (!rule || rule.enabled === false) { continue; }
+    if (!ruleTargetsThisNode(rule)) { continue; }
+    const cooldownMs = Math.max(0, Number(rule.cooldownMinutes) || 0) * 60000;
+
+    for (const th of rule.thresholds || []) {
+      if (!th || !MEASURABLE_METRICS.has(th.metric)) { continue; }
+      const value = metricValueOf(th.metric, measured);
+      if (value === null || value === undefined) { continue; }
+      const op = CONDITION_OPS[th.condition] || CONDITION_OPS.gt;
+      const triggered = op(value, Number(th.value));
+      const key = `${rule.id}:${th.metric}`;
+      const st = ruleStates.get(key) || { active: false, lastFiredAt: 0 };
+      const unit = th.unit || "";
+      const message = `[规则] ${rule.name} — ${th.metric} 当前 ${Number(value).toFixed(1)}${unit}（阈值 ${CONDITION_LABEL[th.condition] || ">"} ${th.value}${unit}）`;
+
+      if (triggered) {
+        const shouldFire = !st.active || (cooldownMs > 0 && now - st.lastFiredAt > cooldownMs);
+        if (shouldFire) {
+          fired.push({
+            id: `agent-${rule.id}-${th.metric}-${now}`,
+            level: rule.severity || "warning",
+            message,
+            source: "yyc3-agent",
+            timestamp: now,
+          });
+          st.lastFiredAt = now;
+        }
+        st.active = true;
+        active.push({
+          id: `active-${rule.id}-${th.metric}`,
+          level: rule.severity || "warning",
+          message,
+          source: "yyc3-agent",
+          timestamp: st.lastFiredAt || now,
+        });
+      } else {
+        st.active = false;
+      }
+      ruleStates.set(key, st);
+    }
+  }
+  return { fired, active };
+}
+
+/**
+ * 规范化前端下发的规则（只保留 agent 需要的字段，丢弃未知字段）
+ * @returns {{ok: boolean, rules?: object[], error?: string}}
+ */
+function sanitizeAgentRules(input) {
+  if (!input || !Array.isArray(input.rules)) {
+    return { ok: false, error: "body must be { rules: [...] }" };
+  }
+  if (input.rules.length > 100) {
+    return { ok: false, error: "too many rules (max 100)" };
+  }
+  const severities = new Set(["critical", "error", "warning", "info"]);
+  const rules = [];
+  for (const r of input.rules) {
+    if (!r || typeof r.id !== "string" || !r.id) {
+      return { ok: false, error: "each rule requires string id" };
+    }
+    if (!Array.isArray(r.thresholds)) {
+      return { ok: false, error: `rule ${r.id}: thresholds must be an array` };
+    }
+    rules.push({
+      id: r.id,
+      name: typeof r.name === "string" ? r.name : r.id,
+      severity: severities.has(r.severity) ? r.severity : "warning",
+      enabled: r.enabled !== false,
+      thresholds: r.thresholds
+        .filter((th) => th && typeof th.metric === "string" && Number.isFinite(Number(th.value)))
+        .map((th) => ({
+          metric: th.metric,
+          condition: typeof th.condition === "string" ? th.condition : "gt",
+          value: Number(th.value),
+          unit: typeof th.unit === "string" ? th.unit : "",
+        })),
+      cooldownMinutes: Number.isFinite(Number(r.cooldownMinutes)) ? Number(r.cooldownMinutes) : 0,
+      targets: Array.isArray(r.targets) ? r.targets.filter((t) => typeof t === "string") : ["*"],
+    });
+  }
+  return { ok: true, rules };
+}
+
+function replaceAgentRules(rules) {
+  RULES.rules = rules;
+  RULES.source = RULES_FILE;
+  ruleStates.clear(); // 阈值语义已变，重置边沿状态避免漏报/误报
+  fs.mkdirSync(path.dirname(RULES_FILE), { recursive: true });
+  fs.writeFileSync(RULES_FILE, JSON.stringify({ rules, updatedAt: new Date().toISOString() }, null, 2) + "\n", { mode: 0o600 });
+}
+
+/** HTTP 鉴权：?token= 或 Authorization: Bearer（与 WS 同一令牌） */
+function checkHttpAuth(req, url) {
+  const bearer = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  const presented = url.searchParams.get("token") || bearer;
+  const a = Buffer.from(presented);
+  const b = Buffer.from(AUTH.token);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/** CORS：回环本地代理，回显来源并允许预检（前端 dev 端口跨域调用 /rules） */
+function writeCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (origin) { res.setHeader("Access-Control-Allow-Origin", origin); }
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+}
+
 const TAG = "[yyc3-agent]";
 const log = (...args) => console.log(TAG, ...args);
 const warn = (...args) => console.warn(TAG, ...args);
@@ -123,8 +317,8 @@ const cpuSample = createCpuSampler();
 let prevSnapshot = null;
 /** 吞吐量历史（真实观测值） */
 const throughputHistory = [];
-/** 已发出的边沿告警状态 */
-const alertState = { ollamaDown: false, memHigh: false, diskHigh: false };
+/** 已发出的 Ollama 边沿告警状态 */
+const alertState = { ollamaDown: false };
 /** 当前活跃告警条件快照（新客户端连入时回放，边沿告警一次性会漏连） */
 let activeAlerts = [];
 
@@ -199,15 +393,9 @@ async function collectSnapshot() {
   }
   alertState.ollamaDown = !ollama.online;
 
-  if (mem !== null && mem > CONFIG.memAlertThreshold && !alertState.memHigh) {
-    pushAlert("critical", `内存占用 ${mem}% 超过阈值 ${CONFIG.memAlertThreshold}%`);
-  }
-  alertState.memHigh = mem !== null && mem > CONFIG.memAlertThreshold;
-
-  if (disk && disk.percent > CONFIG.diskAlertThreshold && !alertState.diskHigh) {
-    pushAlert("warning", `磁盘占用 ${disk.percent}% 超过阈值 ${CONFIG.diskAlertThreshold}%`);
-  }
-  alertState.diskHigh = disk !== null && disk.percent > CONFIG.diskAlertThreshold;
+  // 动态规则评估（前端下发的阈值规则，替代历史硬编码 mem>90/disk>85）
+  const ruleResult = evaluateAgentRules({ cpu, mem, disk });
+  for (const a of ruleResult.fired) { alerts.push(a); }
 
   // 活跃告警条件快照：与边沿触发解耦，表达「此刻仍处于告警态」的条件集合
   activeAlerts = [];
@@ -220,24 +408,7 @@ async function collectSnapshot() {
       timestamp: Date.now(),
     });
   }
-  if (alertState.memHigh) {
-    activeAlerts.push({
-      id: "active-mem-high",
-      level: "critical",
-      message: `内存占用 ${mem}% 超过阈值 ${CONFIG.memAlertThreshold}%`,
-      source: "yyc3-agent",
-      timestamp: Date.now(),
-    });
-  }
-  if (alertState.diskHigh && disk) {
-    activeAlerts.push({
-      id: "active-disk-high",
-      level: "warning",
-      message: `磁盘占用 ${disk.percent}% 超过阈值 ${CONFIG.diskAlertThreshold}%`,
-      source: "yyc3-agent",
-      timestamp: Date.now(),
-    });
-  }
+  for (const a of ruleResult.active) { activeAlerts.push(a); }
 
   const snapshot = {
     node,
@@ -372,6 +543,15 @@ function handleWsUpgrade(req, socket) {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+  writeCorsHeaders(req, res);
+
+  // CORS 预检
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (url.pathname === "/healthz") {
     const body = JSON.stringify({
       ok: true,
@@ -380,12 +560,72 @@ const server = http.createServer((req, res) => {
       clients: clients.size,
       intervalMs: CONFIG.intervalMs,
       ollama: CONFIG.ollamaBaseUrl,
+      rules: RULES.rules.length,
+      rulesSource: RULES.source,
       uptimeSec: Math.round(process.uptime()),
     });
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(body);
     return;
   }
+
+  // 动态告警规则：GET 读取 / PUT 全量替换（前端「告警规则」面板编辑即生效）
+  if (url.pathname === "/rules") {
+    if (!checkHttpAuth(req, url)) {
+      warn(`拒绝未授权规则访问（${req.socket.remoteAddress ?? "unknown"} ${req.method} /rules）`);
+      res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "unauthorized" }));
+      return;
+    }
+    if (req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: true, rules: RULES.rules, source: RULES.source }));
+      return;
+    }
+    if (req.method === "PUT") {
+      const chunks = [];
+      req.on("data", (c) => {
+        chunks.push(c);
+        if (Buffer.concat(chunks).length > 256 * 1024) {
+          res.writeHead(413, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: false, error: "payload too large" }));
+          req.destroy();
+        }
+      });
+      req.on("end", () => {
+        if (res.writableEnded) { return; }
+        let body;
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        } catch {
+          res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: false, error: "invalid JSON" }));
+          return;
+        }
+        const result = sanitizeAgentRules(body);
+        if (!result.ok) {
+          res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: false, error: result.error }));
+          return;
+        }
+        try {
+          replaceAgentRules(result.rules);
+          log(`规则已更新（${result.rules.length} 条，来源前端下发）`);
+          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: true, count: result.rules.length }));
+        } catch (err) {
+          warn("规则写入失败：", err instanceof Error ? err.message : err);
+          res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: false, error: "persist failed" }));
+        }
+      });
+      return;
+    }
+    res.writeHead(405, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: "method not allowed" }));
+    return;
+  }
+
   res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
   res.end("yyc3-agent: use ws://" + CONFIG.host + ":" + CONFIG.port + CONFIG.wsPath + " or GET /healthz\n");
 });
@@ -436,6 +676,7 @@ async function main() {
   log(`  WS:        ws://${CONFIG.host}:${CONFIG.port}${CONFIG.wsPath}?token=<agent-token>`);
   log(`  Health:    http://${CONFIG.host}:${CONFIG.port}/healthz`);
   log(`  Node:      ${CONFIG.nodeId} · 间隔 ${CONFIG.intervalMs}ms · Ollama ${CONFIG.ollamaBaseUrl}`);
+  log(`  Rules:     ${RULES.rules.length} 条（来源 ${RULES.source}）· GET/PUT http://${CONFIG.host}:${CONFIG.port}/rules?token=<agent-token>`);
   log(`  Auth:      令牌来源 ${AUTH.source}（前端「系统设置 → WebSocket → WS 访问令牌」填入同一令牌）`);
   timer = setInterval(() => {
     pushSnapshot().catch((err) => warn("采集失败：", err instanceof Error ? err.message : err));

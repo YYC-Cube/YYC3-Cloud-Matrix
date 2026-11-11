@@ -1103,6 +1103,7 @@ const zhCN = {
     notifyChannels: "通知渠道",
     autoActionLabel: "自动操作(可选)",
     selectNodes: "选择目标节点",
+    noAvailableNodes: "暂无在线节点 — 请先通过节点代理接入设备，或保存既有规则目标",
     formRequired: "请填写必填项",
     addThreshold: "添加阈值",
     removeThreshold: "移除阈值",

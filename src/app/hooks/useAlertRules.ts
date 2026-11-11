@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { usePersistedList } from "./usePersistedState";
+import { syncAlertRulesToAgent } from "../lib/agent-rules-sync";
 
 // ============================================================
 // Types — centralized in types/index.ts
@@ -24,203 +25,18 @@ import type {
 // RF-011: Re-export 已移除
 
 // ============================================================
-// Mock Data
+// 历史假种子清理
+// 2026-11-11 前版本内置 6 条 GPU-A100 假规则 + 5 条假事件作为默认种子，
+// 违反「可编辑项拒绝硬编码」原则。现默认空列表，真实规则由用户创建；
+// 已持久化在用户浏览器 IndexedDB 中的假种子按已知 ID 一次性清除。
 // ============================================================
 
-const MOCK_RULES: AlertRule[] = [
-  {
-    id: "rule-001",
-    name: "GPU 利用率过高",
-    enabled: true,
-    severity: "critical",
-    thresholds: [
-      { metric: "gpu", condition: "gt", value: 95, unit: "%", duration: 300 },
-    ],
-    aggregation: { enabled: true, windowMinutes: 5, maxGroupSize: 10 },
-    deduplication: { enabled: true, cooldownMinutes: 15 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"], autoAction: "auto_scale_check" },
-      { level: 2, delayMinutes: 10, notifyChannels: ["dashboard", "email"], autoAction: "auto_scale_up" },
-      { level: 3, delayMinutes: 30, notifyChannels: ["dashboard", "email", "sms"], autoAction: "force_rebalance" },
-    ],
-    targets: ["GPU-A100-01", "GPU-A100-02", "GPU-A100-03"],
-    createdAt: Date.now() - 86400000 * 7,
-    lastTriggered: Date.now() - 3600000,
-    triggerCount: 23,
-  },
-  {
-    id: "rule-002",
-    name: "推理延迟异常",
-    enabled: true,
-    severity: "warning",
-    thresholds: [
-      { metric: "latency", condition: "gt", value: 2000, unit: "ms", duration: 60 },
-    ],
-    aggregation: { enabled: true, windowMinutes: 3, maxGroupSize: 5 },
-    deduplication: { enabled: true, cooldownMinutes: 10 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] },
-      { level: 2, delayMinutes: 15, notifyChannels: ["dashboard", "email"] },
-    ],
-    targets: ["GPU-A100-01", "GPU-A100-02", "GPU-A100-03", "GPU-A100-04"],
-    createdAt: Date.now() - 86400000 * 5,
-    lastTriggered: Date.now() - 7200000,
-    triggerCount: 45,
-  },
-  {
-    id: "rule-003",
-    name: "磁盘空间不足",
-    enabled: true,
-    severity: "warning",
-    thresholds: [
-      { metric: "disk", condition: "gt", value: 85, unit: "%", duration: 0 },
-    ],
-    aggregation: { enabled: false, windowMinutes: 0, maxGroupSize: 0 },
-    deduplication: { enabled: true, cooldownMinutes: 60 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] },
-    ],
-    targets: ["NAS-01", "NAS-02"],
-    createdAt: Date.now() - 86400000 * 3,
-    lastTriggered: Date.now() - 86400000,
-    triggerCount: 8,
-  },
-  {
-    id: "rule-004",
-    name: "内存使用率过高",
-    enabled: false,
-    severity: "critical",
-    thresholds: [
-      { metric: "memory", condition: "gt", value: 90, unit: "%", duration: 120 },
-    ],
-    aggregation: { enabled: true, windowMinutes: 5, maxGroupSize: 10 },
-    deduplication: { enabled: true, cooldownMinutes: 20 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] },
-      { level: 2, delayMinutes: 5, notifyChannels: ["dashboard", "email"], autoAction: "restart_service" },
-    ],
-    targets: ["GPU-A100-01", "GPU-A100-02"],
-    createdAt: Date.now() - 86400000 * 2,
-    lastTriggered: null,
-    triggerCount: 0,
-  },
-  {
-    id: "rule-005",
-    name: "错误率飙升",
-    enabled: true,
-    severity: "critical",
-    thresholds: [
-      { metric: "error_rate", condition: "gt", value: 5, unit: "%", duration: 60 },
-    ],
-    aggregation: { enabled: true, windowMinutes: 10, maxGroupSize: 20 },
-    deduplication: { enabled: true, cooldownMinutes: 30 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"], autoAction: "log_capture" },
-      { level: 2, delayMinutes: 5, notifyChannels: ["dashboard", "email"], autoAction: "circuit_breaker" },
-      { level: 3, delayMinutes: 15, notifyChannels: ["dashboard", "email", "sms"], autoAction: "rollback" },
-    ],
-    targets: ["GPU-A100-01", "GPU-A100-02", "GPU-A100-03"],
-    createdAt: Date.now() - 86400000,
-    lastTriggered: Date.now() - 1800000,
-    triggerCount: 12,
-  },
-  {
-    id: "rule-006",
-    name: "网络延迟异常",
-    enabled: true,
-    severity: "info",
-    thresholds: [
-      { metric: "network", condition: "gt", value: 100, unit: "ms", duration: 30 },
-    ],
-    aggregation: { enabled: false, windowMinutes: 0, maxGroupSize: 0 },
-    deduplication: { enabled: true, cooldownMinutes: 5 },
-    escalation: [
-      { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] },
-    ],
-    targets: ["GPU-A100-01", "GPU-A100-02", "GPU-A100-03", "GPU-A100-04", "GPU-A100-05"],
-    createdAt: Date.now() - 3600000 * 12,
-    lastTriggered: Date.now() - 600000,
-    triggerCount: 67,
-  },
-];
-
-const MOCK_EVENTS: AlertEvent[] = [
-  {
-    id: "evt-001",
-    ruleId: "rule-001",
-    ruleName: "GPU 利用率过高",
-    severity: "critical",
-    message: "GPU-A100-03 利用率达到 98.2%，持续 5 分钟",
-    metric: "gpu",
-    currentValue: 98.2,
-    threshold: 95,
-    nodeId: "GPU-A100-03",
-    timestamp: Date.now() - 300000,
-    acknowledged: false,
-    resolved: false,
-    escalationLevel: 2,
-  },
-  {
-    id: "evt-002",
-    ruleId: "rule-002",
-    ruleName: "推理延迟异常",
-    severity: "warning",
-    message: "GPU-A100-01 推理延迟 2,450ms > 2,000ms",
-    metric: "latency",
-    currentValue: 2450,
-    threshold: 2000,
-    nodeId: "GPU-A100-01",
-    timestamp: Date.now() - 900000,
-    acknowledged: true,
-    resolved: false,
-    escalationLevel: 1,
-  },
-  {
-    id: "evt-003",
-    ruleId: "rule-005",
-    ruleName: "错误率飙升",
-    severity: "critical",
-    message: "GPU-A100-02 错误率达到 7.3%，已触发熔断",
-    metric: "error_rate",
-    currentValue: 7.3,
-    threshold: 5,
-    nodeId: "GPU-A100-02",
-    timestamp: Date.now() - 1800000,
-    acknowledged: true,
-    resolved: true,
-    escalationLevel: 2,
-  },
-  {
-    id: "evt-004",
-    ruleId: "rule-006",
-    ruleName: "网络延迟异常",
-    severity: "info",
-    message: "GPU-A100-04 网络延迟 145ms > 100ms",
-    metric: "network",
-    currentValue: 145,
-    threshold: 100,
-    nodeId: "GPU-A100-04",
-    timestamp: Date.now() - 600000,
-    acknowledged: false,
-    resolved: false,
-    escalationLevel: 1,
-  },
-  {
-    id: "evt-005",
-    ruleId: "rule-003",
-    ruleName: "磁盘空间不足",
-    severity: "warning",
-    message: "NAS-01 磁盘使用率 87.5% > 85%",
-    metric: "disk",
-    currentValue: 87.5,
-    threshold: 85,
-    nodeId: "NAS-01",
-    timestamp: Date.now() - 3600000,
-    acknowledged: true,
-    resolved: false,
-    escalationLevel: 1,
-  },
-];
+const LEGACY_MOCK_RULE_IDS = new Set([
+  "rule-001", "rule-002", "rule-003", "rule-004", "rule-005", "rule-006",
+]);
+const LEGACY_MOCK_EVENT_IDS = new Set([
+  "evt-001", "evt-002", "evt-003", "evt-004", "evt-005",
+]);
 
 // ============================================================
 // Hook
@@ -228,20 +44,22 @@ const MOCK_EVENTS: AlertEvent[] = [
 
 export function useAlertRules(opts: AlertRulesOptions = {}) {
   // RF-007: 使用 usePersistedList 代替手动 IndexedDB CRUD
+  // 默认空列表：规则/事件均为用户可编辑数据，禁止硬编码种子（唯一禁忌）
   const {
     items: rules,
     upsert: upsertRule,
     remove: removeRule,
-    setAll: _setAllRules,
-    loaded: _rulesLoaded,
-  } = usePersistedList<AlertRule>("alertRules", MOCK_RULES);
+    setAll: setAllRules,
+    loaded: rulesLoaded,
+  } = usePersistedList<AlertRule>("alertRules", []);
 
   const {
     items: events,
     setItems: setEvents,
+    setAll: setAllEvents,
     upsert: upsertEvent,
-    loaded: _eventsLoaded,
-  } = usePersistedList<AlertEvent>("alertEvents", MOCK_EVENTS);
+    loaded: eventsLoaded,
+  } = usePersistedList<AlertEvent>("alertEvents", []);
 
   const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -250,10 +68,39 @@ export function useAlertRules(opts: AlertRulesOptions = {}) {
   const lastPushRef = useRef<number>(0);
   const rulesRef = useRef(rules);
 
+  // ── 历史假种子一次性清除（IndexedDB 加载完成后执行） ──
+  useEffect(() => {
+    if (!rulesLoaded) {return;}
+    if (rules.some((r) => LEGACY_MOCK_RULE_IDS.has(r.id))) {
+      void setAllRules(rules.filter((r) => !LEGACY_MOCK_RULE_IDS.has(r.id)));
+    }
+  }, [rulesLoaded, rules, setAllRules]);
+
+  useEffect(() => {
+    if (!eventsLoaded) {return;}
+    if (events.some((e) => LEGACY_MOCK_EVENT_IDS.has(e.id))) {
+      void setAllEvents(events.filter((e) => !LEGACY_MOCK_EVENT_IDS.has(e.id)));
+    }
+  }, [eventsLoaded, events, setAllEvents]);
+
   // ── WebSocket live alert evaluation ──
   useEffect(() => {
     rulesRef.current = rules;
   }, [rules]);
+
+  // ── 规则下发 yyc3-agent（防抖）：编辑即生效的下行链路 ──
+  // agent 端按规则实时评估 cpu/memory/disk 并推送 alert（上行闭环）
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!rulesLoaded) {return;}
+    if (syncTimerRef.current) {clearTimeout(syncTimerRef.current);}
+    syncTimerRef.current = setTimeout(() => {
+      void syncAlertRulesToAgent(rulesRef.current);
+    }, 800);
+    return () => {
+      if (syncTimerRef.current) {clearTimeout(syncTimerRef.current);}
+    };
+  }, [rules, rulesLoaded]);
 
   useEffect(() => {
     if (!opts.liveNodes || opts.liveNodes.length === 0) {return;}
@@ -355,7 +202,8 @@ export function useAlertRules(opts: AlertRulesOptions = {}) {
   const createRule = useCallback((rule: Omit<AlertRule, "id" | "createdAt" | "lastTriggered" | "triggerCount">) => {
     const newRule: AlertRule = {
       ...rule,
-      id: `rule-${String(Date.now()).slice(-6)}`,
+      // 同毫秒连续创建时 Date.now() 会撞 ID，追加随机段防碰撞
+      id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       createdAt: Date.now(),
       lastTriggered: null,
       triggerCount: 0,

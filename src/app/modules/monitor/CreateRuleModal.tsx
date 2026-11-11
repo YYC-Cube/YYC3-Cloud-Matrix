@@ -53,21 +53,6 @@ const SEVERITIES: { value: AlertSeverity; color: string; icon: React.ElementType
   { value: "info", color: "#00d4ff", icon: Info },
 ];
 
-const AVAILABLE_NODES = [
-  "GPU-A100-01",
-  "GPU-A100-02",
-  "GPU-A100-03",
-  "GPU-A100-04",
-  "GPU-A100-05",
-  "GPU-H100-01",
-  "GPU-H100-02",
-  "GPU-H100-03",
-  "TPU-v4-01",
-  "TPU-v4-02",
-  "NAS-01",
-  "NAS-02",
-];
-
 const CHANNEL_OPTIONS = ["dashboard", "email", "sms", "webhook", "slack"];
 
 // ============================================================
@@ -89,13 +74,18 @@ interface CreateRuleModalProps {
   }) => void;
   /** When provided, modal switches to "edit" mode with pre-filled values */
   editRule?: AlertRule | null;
+  /**
+   * 可选目标节点列表（真实在线节点 + 既有规则目标的并集，由调用方提供）。
+   * 禁止内置假节点：无可用节点时显示空态提示，用户需先接入节点。
+   */
+  availableNodes?: string[];
 }
 
 // ============================================================
 // Component
 // ============================================================
 
-export function CreateRuleModal({ open, onClose, onSubmit, editRule }: CreateRuleModalProps) {
+export function CreateRuleModal({ open, onClose, onSubmit, editRule, availableNodes = [] }: CreateRuleModalProps) {
   const { t } = useI18n();
 
   // Form state
@@ -112,7 +102,7 @@ export function CreateRuleModal({ open, onClose, onSubmit, editRule }: CreateRul
   const [escalation, setEscalation] = useState<EscalationPolicy[]>([
     { level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] },
   ]);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>(["GPU-A100-01"]);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [error, setError] = useState("");
 
   // ── Backfill form when editing ──
@@ -235,7 +225,7 @@ export function CreateRuleModal({ open, onClose, onSubmit, editRule }: CreateRul
       setDedupEnabled(true);
       setDedupCooldown(15);
       setEscalation([{ level: 1, delayMinutes: 0, notifyChannels: ["dashboard"] }]);
-      setSelectedNodes(["GPU-A100-01"]);
+      setSelectedNodes([]);
     }
   }, [
     name,
@@ -627,26 +617,32 @@ export function CreateRuleModal({ open, onClose, onSubmit, editRule }: CreateRul
           {/* Target Nodes */}
           <div>
             <label style={labelStyle}>{t("alerts.selectNodes")}</label>
-            <div className="flex flex-wrap gap-1.5">
-              {AVAILABLE_NODES.map((node) => (
-                <button
-                  key={node}
-                  onClick={() => toggleNode(node)}
-                  className="px-2.5 py-1.5 rounded-lg font-mono transition-all"
-                  style={{
-                    fontSize: "0.65rem",
-                    border: `1px solid ${selectedNodes.includes(node) ? "rgba(0,255,136,0.3)" : "rgba(0,180,255,0.1)"}`,
-                    background: selectedNodes.includes(node)
-                      ? "rgba(0,255,136,0.08)"
-                      : "transparent",
-                    color: selectedNodes.includes(node) ? "#00ff88" : "rgba(224,240,255,0.4)",
-                  }}
-                  data-testid={`node-${node}`}
-                >
-                  {node}
-                </button>
-              ))}
-            </div>
+            {availableNodes.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {availableNodes.map((node) => (
+                  <button
+                    key={node}
+                    onClick={() => toggleNode(node)}
+                    className="px-2.5 py-1.5 rounded-lg font-mono transition-all"
+                    style={{
+                      fontSize: "0.65rem",
+                      border: `1px solid ${selectedNodes.includes(node) ? "rgba(0,255,136,0.3)" : "rgba(0,180,255,0.1)"}`,
+                      background: selectedNodes.includes(node)
+                        ? "rgba(0,255,136,0.08)"
+                        : "transparent",
+                      color: selectedNodes.includes(node) ? "#00ff88" : "rgba(224,240,255,0.4)",
+                    }}
+                    data-testid={`node-${node}`}
+                  >
+                    {node}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[rgba(0,212,255,0.35)]" style={{ fontSize: "0.68rem" }} data-testid="no-nodes-hint">
+                {t("alerts.noAvailableNodes")}
+              </p>
+            )}
           </div>
         </div>
 

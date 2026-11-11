@@ -382,6 +382,15 @@ export function AlertRulesPanel() {
   } = state;
   const [viewMode, setViewMode] = useState<"rules" | "events">("rules");
 
+  // 可选目标节点 = 真实在线节点 ∪ 既有规则目标（编辑旧规则时不丢已选节点）
+  // 禁止内置假节点清单（唯一禁忌：可选项拒绝硬编码）
+  const availableNodes = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const n of wsData.nodes) { set.add(n.id); }
+    for (const r of state.rules) { for (const target of r.targets) { set.add(target); } }
+    return Array.from(set);
+  }, [wsData.nodes, state.rules]);
+
   // Handle edit submit: delegates to updateRule or createRule
   const handleModalSubmit = React.useCallback((ruleData: Parameters<typeof createRule>[0]) => {
     if (editingRule) {
@@ -411,6 +420,7 @@ export function AlertRulesPanel() {
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         editRule={editingRule}
+        availableNodes={availableNodes}
       />
 
       {/* WebSocket Status Indicator */}

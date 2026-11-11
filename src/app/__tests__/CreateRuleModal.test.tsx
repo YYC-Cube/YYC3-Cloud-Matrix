@@ -17,6 +17,9 @@ import * as React from "react";
 import { CreateRuleModal } from "../modules/monitor/CreateRuleModal";
 import type { AlertRule } from "../types";
 
+/** 测试用节点清单（通过 availableNodes 注入，替代已移除的内置假节点） */
+const TEST_NODES = ["GPU-A100-01", "GPU-A100-02", "GPU-A100-03", "GPU-H100-01"];
+
 const mockOnClose = vi.fn();
 const mockOnSubmit = vi.fn();
 
@@ -64,6 +67,7 @@ describe("CreateRuleModal", () => {
           open={false}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -76,6 +80,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -88,6 +93,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -100,6 +106,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -113,6 +120,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -127,6 +135,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -139,6 +148,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -154,6 +164,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -167,6 +178,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -179,6 +191,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -191,6 +204,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -203,6 +217,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -215,6 +230,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -230,6 +246,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -245,6 +262,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -260,6 +278,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -276,6 +295,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -295,6 +315,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -310,6 +331,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -325,6 +347,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -340,6 +363,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -355,6 +379,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -367,6 +392,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -382,6 +408,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -394,6 +421,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -410,6 +438,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -426,6 +455,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -441,6 +471,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -458,6 +489,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -475,18 +507,17 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
-      
+
       const nameInput = screen.getByTestId("rule-name-input");
       fireEvent.change(nameInput, { target: { value: "测试规则" } });
-      
-      const nodeButton = screen.getByTestId("node-GPU-A100-01");
-      fireEvent.click(nodeButton);
-      
+
+      // 不选择任何节点（默认无选中，禁止内置假节点默认选中）
       const submitBtn = screen.getByTestId("submit-rule-btn");
       fireEvent.click(submitBtn);
-      
+
       await waitFor(() => {
         expect(screen.getByText("alerts.formRequired")).toBeInTheDocument();
       });
@@ -500,21 +531,26 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
       const nameInput = screen.getByTestId("rule-name-input");
       fireEvent.change(nameInput, { target: { value: "测试规则" } });
-      
+
+      // 选择一个目标节点（无默认选中，需用户显式选择）
+      fireEvent.click(screen.getByTestId("node-GPU-A100-01"));
+
       const submitBtn = screen.getByTestId("submit-rule-btn");
       fireEvent.click(submitBtn);
-      
+
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith(
           expect.objectContaining({
             name: "测试规则",
             enabled: true,
             severity: "warning",
+            targets: ["GPU-A100-01"],
           })
         );
       });
@@ -526,15 +562,18 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
       const nameInput = screen.getByTestId("rule-name-input");
       fireEvent.change(nameInput, { target: { value: "测试规则" } });
-      
+
+      fireEvent.click(screen.getByTestId("node-GPU-A100-01"));
+
       const submitBtn = screen.getByTestId("submit-rule-btn");
       fireEvent.click(submitBtn);
-      
+
       await waitFor(() => {
         expect(nameInput).toHaveValue("");
       });
@@ -546,6 +585,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -569,6 +609,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -583,6 +624,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -597,6 +639,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -611,6 +654,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -628,6 +672,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -645,6 +690,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -659,6 +705,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={mockEditRule}
         />
       );
@@ -678,6 +725,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -695,6 +743,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -710,6 +759,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -725,6 +775,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -742,6 +793,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
           editRule={null}
         />
       );
@@ -755,6 +807,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -778,6 +831,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -800,6 +854,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
@@ -823,6 +878,7 @@ describe("CreateRuleModal", () => {
           open={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
+          availableNodes={TEST_NODES}
         />
       );
       
