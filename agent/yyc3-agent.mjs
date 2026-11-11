@@ -294,6 +294,136 @@ function checkHttpAuth(req, url) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+// ============================================================
+// 本机文件浏览（只读浏览 + 内容读写，白名单根目录）
+// 根目录固定为 agent 数据目录 ~/.yyc3-cloud-matrix；
+// 路径穿越（..）与绝对路径逃逸一律拒绝；内容上限 512KB 读 / 1MB 写
+// ============================================================
+
+const FILE_ROOT = path.join(os.homedir(), ".yyc3-cloud-matrix");
+const FILE_READ_CAP = 512 * 1024;
+const FILE_WRITE_CAP = 1024 * 1024;
+
+/** 将请求相对路径解析为根目录内的绝对路径；逃逸返回 null */
+function resolveSafePath(rel) {
+  const clean = String(rel || "").replace(/^\/+/, "");
+  const abs = path.resolve(FILE_ROOT, clean);
+  if (abs !== FILE_ROOT && !abs.startsWith(FILE_ROOT + path.sep)) { return null; }
+  return abs;
+}
+
+async function handleFilesList(url, res) {
+  const abs = resolveSafePath(url.searchParams.get("path"));
+  if (!abs) {
+    res.writeHead(403, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: "path outside whitelist root" }));
+    return;
+  }
+  try {
+    const st = await fs.promises.stat(abs);
+    if (!st.isDirectory()) {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: true, type: "file", name: path.basename(abs), size: st.size, modifiedAt: st.mtimeMs }));
+      return;
+    }
+    const dirents = await fs.promises.readdir(abs, { withFileTypes: true });
+    const entries = [];
+    for (const d of dirents) {
+      if (d.name.startsWith(".") && d.name !== ".yyc3-cloud-matrix") { continue; }
+      try {
+        const s = await fs.promises.stat(path.join(abs, d.name));
+        entries.push({
+          name: d.name,
+          type: d.isDirectory() ? "directory" : "file",
+          size: d.isDirectory() ? undefined : s.size,
+          modifiedAt: s.mtimeMs,
+        });
+      } catch { /* 竞态删除跳过 */ }
+    }
+    entries.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === "directory" ? -1 : 1));
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: true, type: "dir", entries }));
+  } catch (err) {
+    const code = err && err.code === "ENOENT" ? 404 : 500;
+    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: code === 404 ? "not found" : "read failed" }));
+  }
+}
+
+async function handleFileRead(url, res) {
+  const abs = resolveSafePath(url.searchParams.get("path"));
+  if (!abs) {
+    res.writeHead(403, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: "path outside whitelist root" }));
+    return;
+  }
+  try {
+    const st = await fs.promises.stat(abs);
+    if (!st.isFile()) { throw Object.assign(new Error("not a file"), { code: "EINVAL" }); }
+    if (st.size > FILE_READ_CAP) {
+      const fh = await fs.promises.open(abs, "r");
+      const buf = Buffer.alloc(FILE_READ_CAP);
+      await fh.read(buf, 0, FILE_READ_CAP, 0);
+      await fh.close();
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: true, content: buf.toString("utf8"), size: st.size, modifiedAt: st.mtimeMs, truncated: true }));
+      return;
+    }
+    const content = await fs.promises.readFile(abs, "utf8");
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: true, content, size: st.size, modifiedAt: st.mtimeMs, truncated: false }));
+  } catch (err) {
+    const code = err && err.code === "ENOENT" ? 404 : 400;
+    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: code === 404 ? "not found" : "not a readable file" }));
+  }
+}
+
+async function handleFileWrite(req, res) {
+  const chunks = [];
+  req.on("data", (c) => {
+    chunks.push(c);
+    if (Buffer.concat(chunks).length > FILE_WRITE_CAP + 4096) {
+      res.writeHead(413, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "payload too large" }));
+      req.destroy();
+    }
+  });
+  req.on("end", async () => {
+    if (res.writableEnded) { return; }
+    let body;
+    try {
+      body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "invalid JSON" }));
+      return;
+    }
+    const abs = resolveSafePath(body && body.path);
+    if (!abs || typeof body.content !== "string") {
+      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "path/content required" }));
+      return;
+    }
+    if (Buffer.byteLength(body.content, "utf8") > FILE_WRITE_CAP) {
+      res.writeHead(413, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "content exceeds 1MB" }));
+      return;
+    }
+    try {
+      await fs.promises.mkdir(path.dirname(abs), { recursive: true });
+      await fs.promises.writeFile(abs, body.content, "utf8");
+      const st = await fs.promises.stat(abs);
+      log(`文件写入 ${path.relative(FILE_ROOT, abs)}（${st.size}B）`);
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: true, size: st.size, modifiedAt: st.mtimeMs }));
+    } catch {
+      res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "write failed" }));
+    }
+  });
+}
+
 /** CORS：回环本地代理，回显来源并允许预检（前端 dev 端口跨域调用 /rules） */
 function writeCorsHeaders(req, res) {
   const origin = req.headers.origin;
@@ -552,6 +682,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 异步路由统一捕获，避免未处理拒绝拖垮进程
+  void (async () => {
+
   if (url.pathname === "/healthz") {
     const body = JSON.stringify({
       ok: true,
@@ -626,8 +759,46 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 本机文件浏览（白名单根目录 ~/.yyc3-cloud-matrix）
+  if (url.pathname === "/files" && req.method === "GET") {
+    if (!checkHttpAuth(req, url)) {
+      res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "unauthorized" }));
+      return;
+    }
+    await handleFilesList(url, res);
+    return;
+  }
+  if (url.pathname === "/files/content") {
+    if (!checkHttpAuth(req, url)) {
+      res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: false, error: "unauthorized" }));
+      return;
+    }
+    if (req.method === "GET") {
+      await handleFileRead(url, res);
+      return;
+    }
+    if (req.method === "PUT") {
+      await handleFileWrite(req, res);
+      return;
+    }
+    res.writeHead(405, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: false, error: "method not allowed" }));
+    return;
+  }
+
   res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
   res.end("yyc3-agent: use ws://" + CONFIG.host + ":" + CONFIG.port + CONFIG.wsPath + " or GET /healthz\n");
+  })().catch((err) => {
+    warn("HTTP 处理异常：", err instanceof Error ? err.message : err);
+    if (!res.writableEnded) {
+      try {
+        res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+        res.end(JSON.stringify({ ok: false, error: "internal error" }));
+      } catch { /* ignore */ }
+    }
+  });
 });
 
 server.on("upgrade", (req, socket) => {

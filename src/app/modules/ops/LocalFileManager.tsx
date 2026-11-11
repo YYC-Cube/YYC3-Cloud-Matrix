@@ -19,7 +19,7 @@ import { FileBrowser } from "./FileBrowser";
 import { LogViewer } from "./LogViewer";
 import { ReportGenerator } from "./ReportGenerator";
 import { CodeEditor, getLanguageLabel } from "../../components/CodeEditor";
-import { useLocalFileSystem } from "../../hooks/useLocalFileSystem";
+import { useLocalFileSystem, AGENT_FS_ROOT_LABEL } from "../../hooks/useLocalFileSystem";
 import { useI18n } from "../../hooks/useI18n";
 import { useLogSlice } from "../../store/slices/log-slice";
 import { ViewContext } from "../../lib/view-context";
@@ -124,15 +124,26 @@ export function LocalFileManager() {
 
       {/* ======== Tab Content ======== */}
       {activeTab === "files" && (
-        <FileBrowser
-          items={fs.currentItems}
-          breadcrumbs={fs.breadcrumbs}
-          onSelect={fs.selectFile}
-          onNavigate={fs.navigateTo}
-          onGoUp={fs.goUp}
-          formatSize={fs.formatSize}
-          canGoUp={fs.currentPath !== "~/.yyc3-cloudpivot"}
-        />
+        <>
+          {fs.agentReachable === false && (
+            <div
+              className="px-3 py-2 rounded-lg bg-[rgba(255,170,0,0.06)] border border-[rgba(255,170,0,0.2)] text-[#ffaa00]"
+              style={{ fontSize: "0.7rem" }}
+              data-testid="agent-offline-hint"
+            >
+              agent 未连接或未配置访问令牌 — 文件浏览需要在「系统设置 → WebSocket」中配置本机 agent 令牌
+            </div>
+          )}
+          <FileBrowser
+            items={fs.currentItems}
+            breadcrumbs={fs.breadcrumbs}
+            onSelect={fs.selectFile}
+            onNavigate={fs.navigateTo}
+            onGoUp={fs.goUp}
+            formatSize={fs.formatSize}
+            canGoUp={fs.currentPath !== AGENT_FS_ROOT_LABEL}
+          />
+        </>
       )}
 
       {activeTab === "logs" && (
@@ -180,25 +191,29 @@ function FileDetailEditor({
   file, getContent, saveContent, formatSize, onClose, t,
 }: {
   file: { id: string; name: string; path: string; size?: number; extension?: string; modifiedAt: number };
-  getContent: (id: string) => string;
-  saveContent: (id: string, content: string) => void;
+  getContent: (id: string) => Promise<string>;
+  saveContent: (id: string, content: string) => Promise<boolean>;
   formatSize: (n?: number) => string;
   onClose: () => void;
   t: (key: string) => string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState("");
   const [dirty, setDirty] = useState(false);
 
-  const openEditor = useCallback(() => {
-    setContent(getContent(file.id));
+  const openEditor = useCallback(async () => {
+    setIsLoading(true);
+    const text = await getContent(file.id);
+    setContent(text);
+    setIsLoading(false);
     setIsEditing(true);
     setDirty(false);
   }, [getContent, file.id]);
 
-  const handleSave = useCallback(() => {
-    saveContent(file.id, content);
-    setDirty(false);
+  const handleSave = useCallback(async () => {
+    const ok = await saveContent(file.id, content);
+    if (ok) { setDirty(false); }
   }, [saveContent, file.id, content]);
 
   const handleClose = useCallback(() => {
@@ -222,11 +237,12 @@ function FileDetailEditor({
         <div className="flex items-center gap-2">
           {!isEditing && (
             <button
-              onClick={openEditor}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(0,140,200,0.1)] border border-[rgba(0,180,255,0.15)] text-[rgba(0,212,255,0.5)] hover:text-[#00d4ff] transition-all"
+              onClick={() => { void openEditor(); }}
+              disabled={isLoading}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(0,140,200,0.1)] border border-[rgba(0,180,255,0.15)] text-[rgba(0,212,255,0.5)] hover:text-[#00d4ff] transition-all disabled:opacity-40"
               style={{ fontSize: "0.68rem" }}
             >
-              <FileEdit className="w-3 h-3" /> 编辑内容
+              <FileEdit className="w-3 h-3" /> {isLoading ? "读取中…" : "编辑内容"}
             </button>
           )}
           {isEditing && (

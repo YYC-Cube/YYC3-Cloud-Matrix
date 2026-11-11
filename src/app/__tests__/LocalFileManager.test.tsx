@@ -17,13 +17,17 @@ import * as React from "react";
 import { LocalFileManager } from "../modules/ops/LocalFileManager";
 
 vi.mock("../hooks/useLocalFileSystem", () => ({
+  AGENT_FS_ROOT_LABEL: "~/.yyc3-cloud-matrix",
   useLocalFileSystem: vi.fn(() => ({
     files: [],
     logs: [],
     currentItems: [],
-    breadcrumbs: ["~/.yyc3-cloudpivot"],
-    currentPath: "~/.yyc3-cloudpivot",
+    breadcrumbs: ["~/.yyc3-cloud-matrix"],
+    currentPath: "~/.yyc3-cloud-matrix",
     selectedFile: null,
+    agentReachable: true,
+    isListing: false,
+    refresh: vi.fn(),
     logLevelFilter: "all",
     logSourceFilter: "all",
     logSearchQuery: "",
@@ -37,8 +41,8 @@ vi.mock("../hooks/useLocalFileSystem", () => ({
     selectFile: vi.fn(),
     navigateTo: vi.fn(),
     goUp: vi.fn(),
-    getFileContent: vi.fn(() => ""),
-    saveFileContent: vi.fn(),
+    getFileContent: vi.fn(() => Promise.resolve("")),
+    saveFileContent: vi.fn(() => Promise.resolve(true)),
     formatSize: vi.fn((n?: number) => n ? `${n} B` : "--"),
     generateReport: vi.fn(),
     setLogLevelFilter: vi.fn(),
