@@ -77,14 +77,14 @@ describe("useOperationCenter", () => {
       expect(result.current.actions.length).toBe(12);
     });
 
-    it("应有 3 个模板", () => {
+    it("模板初始为空（零硬编码种子）", () => {
       const { result } = renderHook(() => useOperationCenter());
-      expect(result.current.templates.length).toBe(3);
+      expect(result.current.templates.length).toBe(0);
     });
 
-    it("应有初始日志数据", () => {
+    it("日志初始为空（零硬编码种子）", () => {
       const { result } = renderHook(() => useOperationCenter());
-      expect(result.current.logs.length).toBeGreaterThan(0);
+      expect(result.current.logs.length).toBe(0);
     });
 
     it("isExecuting 初始为 null", () => {
@@ -168,6 +168,9 @@ describe("useOperationCenter", () => {
 
     it("deleteTemplate 应移除模板", () => {
       const { result } = renderHook(() => useOperationCenter());
+      act(() => {
+        result.current.addTemplate("待删除", "测试用", "system", ["步骤1"]);
+      });
       const before = result.current.templates.length;
       const targetId = result.current.templates[0].id;
       act(() => {
@@ -179,6 +182,9 @@ describe("useOperationCenter", () => {
 
     it("runTemplate 应更新 lastUsed", async () => {
       const { result } = renderHook(() => useOperationCenter());
+      act(() => {
+        result.current.addTemplate("测试模板", "测试用", "system", ["步骤1"]);
+      });
       const tpl = result.current.templates[0];
 
       await act(async () => {

@@ -21,7 +21,7 @@
  * @notes: 使用 usePersistedList 持久化操作日志
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { usePersistedList } from "./usePersistedState";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
@@ -48,7 +48,8 @@ export const CATEGORY_META: OperationCategoryMeta[] = [
 ];
 
 // ============================================================
-// Mock Quick Actions
+// Mock Quick Actions — 运维能力目录（非用户数据，等同路由/菜单定义）
+// 其中 REAL_ACTIONS 已接入真实执行；其余为演示模式动作（demoMode 开启时可演练）
 // ============================================================
 
 const QUICK_ACTIONS: OperationItem[] = [
@@ -67,78 +68,115 @@ const QUICK_ACTIONS: OperationItem[] = [
 ];
 
 // ============================================================
-// Mock Templates
+// 模板与日志（零硬编码种子 2026-11-11）
+// 模板/日志均为用户可编辑数据，禁止内置假种子；
+// 历史版本持久化在 IndexedDB 的假数据按已知 ID 一次性清除。
 // ============================================================
 
-const INITIAL_TEMPLATES: OperationTemplateItem[] = [
-  {
-    id: "tpl1",
-    name: "模型部署标准流程",
-    description: "标准模型部署 → 验证 → 上线流程",
-    category: "model",
-    steps: ["选择目标节点", "上传模型权重", "配置推理参数", "运行冒烟测试", "切换流量"],
-    createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    lastUsed: Date.now() - 2 * 60 * 60 * 1000,
-  },
-  {
-    id: "tpl2",
-    name: "节点故障排查流程",
-    description: "GPU 节点异常 → 诊断 → 修复 → 验证",
-    category: "node",
-    steps: ["检查 GPU 温度/显存", "查看错误日志", "重启推理服务", "验证响应延迟", "恢复任务队列"],
-    createdAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
-    lastUsed: Date.now() - 24 * 60 * 60 * 1000,
-  },
-  {
-    id: "tpl3",
-    name: "每日备份任务",
-    description: "配置 + 数据库 + 日志定时备份",
-    category: "system",
-    steps: ["备份 PostgreSQL 数据", "导出系统配置", "压缩日志归档", "上传到 NAS", "清理旧备份"],
-    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-    lastUsed: Date.now() - 12 * 60 * 60 * 1000,
-  },
-];
+const LEGACY_TEMPLATE_IDS = new Set(["tpl1", "tpl2", "tpl3"]);
+const LEGACY_LOG_IDS = new Set(
+  Array.from({ length: 12 }, (_, i) => `log-${1000 + i}`),
+);
 
 // ============================================================
-// Mock Log Stream
+// 真实动作执行器（2026-11-11）
+// qa10 健康检查 / qa4 导出日志 / qa5 生成报告 / qa11 备份配置
+// 均为真实能力：直接读 SSOT / 调 agent /healthz / 本地下载，无模拟
 // ============================================================
 
-function generateMockLogs(): OperationLogEntry[] {
-  const actions = [
-    { category: "node" as const,   action: "重启节点 GPU-A100-03",     user: "admin" },
-    { category: "model" as const,  action: "部署 LLaMA-70B 到 GPU-H100-01", user: "dev_yang" },
-    { category: "system" as const, action: "清理推理缓存",             user: "admin" },
-    { category: "task" as const,   action: "暂停推理队列 #847",        user: "admin" },
-    { category: "model" as const,  action: "更新 DeepSeek-V3 参数",   user: "dev_li" },
-    { category: "node" as const,   action: "健康检查 全节点",          user: "system" },
-    { category: "system" as const, action: "导出日志 2025-02-24",      user: "admin" },
-    { category: "system" as const, action: "备份 PostgreSQL",          user: "system" },
-    { category: "task" as const,   action: "恢复推理队列",             user: "admin" },
-    { category: "custom" as const, action: "执行自定义脚本 cleanup.sh",user: "dev_yang" },
-    { category: "node" as const,   action: "GPU-A100-01 温度告警检查", user: "system" },
-    { category: "model" as const,  action: "模型冒烟测试 Qwen-72B",   user: "dev_li" },
-  ];
+import { deriveAgentHttpBase } from "../lib/agent-rules-sync";
+import { getAPIConfig } from "../lib/api-config";
+import { useLogSlice } from "../store/slices/log-slice";
+import { useNodeSlice } from "../store/slices/node-slice";
+import { useFollowUpSlice } from "../store/slices/follow-up-slice";
 
-  const statuses: OperationStatus[] = ["success", "success", "success", "success", "failed", "running"];
+/** 真实动作 ID 集合 */
+export const REAL_ACTION_IDS = new Set(["qa10", "qa4", "qa5", "qa11"]);
 
-  return actions.map((a, i) => ({
-    id: `log-${1000 + i}`,
-    timestamp: Date.now() - i * 8 * 60 * 1000 - Math.random() * 5 * 60 * 1000,
-    category: a.category,
-    action: a.action,
-    user: a.user,
-    status: statuses[i % statuses.length],
-    duration: 200 + Math.floor(Math.random() * 3000),
-  }));
+function downloadJson(filename: string, data: unknown): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
+
+interface RealActionResult {
+  ok: boolean;
+  note: string;
+}
+
+async function runHealthCheck(): Promise<RealActionResult> {
+  const base = deriveAgentHttpBase(getAPIConfig().wsEndpoint);
+  if (!base) {
+    return { ok: false, note: "未配置 WS 端点 — 请到「系统设置 → WebSocket」配置" };
+  }
+  const started = performance.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(`${base}/healthz`, { signal: controller.signal });
+    const rtt = Math.round(performance.now() - started);
+    if (!res.ok) { return { ok: false, note: `agent 返回 HTTP ${res.status}` }; }
+    const health = await res.json();
+    return {
+      ok: true,
+      note: `agent 在线（${health.nodeId}）· RTT ${rtt}ms · WS 客户端 ${health.clients} · 规则 ${health.rules} 条 · 运行 ${health.uptimeSec}s`,
+    };
+  } catch {
+    return { ok: false, note: "agent 不可达 — 请确认 yyc3-agent 已启动（pnpm agent）" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function runExportLogs(): RealActionResult {
+  const logs = useLogSlice.getState().logs;
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  downloadJson(`yyc3-logs-${stamp}.json`, { exportedAt: Date.now(), count: logs.length, logs });
+  return { ok: true, note: `已导出 ${logs.length} 条日志` };
+}
+
+function runGenerateReport(): RealActionResult {
+  const nodes = useNodeSlice.getState().nodes;
+  const followUps = useFollowUpSlice.getState().followUps;
+  const pending = followUps.filter((f) => f.status === "pending");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  downloadJson(`yyc3-report-${stamp}.json`, {
+    generatedAt: Date.now(),
+    nodes: nodes.map((n) => ({ id: n.id, status: n.status, mem: n.mem, tasks: n.tasks, model: n.model })),
+    alerts: { total: followUps.length, pending: pending.length },
+    pendingWorkOrders: pending.map((f) => ({ taskId: f.taskId, taskName: f.taskName, priority: f.priority })),
+  });
+  return { ok: true, note: `报告已生成：${nodes.length} 节点 · ${pending.length} 待办工单` };
+}
+
+function runBackupConfig(): RealActionResult {
+  const values = useSettingsSSOT.getState().values;
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  downloadJson(`yyc3-config-backup-${stamp}.json`, {
+    backedUpAt: Date.now(),
+    settings: { ...values, wsToken: values.wsToken ? "***（已脱敏）" : "", aiApiKey: values.aiApiKey ? "***（已脱敏）" : "" },
+    apiEndpoints: getAPIConfig(),
+  });
+  return { ok: true, note: "配置备份已导出（令牌字段已脱敏）" };
+}
+
+const REAL_EXECUTORS: Record<string, () => Promise<RealActionResult> | RealActionResult> = {
+  qa10: runHealthCheck,
+  qa4: runExportLogs,
+  qa5: runGenerateReport,
+  qa11: runBackupConfig,
+};
 
 // ============================================================
 // Hook
 // ============================================================
 
 export function useOperationCenter() {
-  // 演示模式总开关（Settings SSOT）：关闭时不产出模拟日志、不执行模拟操作
+  // 演示模式总开关（Settings SSOT）：关闭时演示动作不执行
   const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [activeCategory, setActiveCategory] = useState<OperationCategoryType | "all">("all");
   const [actions, setActions] = useState<OperationItem[]>(QUICK_ACTIONS);
@@ -146,16 +184,33 @@ export function useOperationCenter() {
     items: templates,
     upsert: upsertTemplate,
     remove: removeTemplate,
+    setAll: setAllTemplates,
     loaded: templatesLoaded,
-  } = usePersistedList<OperationTemplateItem>("operationTemplates", INITIAL_TEMPLATES);
+  } = usePersistedList<OperationTemplateItem>("operationTemplates", []);
   const {
     items: logs,
     prepend: prependLog,
+    setAll: setAllLogs,
     loaded: logsLoaded,
-  } = usePersistedList<OperationLogEntry>("operationLogs", generateMockLogs());
+  } = usePersistedList<OperationLogEntry>("operationLogs", []);
   const [logFilter, setLogFilter] = useState<LogFilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
+
+  // ── 历史假种子一次性清除（IndexedDB 加载完成后执行） ──
+  useEffect(() => {
+    if (!templatesLoaded) {return;}
+    if (templates.some((t) => LEGACY_TEMPLATE_IDS.has(t.id))) {
+      void setAllTemplates(templates.filter((t) => !LEGACY_TEMPLATE_IDS.has(t.id)));
+    }
+  }, [templatesLoaded, templates, setAllTemplates]);
+
+  useEffect(() => {
+    if (!logsLoaded) {return;}
+    if (logs.some((l) => LEGACY_LOG_IDS.has(l.id))) {
+      void setAllLogs(logs.filter((l) => !LEGACY_LOG_IDS.has(l.id)));
+    }
+  }, [logsLoaded, logs, setAllLogs]);
 
   // Filtered actions
   const filteredActions = activeCategory === "all"
@@ -164,7 +219,7 @@ export function useOperationCenter() {
 
   // Filtered logs（演示模式关闭时不展示模拟日志种子，持久化数据保留）
   const filteredLogs = (() => {
-    let result = demoMode ? logs : [];
+    let result = demoMode ? logs : logs.filter((l) => !LEGACY_LOG_IDS.has(l.id));
     if (logFilter === "byCategory" && activeCategory !== "all") {
       result = result.filter((l) => l.category === activeCategory);
     }
@@ -182,8 +237,9 @@ export function useOperationCenter() {
     const action = actions.find((a) => a.id === actionId);
     if (!action) {return;}
 
-    if (!demoMode) {
-      toast.info("演示模式已关闭：操作执行需要接入真实运维通道，请在系统设置中开启演示模式查看效果");
+    const realExecutor = REAL_EXECUTORS[actionId];
+    if (!realExecutor && !demoMode) {
+      toast.info(`「${action.label}」需要接入对应服务端能力（演示模式下可演练，请在系统设置中开启）`);
       return;
     }
 
@@ -192,11 +248,29 @@ export function useOperationCenter() {
       prev.map((a) => (a.id === actionId ? { ...a, status: "running" as const } : a))
     );
 
-    // Simulate execution
-    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
+    let finalStatus: OperationStatus;
+    let duration: number;
+    let note = "";
 
-    const success = Math.random() > 0.15;
-    const finalStatus: OperationStatus = success ? "success" : "failed";
+    if (realExecutor) {
+      // ── 真实动作：实测耗时与结果 ──
+      const started = performance.now();
+      try {
+        const result = await realExecutor();
+        finalStatus = result.ok ? "success" : "failed";
+        note = result.note;
+      } catch (err) {
+        finalStatus = "failed";
+        note = err instanceof Error ? err.message : String(err);
+      }
+      duration = Math.round(performance.now() - started);
+    } else {
+      // ── 演示动作：仅在演示模式下演练 ──
+      await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
+      const success = Math.random() > 0.15;
+      finalStatus = success ? "success" : "failed";
+      duration = 1500 + Math.floor(Math.random() * 2000);
+    }
 
     setActions((prev) =>
       prev.map((a) => (a.id === actionId ? { ...a, status: finalStatus } : a))
@@ -204,21 +278,21 @@ export function useOperationCenter() {
 
     // Add log entry
     const newLog: OperationLogEntry = {
-      id: `log-${Date.now()}`,
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       timestamp: Date.now(),
       category: action.category,
-      action: action.label,
+      action: note ? `${action.label} — ${note}` : action.label,
       user: "admin",
       status: finalStatus,
-      duration: 1500 + Math.floor(Math.random() * 2000),
+      duration,
     };
     await prependLog(newLog);
     setIsExecuting(null);
 
-    if (success) {
-      toast.success(`${action.label} 执行成功`);
+    if (finalStatus === "success") {
+      toast.success(`${action.label} 执行成功`, note ? { description: note } : undefined);
     } else {
-      toast.error(`${action.label} 执行失败`, { description: "请检查日志获取详情" });
+      toast.error(`${action.label} 执行失败`, { description: note || "请检查日志获取详情" });
     }
 
     // Reset status after 3s
@@ -299,7 +373,7 @@ export function useOperationCenter() {
     deleteTemplate,
     // Logs
     logs: filteredLogs,
-    allLogs: demoMode ? logs : [],
+    allLogs: demoMode ? logs : logs.filter((l) => !LEGACY_LOG_IDS.has(l.id)),
     logsLoaded,
     logFilter,
     setLogFilter,

@@ -62,6 +62,13 @@ describe("useOperationCenter", () => {
 
   it("should have templates", () => {
     const { result } = renderHook(() => useOperationCenter());
+    // 零硬编码种子：模板为用户可编辑数据，初始为空
+    expect(result.current.templates).toHaveLength(0);
+
+    act(() => {
+      result.current.addTemplate("测试模板", "测试描述", "system", ["步骤1", "步骤2"]);
+    });
+
     expect(result.current.templates.length).toBeGreaterThan(0);
     expect(result.current.templates[0]).toHaveProperty("id");
     expect(result.current.templates[0]).toHaveProperty("name");
@@ -70,10 +77,8 @@ describe("useOperationCenter", () => {
 
   it("should have logs", () => {
     const { result } = renderHook(() => useOperationCenter());
-    expect(result.current.logs.length).toBeGreaterThan(0);
-    expect(result.current.logs[0]).toHaveProperty("id");
-    expect(result.current.logs[0]).toHaveProperty("timestamp");
-    expect(result.current.logs[0]).toHaveProperty("action");
+    // 零硬编码种子：无假日志，初始为空（真实执行后才有日志）
+    expect(result.current.logs).toHaveLength(0);
   });
 
   it("should filter actions by category", () => {
@@ -118,13 +123,17 @@ describe("useOperationCenter", () => {
 
   it("should delete template", () => {
     const { result } = renderHook(() => useOperationCenter());
+
+    act(() => {
+      result.current.addTemplate("待删除模板", "测试", "system", ["步骤1"]);
+    });
     const templateId = result.current.templates[0].id;
     const initialCount = result.current.templates.length;
-    
+
     act(() => {
       result.current.deleteTemplate(templateId);
     });
-    
+
     expect(result.current.templates.length).toBeLessThan(initialCount);
   });
 
@@ -142,12 +151,16 @@ describe("useOperationCenter", () => {
 
   it("should run template", async () => {
     const { result } = renderHook(() => useOperationCenter());
+
+    act(() => {
+      result.current.addTemplate("测试模板", "测试", "system", ["步骤1", "步骤2"]);
+    });
     const templateId = result.current.templates[0].id;
-    
+
     await act(async () => {
       await result.current.runTemplate(templateId);
     });
-    
+
     // Verify template was run (logs should be added)
     expect(result.current.logs.length).toBeGreaterThan(0);
   });

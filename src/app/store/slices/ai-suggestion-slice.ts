@@ -46,7 +46,7 @@ const PRIORITY_TO_SEVERITY: Record<string, PatternSeverity> = {
   low: 'low',
 };
 
-function deriveFromRealData(): { patterns: DetectedPattern[]; recommendations: AIRecommendation[] } {
+export function deriveFromRealData(): { patterns: DetectedPattern[]; recommendations: AIRecommendation[] } {
   const patterns: DetectedPattern[] = [];
   const recommendations: AIRecommendation[] = [];
   const now = Date.now();

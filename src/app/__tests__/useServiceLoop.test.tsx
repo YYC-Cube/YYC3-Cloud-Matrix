@@ -184,7 +184,8 @@ describe("useServiceLoop", () => {
       for (const stage of result.current.currentRun!.stages) {
         expect(stage.summary).toBeTruthy();
         expect(stage.details.length).toBeGreaterThan(0);
-        expect(stage.duration).toBeGreaterThan(0);
+        // 真实执行器无模拟延迟，同步阶段 duration 可为 0ms（verify 阶段含 2.5s 真实等待）
+        expect(stage.duration).toBeGreaterThanOrEqual(0);
       }
     });
 

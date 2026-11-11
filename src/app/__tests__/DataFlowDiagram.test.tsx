@@ -52,8 +52,8 @@ describe("DataFlowDiagram", () => {
 
     it("应渲染子标签", () => {
       render(<DataFlowDiagram nodes={DATA_FLOW_NODES} edges={DATA_FLOW_EDGES} />);
-      expect(screen.getAllByText("localhost")[0]).toBeInTheDocument();
-      expect(screen.getAllByText("PostgreSQL + NAS")[0]).toBeInTheDocument();
+      expect(screen.getAllByText("yyc3-agent · 本机")[0]).toBeInTheDocument();
+      expect(screen.getAllByText("localStorage + IndexedDB")[0]).toBeInTheDocument();
     });
   });
 

@@ -86,72 +86,152 @@ export const STAGE_META: StageMeta[] = [
 ];
 
 // ============================================================
-// 闭环阶段模拟数据生成
+// 闭环阶段真实执行器（v2 真实化 2026-11-11）
+// 六阶段全部基于真实数据源执行，零模拟数据：
+//   monitor  → useNodeSlice（WS 权威节点快照）
+//   analyze  → deriveFromRealData（AI 决策同一派生引擎，口径一致）
+//   decide   → 筛选可自动执行建议
+//   execute  → 真实动作：为可执行建议生成跟进工单（follow-up-slice SSOT）
+//   verify   → 等待一个 WS 推送周期后重读真实指标对比
+//   optimize → 真实沉淀：统计在库告警规则与生成工单
 // ============================================================
 
-const MOCK_STAGE_RESULTS: Record<LoopStage, () => Partial<StageResult>> = {
-  monitor: () => ({
-    summary: "采集 13 个节点数据，检测到 2 个异常信号",
-    details: [
-      "GPU-A100-03 推理延迟 2,450ms (>2,000ms 阈值)",
-      "GPU-H100-02 温度 85°C (>80°C 阈值)",
-      "其余 11 个节点运行正常",
-    ],
-    metrics: { nodes_scanned: 13, anomalies: 2, data_points: 1560 },
-  }),
-  analyze: () => ({
-    summary: "识别 2 个异常模式，关联历史 5 起类似事件",
-    details: [
-      "模式 A: latency_spike → GPU-A100-03 (连续 3 次 >2s)",
-      "模式 B: gpu_overheat → GPU-H100-02 (温度持续上升)",
-      "历史关联: 过去 7 天有 5 次类似异常",
-    ],
-    metrics: { patterns_found: 2, historical_matches: 5, confidence: 89 },
-  }),
-  decide: () => ({
-    summary: "AI 生成 4 条操作建议，置信度 78~95%",
-    details: [
-      "✅ 迁移 LLaMA-70B 到 GPU-A100-07 (置信度 92%)",
-      "✅ 降低 GPU-H100-02 频率到 1.5GHz (置信度 90%)",
-      "✅ 启用动态负载均衡 (置信度 78%)",
-      "✅ 清理历史日志释放 8.2GB (置信度 95%)",
-    ],
-    metrics: { recommendations: 4, avg_confidence: 89, auto_executable: 3 },
-  }),
-  execute: () => ({
-    summary: "自动执行 3 项操作，1 项等待人工确认",
-    details: [
-      "✅ 模型迁移完成: GPU-A100-03 → GPU-A100-07 (耗时 45s)",
-      "✅ GPU-H100-02 频率已降至 1.5GHz",
-      "✅ 动态负载均衡已启用",
-      "⏳ 日志清理等待人工确认 (8.2GB)",
-    ],
-    metrics: { executed: 3, pending: 1, total_time_ms: 48200 },
-  }),
-  verify: () => ({
-    summary: "验证结果: 延迟下降 68%，温度下降 12°C",
-    details: [
-      "GPU-A100-07 推理延迟: 780ms (原 2,450ms ↓68%)",
-      "GPU-H100-02 温度: 73°C (原 85°C ↓12°C)",
-      "集群整体吞吐量: 148K tok/s (原 121K ↑22%)",
-      "无回归异常检测",
-    ],
-    metrics: { latency_reduction: 68, temp_reduction: 12, throughput_increase: 22 },
-  }),
-  optimize: () => ({
-    summary: "更新 3 优化规则，学习周期 T+1 生效",
-    details: [
-      "规则更新: GPU-A100 系列延迟阈值从 2,000ms → 1,500ms",
-      "规则更新: 温度预警提前到 75°C",
-      "模型部署偏好: 优先选择低负载节点",
-      "学习数据已入库，预计 T+1 生效",
-    ],
-    metrics: { rules_updated: 3, learning_data_points: 48, next_cycle_eta: 3600 },
-  }),
+import { useNodeSlice } from "../store/slices/node-slice";
+import { useFollowUpSlice } from "../store/slices/follow-up-slice";
+import { deriveFromRealData } from "../store/slices/ai-suggestion-slice";
+import { idbGetAll } from "../lib/yyc3-storage";
+import type { DetectedPattern, AIRecommendation } from "../types";
+
+/** 单次闭环运行的跨阶段上下文 */
+interface LoopContext {
+  runId: string;
+  before: { nodes: number; anomalies: number };
+  patterns: DetectedPattern[];
+  recommendations: AIRecommendation[];
+  createdOrders: string[];
+}
+
+function countAnomalies(nodes: { mem: number; status: string }[]): number {
+  return nodes.filter((n) => n.mem >= 90 || n.status !== "active").length;
+}
+
+const REAL_STAGE_EXECUTORS: Record<LoopStage, (ctx: LoopContext) => Promise<Partial<StageResult>>> = {
+  monitor: async (ctx) => {
+    const nodes = useNodeSlice.getState().nodes;
+    const anomalies = nodes.filter((n) => n.mem >= 90 || n.status !== "active");
+    ctx.before = { nodes: nodes.length, anomalies: anomalies.length };
+    return {
+      summary: `采集 ${nodes.length} 个节点真实指标，检测到 ${anomalies.length} 个异常信号`,
+      details: [
+        ...anomalies.map((n) => {
+          const parts: string[] = [];
+          if (n.status !== "active") { parts.push(`状态 ${n.status}`); }
+          if (n.mem >= 90) { parts.push(`内存 ${n.mem.toFixed(1)}%`); }
+          return `${n.id}: ${parts.join(" · ")}`;
+        }),
+        ...(anomalies.length === 0 ? ["全部节点指标处于正常区间"] : []),
+      ],
+      metrics: { nodes_scanned: nodes.length, anomalies: anomalies.length },
+    };
+  },
+
+  analyze: async (ctx) => {
+    const { patterns, recommendations } = deriveFromRealData();
+    ctx.patterns = patterns;
+    ctx.recommendations = recommendations;
+    return {
+      summary: patterns.length > 0
+        ? `识别 ${patterns.length} 个异常模式（真实数据派生）`
+        : "未识别到异常模式",
+      details: patterns.length > 0
+        ? patterns.map((p) => `${p.severity.toUpperCase()} · ${p.title} — ${p.metric}`)
+        : ["节点指标与告警流均正常"],
+      metrics: { patterns_found: patterns.length, recommendations: recommendations.length },
+    };
+  },
+
+  decide: async (ctx) => {
+    const auto = ctx.recommendations.filter((r) => r.autoExecutable && !r.applied);
+    return {
+      summary: auto.length > 0
+        ? `生成 ${auto.length} 条可执行建议（来自真实异常模式）`
+        : "无需干预 — 当前无可执行建议",
+      details: auto.length > 0
+        ? auto.map((r) => `${r.action}（置信度 ${r.confidence}%）`)
+        : ["系统处于健康状态，保持观察"],
+      metrics: { recommendations: auto.length, total_patterns: ctx.patterns.length },
+    };
+  },
+
+  execute: async (ctx) => {
+    const auto = ctx.recommendations.filter((r) => r.autoExecutable && !r.applied);
+    const now = Date.now();
+    for (const rec of auto) {
+      const pattern = ctx.patterns.find((p) => p.id === rec.patternId);
+      const taskId = `LOOP-${ctx.runId}-${rec.id}`;
+      useFollowUpSlice.getState().addFollowUp({
+        taskId,
+        taskName: rec.action,
+        assignee: "operator",
+        assigneeName: pattern?.source ?? "系统",
+        priority: pattern?.severity === "critical" ? "critical"
+          : pattern?.severity === "high" ? "high"
+          : pattern?.severity === "medium" ? "medium" : "low",
+        status: "pending",
+        dueDate: now + 86400000,
+        notes: `服务闭环自动派发 · ${rec.description}（置信度 ${rec.confidence}%）`,
+        updatedAt: now,
+        category: "maintenance",
+      });
+      ctx.createdOrders.push(taskId);
+    }
+    return {
+      summary: ctx.createdOrders.length > 0
+        ? `真实执行：生成 ${ctx.createdOrders.length} 张跟进工单（一键跟进可追踪）`
+        : "无待执行项，跳过",
+      details: ctx.createdOrders.length > 0
+        ? ctx.createdOrders.map((id) => `工单 ${id} 已创建`)
+        : ["所有建议均无需执行"],
+      metrics: { executed: ctx.createdOrders.length },
+    };
+  },
+
+  verify: async (ctx) => {
+    // 真实等待一个 WS 推送周期（agent 默认 2s），再重读指标做前后对比
+    await new Promise((r) => setTimeout(r, 2500));
+    const nodes = useNodeSlice.getState().nodes;
+    const after = { nodes: nodes.length, anomalies: countAnomalies(nodes) };
+    const delta = ctx.before.anomalies - after.anomalies;
+    return {
+      summary: `验证完成：异常信号 ${ctx.before.anomalies} → ${after.anomalies}${delta > 0 ? `（减少 ${delta}）` : delta < 0 ? `（新增 ${-delta}，需关注）` : "（持平）"}`,
+      details: [
+        `节点数: ${ctx.before.nodes} → ${after.nodes}`,
+        `异常信号: ${ctx.before.anomalies} → ${after.anomalies}`,
+        `已派发工单: ${ctx.createdOrders.length} 张（待人工处置闭环）`,
+      ],
+      metrics: { before_anomalies: ctx.before.anomalies, after_anomalies: after.anomalies, orders: ctx.createdOrders.length },
+    };
+  },
+
+  optimize: async (ctx) => {
+    const rules = await idbGetAll<{ id: string; enabled?: boolean }>("alertRules").catch(() => [] as { id: string; enabled?: boolean }[]);
+    const enabledCount = rules.filter((r) => r.enabled !== false).length;
+    return {
+      summary: `本轮闭环沉淀：${ctx.createdOrders.length} 张工单 · ${enabledCount}/${rules.length} 条告警规则生效中`,
+      details: [
+        `告警规则库: ${rules.length} 条（${enabledCount} 条启用）— 可在「告警规则」中按本轮结果调整阈值`,
+        `跟进工单: ${ctx.createdOrders.length} 张已入「一键跟进」队列`,
+        ctx.patterns.length === 0 && ctx.createdOrders.length === 0
+          ? "系统健康，建议保持当前阈值策略"
+          : "建议复盘本轮异常模式，优化对应告警阈值",
+      ],
+      metrics: { rules_total: rules.length, rules_enabled: enabledCount, orders_created: ctx.createdOrders.length },
+    };
+  },
 };
 
 // ============================================================
-// 数据流连线
+// 数据流连线（真实链路描述，替代假带宽数字）
 // ============================================================
 
 export const DATA_FLOW_EDGES: DataFlowEdge[] = [
@@ -159,51 +239,51 @@ export const DATA_FLOW_EDGES: DataFlowEdge[] = [
     from: "device",
     to: "storage",
     label: "指标采集",
-    bandwidth: "2.4 GB/s",
+    bandwidth: "WS 推送 · 2s/帧",
     active: true,
   },
   {
     from: "storage",
     to: "dashboard",
     label: "数据查询",
-    bandwidth: "1.8 GB/s",
+    bandwidth: "IndexedDB 本地",
     active: true,
   },
   {
     from: "dashboard",
     to: "device",
     label: "控制指令",
-    bandwidth: "128 KB/s",
+    bandwidth: "PUT /rules",
     active: true,
   },
   {
     from: "dashboard",
     to: "terminal",
     label: "CLI / IDE",
-    bandwidth: "512 KB/s",
+    bandwidth: "本地进程",
     active: true,
   },
   {
     from: "terminal",
     to: "device",
     label: "脚本执行",
-    bandwidth: "256 KB/s",
+    bandwidth: "yyc3-agent",
     active: true,
   },
   {
     from: "storage",
     to: "terminal",
     label: "日志/报告",
-    bandwidth: "4.2 GB/s",
+    bandwidth: "本地导出",
     active: true,
   },
 ];
 
 export const DATA_FLOW_NODES: DataFlowNode[] = [
-  { type: "device",    label: "本地设备",     sublabel: "localhost",      color: "#00d4ff" },
-  { type: "storage",   label: "本地存储",     sublabel: "PostgreSQL + NAS", color: "#7b2ff7" },
+  { type: "device",    label: "本地设备",       sublabel: "yyc3-agent · 本机", color: "#00d4ff" },
+  { type: "storage",   label: "本地存储",       sublabel: "localStorage + IndexedDB", color: "#7b2ff7" },
   { type: "dashboard", label: "YYC³ Dashboard", sublabel: "React + PWA",   color: "#00ff88" },
-  { type: "terminal",  label: "终端集成",     sublabel: "CLI / IDE",        color: "#ffaa00" },
+  { type: "terminal",  label: "终端集成",       sublabel: "CLI",            color: "#ffaa00" },
 ];
 
 // ============================================================
@@ -259,9 +339,9 @@ export function useServiceLoop() {
       : 0,
   }), [history]);
 
-  // 执行单个阶段
+  // 执行单个阶段（真实执行器，verify 阶段内含真实等待）
   const runStage = useCallback(
-    async (run: LoopRun, stageIndex: number): Promise<LoopRun> => {
+    async (run: LoopRun, stageIndex: number, ctx: LoopContext): Promise<LoopRun> => {
       const stage = ALL_STAGES[stageIndex];
       const now = Date.now();
 
@@ -280,17 +360,17 @@ export function useServiceLoop() {
       };
       setCurrentRun(updatedRun);
 
-      // 模拟执行延迟
-      const delay = 800 + Math.random() * 1200;
-      await new Promise((r) => setTimeout(r, delay));
-
       if (abortRef.current) {
         throw new Error("ABORTED");
       }
 
-      // 获取模拟结果
-      const mockResult = MOCK_STAGE_RESULTS[stage]();
+      // 真实执行（无模拟延迟）
+      const realResult = await REAL_STAGE_EXECUTORS[stage](ctx);
       const completedAt = Date.now();
+
+      if (abortRef.current) {
+        throw new Error("ABORTED");
+      }
 
       updatedStages[stageIndex] = {
         stage,
@@ -298,9 +378,9 @@ export function useServiceLoop() {
         startedAt: now,
         completedAt,
         duration: completedAt - now,
-        summary: mockResult.summary ?? "",
-        details: mockResult.details ?? [],
-        metrics: mockResult.metrics,
+        summary: realResult.summary ?? "",
+        details: realResult.details ?? [],
+        metrics: realResult.metrics,
       };
 
       const nextRun: LoopRun = {
@@ -322,6 +402,13 @@ export function useServiceLoop() {
       setIsRunning(true);
 
       const runId = `loop-${++runIdCounter}-${Date.now()}`;
+      const ctx: LoopContext = {
+        runId,
+        before: { nodes: 0, anomalies: 0 },
+        patterns: [],
+        recommendations: [],
+        createdOrders: [],
+      };
       let run: LoopRun = {
         id: runId,
         startedAt: Date.now(),
@@ -339,7 +426,7 @@ export function useServiceLoop() {
 
       try {
         for (let i = 0; i < ALL_STAGES.length; i++) {
-          run = await runStage(run, i);
+          run = await runStage(run, i, ctx);
         }
 
         run = {
