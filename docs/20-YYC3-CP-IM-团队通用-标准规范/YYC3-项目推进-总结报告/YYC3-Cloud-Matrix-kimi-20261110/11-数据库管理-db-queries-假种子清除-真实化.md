@@ -2,7 +2,7 @@
 title: 数据库管理 db-queries 假种子清除与真实化
 date: 2026-11-12
 stage: 运维管理 · 数据总控（DataEditorPanel）
-commit: 待填
+commit: a78bb08
 gates: tsc 0 错 / vitest 292 文件 5094 用例全绿 / vite build 通过
 ---
 
