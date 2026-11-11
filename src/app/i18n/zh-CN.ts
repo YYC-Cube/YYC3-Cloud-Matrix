@@ -149,6 +149,8 @@ const zhCN = {
     latencyChart: "延迟趋势",
     modelLoadDist: "模型负载分布",
     modelLoadEmpty: "暂无模型负载 — 启动推理服务后自动呈现",
+    noChartData: "暂无图表数据 — 可在系统管理数据总控中维护",
+    noPredictionData: "暂无足够历史数据 — 积累吞吐数据后自动生成预测",
     radarTitle: "模型性能雷达",
     performanceTitle: "模型性能对比",
     predictionTitle: "负载预测",

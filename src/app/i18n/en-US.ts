@@ -151,6 +151,8 @@ const enUS: TranslationKeys = {
     latencyChart: "Latency Trend",
     modelLoadDist: "Model Load Distribution",
     modelLoadEmpty: "No model load — appears automatically once inference is up",
+    noChartData: "No chart data — maintain entries in System Admin → Data Console",
+    noPredictionData: "Not enough history — predictions generate once throughput data accumulates",
     radarTitle: "Model Performance Radar",
     performanceTitle: "Model Performance Comparison",
     predictionTitle: "Load Prediction",

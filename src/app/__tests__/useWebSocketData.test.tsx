@@ -14,6 +14,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useWebSocketData } from "../hooks/useWebSocketData";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
+import { useNodeSlice } from "../store/slices/node-slice";
 import { enableDemoModeForTests } from "./helpers/demo-mode";
 
 // 演示模式：模拟回退用例基于演示数据行为，显式开启（生产默认关闭）
@@ -99,10 +100,12 @@ describe("useWebSocketData", () => {
     });
 
     it("should provide initial nodes from nodeStore", () => {
+      // 零硬编码政策：slice 默认空（假节点种子已清除），此处显式置空避免跨用例污染
+      useNodeSlice.getState().setNodes([], "initialization");
       const { result } = renderHook(() => useWebSocketData());
       expect(result.current.nodes).toBeDefined();
       expect(Array.isArray(result.current.nodes)).toBe(true);
-      expect(result.current.nodes.length).toBeGreaterThan(0);
+      expect(result.current.nodes).toEqual([]);
     });
 
     it("should provide initial liveQPS", () => {

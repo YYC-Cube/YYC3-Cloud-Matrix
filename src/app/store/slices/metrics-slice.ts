@@ -31,30 +31,21 @@ interface MetricsSlice {
   resetAll: () => void;
 }
 
-const DEFAULT_MODEL_PERF: ModelPerfEntry[] = [
-  { id: "mp-1", model: "LLaMA-70B",    accuracy: 94.2, speed: 85, memory: 78, cost: 62 },
-  { id: "mp-2", model: "Qwen-72B",     accuracy: 92.8, speed: 88, memory: 72, cost: 68 },
-  { id: "mp-3", model: "DeepSeek-V3",  accuracy: 96.1, speed: 76, memory: 85, cost: 55 },
-  { id: "mp-4", model: "GLM-4",        accuracy: 91.5, speed: 92, memory: 65, cost: 75 },
-  { id: "mp-5", model: "Mixtral-8x7B", accuracy: 89.3, speed: 95, memory: 60, cost: 82 },
-];
+/**
+ * 2026-11-11 禁止硬编码政策：DEFAULT_* 假图表种子已清除。
+ * 真实来源：Dashboard 真连态由 WS 节点聚合（liveModelDist）；
+ * 未连接态展示用户在「系统管理 → 数据总控」中自行维护的条目（初始为空）。
+ */
+const DEFAULT_MODEL_PERF: ModelPerfEntry[] = [];
+const DEFAULT_MODEL_DIST: ModelDistEntry[] = [];
+const DEFAULT_RADAR: RadarEntry[] = [];
 
-const DEFAULT_MODEL_DIST: ModelDistEntry[] = [
-  { id: "md-1", name: "LLaMA-70B",   value: 35 },
-  { id: "md-2", name: "Qwen-72B",    value: 25 },
-  { id: "md-3", name: "DeepSeek-V3", value: 20 },
-  { id: "md-4", name: "GLM-4",       value: 12 },
-  { id: "md-5", name: "other",       value: 8 },
-];
-
-const DEFAULT_RADAR: RadarEntry[] = [
-  { id: "rd-1", metric: "inferenceSpeed",    A: 92, B: 85 },
-  { id: "rd-2", metric: "modelAccuracy",     A: 88, B: 94 },
-  { id: "rd-3", metric: "memoryEfficiency",  A: 95, B: 78 },
-  { id: "rd-4", metric: "throughput",        A: 90, B: 82 },
-  { id: "rd-5", metric: "reliability",       A: 96, B: 91 },
-  { id: "rd-6", metric: "latency",           A: 85, B: 88 },
-];
+/** 历史假条目 ID — persist 迁移时一次性清除 */
+const LEGACY_FAKE_METRIC_IDS = new Set([
+  "mp-1", "mp-2", "mp-3", "mp-4", "mp-5",
+  "md-1", "md-2", "md-3", "md-4", "md-5",
+  "rd-1", "rd-2", "rd-3", "rd-4", "rd-5", "rd-6",
+]);
 
 export const useMetricsSlice = create<MetricsSlice>()(
   persist(
@@ -85,6 +76,25 @@ export const useMetricsSlice = create<MetricsSlice>()(
         modelDist: state.modelDist,
         radarData: state.radarData,
       }),
+      version: 1,
+      migrate: (persisted, version) => {
+        // v0→v1：清除历史假图表种子（按 ID 精确识别，保留用户自建条目）
+        const state = persisted as {
+          modelPerf?: ModelPerfEntry[];
+          modelDist?: ModelDistEntry[];
+          radarData?: RadarEntry[];
+        };
+        if (version < 1) {
+          for (const key of ["modelPerf", "modelDist", "radarData"] as const) {
+            if (Array.isArray(state[key])) {
+              state[key] = (state[key] as Array<{ id: string }>).filter(
+                (e) => !LEGACY_FAKE_METRIC_IDS.has(e.id)
+              ) as never;
+            }
+          }
+        }
+        return state;
+      },
     }
   )
 );

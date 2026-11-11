@@ -46,6 +46,19 @@ import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 // Simulated Data Generator — 从 useNodeSlice 读取初始数据
 // ============================================================
 
+/**
+ * 演示模式专属模拟种子（2026-11-11 自 node-slice 迁入）。
+ * 仅在 demoMode 开启且 WS 不可达时作为抖动基准，绝不进入 slice 默认值；
+ * 关闭演示模式后模拟器停止，真实 WS 快照到达即被 authoritative 替换。
+ */
+const SIM_DEMO_NODES: NodeData[] = [
+  { id: "DEMO-GPU-01", status: "active",   gpu: 87, mem: 72, temp: 68, model: "demo-70b",  tasks: 128 },
+  { id: "DEMO-GPU-02", status: "active",   gpu: 92, mem: 85, temp: 74, model: "demo-72b",  tasks: 156 },
+  { id: "DEMO-GPU-03", status: "warning",  gpu: 98, mem: 94, temp: 82, model: "demo-v3",   tasks: 89 },
+  { id: "DEMO-GPU-04", status: "active",   gpu: 45, mem: 38, temp: 52, model: "demo-7b",   tasks: 34 },
+  { id: "DEMO-GPU-05", status: "inactive", gpu: 0,  mem: 5,  temp: 32, model: "",          tasks: 0 },
+];
+
 function jitter(base: number, range: number): number {
   return Math.max(0, base + (Math.random() - 0.5) * range * 2);
 }
@@ -130,7 +143,9 @@ export function useWebSocketData(): WebSocketDataState {
 
   // ----- simulated data updater -----
   const runSimulation = useCallback(() => {
-    const baseNodes = useNodeSlice.getState().nodes;
+    const sliceState = useNodeSlice.getState().nodes;
+    // slice 为空时以演示种子为基准（仅 demoMode 模拟路径可达此处）
+    const baseNodes = sliceState.length > 0 ? sliceState : SIM_DEMO_NODES;
     const newNodes = generateSimulatedNodes(baseNodes);
 
     // ★ 关键改动：模拟数据也通过 DataBus 合并，保留用户编辑

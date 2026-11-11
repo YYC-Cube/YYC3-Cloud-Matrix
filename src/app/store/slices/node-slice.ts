@@ -23,17 +23,19 @@ import { immer } from 'zustand/middleware/immer';
 import type { NodeData } from '../../types';
 import { dataBus, type DataSource } from '../../lib/data-bus';
 
-const DEFAULT_NODES: NodeData[] = [
-  { id: "GPU-A100-01", status: "active",   gpu: 87, mem: 72, temp: 68, model: "LLaMA-70B",    tasks: 128 },
-  { id: "GPU-A100-02", status: "active",   gpu: 92, mem: 85, temp: 74, model: "Qwen-72B",     tasks: 156 },
-  { id: "GPU-A100-03", status: "warning",  gpu: 98, mem: 94, temp: 82, model: "DeepSeek-V3",  tasks: 89 },
-  { id: "GPU-A100-04", status: "active",   gpu: 45, mem: 38, temp: 52, model: "Mistral-7B",   tasks: 34 },
-  { id: "GPU-A100-05", status: "active",   gpu: 73, mem: 61, temp: 63, model: "Claude-3.5",   tasks: 97 },
-  { id: "GPU-A100-06", status: "active",   gpu: 56, mem: 48, temp: 58, model: "GPT-4o",       tasks: 112 },
-  { id: "GPU-A100-07", status: "active",   gpu: 81, mem: 76, temp: 71, model: "Qwen-72B",     tasks: 143 },
-  { id: "GPU-A100-08", status: "inactive", gpu: 0,  mem: 5,  temp: 32, model: "",              tasks: 0 },
-  { id: "GPU-H100-01", status: "active",   gpu: 65, mem: 58, temp: 62, model: "GLM-4",        tasks: 78 },
-];
+/**
+ * 2026-11-11 禁止硬编码政策：DEFAULT_NODES 假节点种子已清除。
+ * 真实来源：WS 全量快照（mergeFromWS authoritative）/ 用户手动添加；
+ * 演示数据由 useWebSocketData 的 demoMode 模拟器自带种子生成（不污染本 slice）。
+ */
+const DEFAULT_NODES: NodeData[] = [];
+
+/** 历史假节点 ID — persist 迁移时一次性清除 */
+const LEGACY_FAKE_NODE_IDS = new Set([
+  "GPU-A100-01", "GPU-A100-02", "GPU-A100-03", "GPU-A100-04",
+  "GPU-A100-05", "GPU-A100-06", "GPU-A100-07", "GPU-A100-08",
+  "GPU-H100-01",
+]);
 
 interface NodeSlice {
   nodes: NodeData[];
@@ -194,6 +196,21 @@ export const useNodeSlice = create<NodeSlice>()(
       {
         name: 'yyc3-node-slice',
         partialize: (state) => ({ nodes: state.nodes }),
+        version: 1,
+        migrate: (persisted, version) => {
+          // v0→v1：清除历史 DEFAULT_NODES 假节点种子（按 ID 精确识别，保留用户真实添加）
+          const state = persisted as { nodes?: NodeData[] };
+          if (version < 1 && Array.isArray(state.nodes)) {
+            state.nodes = state.nodes.filter((n) => !LEGACY_FAKE_NODE_IDS.has(n.id));
+          }
+          return state;
+        },
+        // 再水合后重算派生统计（partialize 只存 nodes，derived 需同步重建）
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            useNodeSlice.setState({ derived: computeDerived(state.nodes) });
+          }
+        },
       }
     ),
     {

@@ -79,12 +79,11 @@ describe('useNodeSlice', () => {
       expect(nodes.find((n) => n.id === "GPU-A100-03")).toBeUndefined();
     });
 
-    it('resetNodes 应该恢复默认值', () => {
-      useNodeSlice.getState().setNodes([]);
+    it('resetNodes 应该清空为空态（零硬编码种子，2026-11-11 政策）', () => {
       useNodeSlice.getState().resetNodes();
 
       const { nodes, lastSource } = useNodeSlice.getState();
-      expect(nodes.length).toBeGreaterThan(0);
+      expect(nodes).toEqual([]);
       expect(lastSource).toBe('initialization');
     });
   });

@@ -1,19 +1,35 @@
 /**
  * @file: metrics-slice.test.ts
- * @description: YYC³ Metrics Slice 单元测试 · 模型性能/分布/雷达图
+ * @description: YYC³ Metrics Slice 单元测试 · 模型性能/分布/雷达图（v2 零种子版）
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v2.0.0
  * @created: 2026-04-16
- * @updated: 2026-04-16
+ * @updated: 2026-11-11
  * @status: active
- * @tags: [auto-generated]
+ * @tags: [store],[test],[no-hardcode]
+ *
+ * @brief: 2026-11-11 禁止硬编码政策后重写——初始为空、resetAll 清空、
+ * 历史假种子（mp-/md-/rd- 前缀 ID）在 persist 迁移时按 ID 一次性清除。
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useMetricsSlice } from '../../store/slices/metrics-slice';
 import type { ModelPerfEntry, ModelDistEntry, RadarEntry } from '../../store/slices/metrics-slice';
 
-describe('useMetricsSlice', () => {
+const PERF: ModelPerfEntry[] = [
+  { id: 'u-1', model: 'Model-A', accuracy: 90, speed: 80, memory: 70, cost: 60 },
+  { id: 'u-2', model: 'Model-B', accuracy: 95, speed: 85, memory: 75, cost: 65 },
+];
+const DIST: ModelDistEntry[] = [
+  { id: 'u-1', name: 'Model-A', value: 60 },
+  { id: 'u-2', name: 'Model-B', value: 40 },
+];
+const RADAR: RadarEntry[] = [
+  { id: 'u-1', metric: 'speed', A: 80, B: 75 },
+  { id: 'u-2', metric: 'accuracy', A: 90, B: 85 },
+];
+
+describe('useMetricsSlice（零种子）', () => {
   beforeEach(() => {
     useMetricsSlice.getState().resetAll();
   });
@@ -23,352 +39,140 @@ describe('useMetricsSlice', () => {
   });
 
   describe('初始状态', () => {
-    it('应该包含5个默认模型性能条目', () => {
-      const { modelPerf } = useMetricsSlice.getState();
-      expect(modelPerf).toHaveLength(5);
+    it('modelPerf 初始为空（无内置假条目）', () => {
+      expect(useMetricsSlice.getState().modelPerf).toEqual([]);
     });
 
-    it('modelPerf 默认值应该包含 LLaMA-70B', () => {
-      const { modelPerf } = useMetricsSlice.getState();
-      const llama = modelPerf.find(m => m.model === 'LLaMA-70B');
-      expect(llama).toBeDefined();
-      expect(llama?.accuracy).toBe(94.2);
-      expect(llama?.speed).toBe(85);
+    it('modelDist 初始为空', () => {
+      expect(useMetricsSlice.getState().modelDist).toEqual([]);
     });
 
-    it('应该包含5个默认模型分布条目', () => {
-      const { modelDist } = useMetricsSlice.getState();
-      expect(modelDist).toHaveLength(5);
-    });
-
-    it('modelDist 总和应该等于100', () => {
-      const { modelDist } = useMetricsSlice.getState();
-      const total = modelDist.reduce((sum, m) => sum + m.value, 0);
-      expect(total).toBe(100);
-    });
-
-    it('应该包含6个雷达图指标', () => {
-      const { radarData } = useMetricsSlice.getState();
-      expect(radarData).toHaveLength(6);
-    });
-
-    it('radarData 应该包含 inferenceSpeed 指标', () => {
-      const { radarData } = useMetricsSlice.getState();
-      const inferenceSpeed = radarData.find(r => r.metric === 'inferenceSpeed');
-      expect(inferenceSpeed).toBeDefined();
-      expect(inferenceSpeed?.A).toBe(92);
-      expect(inferenceSpeed?.B).toBe(85);
+    it('radarData 初始为空', () => {
+      expect(useMetricsSlice.getState().radarData).toEqual([]);
     });
   });
 
   describe('setModelPerf', () => {
-    it('应该替换整个 modelPerf 数组', () => {
-      const newModelPerf: ModelPerfEntry[] = [
-        { id: 'new-1', model: 'GPT-4', accuracy: 98, speed: 90, memory: 80, cost: 70 },
-      ];
-
-      useMetricsSlice.getState().setModelPerf(newModelPerf);
-
-      const { modelPerf } = useMetricsSlice.getState();
-      expect(modelPerf).toHaveLength(1);
-      expect(modelPerf[0].model).toBe('GPT-4');
+    it('替换整个数组', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
+      expect(useMetricsSlice.getState().modelPerf).toHaveLength(2);
+      expect(useMetricsSlice.getState().modelPerf[0].model).toBe('Model-A');
     });
 
-    it('应该接受空数组', () => {
+    it('接受空数组', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
       useMetricsSlice.getState().setModelPerf([]);
-
-      const { modelPerf } = useMetricsSlice.getState();
-      expect(modelPerf).toHaveLength(0);
-    });
-
-    it('应该支持多条目设置', () => {
-      const multiEntries: ModelPerfEntry[] = [
-        { id: 'm1', model: 'Model A', accuracy: 90, speed: 80, memory: 70, cost: 60 },
-        { id: 'm2', model: 'Model B', accuracy: 95, speed: 85, memory: 75, cost: 65 },
-        { id: 'm3', model: 'Model C', accuracy: 88, speed: 90, memory: 68, cost: 72 },
-      ];
-
-      useMetricsSlice.getState().setModelPerf(multiEntries);
-
-      const { modelPerf } = useMetricsSlice.getState();
-      expect(modelPerf).toHaveLength(3);
+      expect(useMetricsSlice.getState().modelPerf).toHaveLength(0);
     });
   });
 
   describe('updateModelPerf', () => {
-    it('应该更新指定 ID 的模型性能', () => {
-      useMetricsSlice.getState().updateModelPerf('mp-1', {
-        accuracy: 99,
-        speed: 95,
-      });
+    it('更新指定 ID 且未提供字段保持不变', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
+      useMetricsSlice.getState().updateModelPerf('u-1', { accuracy: 99 });
 
-      const { modelPerf } = useMetricsSlice.getState();
-      const updated = modelPerf.find(m => m.id === 'mp-1');
-
+      const updated = useMetricsSlice.getState().modelPerf.find((m) => m.id === 'u-1');
       expect(updated?.accuracy).toBe(99);
-      expect(updated?.speed).toBe(95);
-      expect(updated?.memory).toBe(78); // 未更新的字段保持不变
+      expect(updated?.speed).toBe(80);
     });
 
-    it('更新不存在的 ID 不应影响其他条目', () => {
-      const originalLength = useMetricsSlice.getState().modelPerf.length;
-
-      useMetricsSlice.getState().updateModelPerf('non-existent', {
-        accuracy: 99,
-      });
-
-      const { modelPerf } = useMetricsSlice.getState();
-      expect(modelPerf).toHaveLength(originalLength);
+    it('更新不存在的 ID 不影响其他条目', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
+      useMetricsSlice.getState().updateModelPerf('non-existent', { accuracy: 1 });
+      expect(useMetricsSlice.getState().modelPerf).toHaveLength(2);
     });
 
-    it('应该只更新提供的字段（部分更新）', () => {
-      useMetricsSlice.getState().updateModelPerf('mp-2', { cost: 99 });
-
-      const { modelPerf } = useMetricsSlice.getState();
-      const updated = modelPerf.find(m => m.id === 'mp-2');
-
-      expect(updated?.cost).toBe(99);
-      expect(updated?.accuracy).toBe(92.8); // 其他字段不变
-      expect(updated?.speed).toBe(88);
-    });
-
-    it('应该支持更新 model 名称', () => {
-      useMetricsSlice.getState().updateModelPerf('mp-3', {
-        model: 'DeepSeek-V4',
-      });
-
-      const { modelPerf } = useMetricsSlice.getState();
-      const updated = modelPerf.find(m => m.id === 'mp-3');
-
-      expect(updated?.model).toBe('DeepSeek-V4');
+    it('支持更新 model 名称', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
+      useMetricsSlice.getState().updateModelPerf('u-2', { model: 'Model-B2' });
+      expect(useMetricsSlice.getState().modelPerf.find((m) => m.id === 'u-2')?.model).toBe('Model-B2');
     });
   });
 
   describe('setModelDist', () => {
-    it('应该替换整个 modelDist 数组', () => {
-      const newDist: ModelDistEntry[] = [
-        { id: 'd1', name: 'GPT-4', value: 50 },
-        { id: 'd2', name: 'Claude', value: 30 },
-        { id: 'd3', name: 'Gemini', value: 20 },
-      ];
-
-      useMetricsSlice.getState().setModelDist(newDist);
-
-      const { modelDist } = useMetricsSlice.getState();
-      expect(modelDist).toHaveLength(3);
-      expect(modelDist[0].name).toBe('GPT-4');
+    it('替换整个数组', () => {
+      useMetricsSlice.getState().setModelDist(DIST);
+      const total = useMetricsSlice.getState().modelDist.reduce((s, m) => s + m.value, 0);
+      expect(total).toBe(100);
     });
 
-    it('应该接受空分布数据', () => {
+    it('接受空分布数据', () => {
+      useMetricsSlice.getState().setModelDist(DIST);
       useMetricsSlice.getState().setModelDist([]);
-
-      const { modelDist } = useMetricsSlice.getState();
-      expect(modelDist).toHaveLength(0);
-    });
-
-    it('应该正确设置单条目分布', () => {
-      const singleDist: ModelDistEntry[] = [
-        { id: 'single', name: 'Only Model', value: 100 },
-      ];
-
-      useMetricsSlice.getState().setModelDist(singleDist);
-
-      const { modelDist } = useMetricsSlice.getState();
-      expect(modelDist).toHaveLength(1);
-      expect(modelDist[0].value).toBe(100);
+      expect(useMetricsSlice.getState().modelDist).toHaveLength(0);
     });
   });
 
-  describe('setRadarData', () => {
-    it('应该替换整个 radarData 数组', () => {
-      const newRadar: RadarEntry[] = [
-        { id: 'r1', metric: 'customMetric1', A: 80, B: 75 },
-        { id: 'r2', metric: 'customMetric2', A: 90, B: 85 },
-      ];
-
-      useMetricsSlice.getState().setRadarData(newRadar);
-
-      const { radarData } = useMetricsSlice.getState();
-      expect(radarData).toHaveLength(2);
-      expect(radarData[0].metric).toBe('customMetric1');
+  describe('setRadarData / updateRadarData', () => {
+    it('替换整个数组', () => {
+      useMetricsSlice.getState().setRadarData(RADAR);
+      expect(useMetricsSlice.getState().radarData).toHaveLength(2);
     });
 
-    it('应该接受空雷达数据', () => {
-      useMetricsSlice.getState().setRadarData([]);
-
-      const { radarData } = useMetricsSlice.getState();
-      expect(radarData).toHaveLength(0);
-    });
-
-    it('应该支持自定义指标数量', () => {
-      const customRadar: RadarEntry[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `r${i + 1}`,
-        metric: `metric${i + 1}`,
-        A: Math.floor(Math.random() * 100),
-        B: Math.floor(Math.random() * 100),
-      }));
-
-      useMetricsSlice.getState().setRadarData(customRadar);
-
-      const { radarData } = useMetricsSlice.getState();
-      expect(radarData).toHaveLength(10);
-    });
-  });
-
-  describe('updateRadarData', () => {
-    it('应该更新指定 ID 的雷达指标', () => {
-      useMetricsSlice.getState().updateRadarData('rd-1', {
-        A: 99,
-        B: 98,
-      });
-
-      const { radarData } = useMetricsSlice.getState();
-      const updated = radarData.find(r => r.id === 'rd-1');
-
+    it('更新指定 ID 的雷达指标', () => {
+      useMetricsSlice.getState().setRadarData(RADAR);
+      useMetricsSlice.getState().updateRadarData('u-1', { A: 99, B: 98 });
+      const updated = useMetricsSlice.getState().radarData.find((r) => r.id === 'u-1');
       expect(updated?.A).toBe(99);
       expect(updated?.B).toBe(98);
     });
 
-    it('更新不存在的 ID 不应抛出错误', () => {
+    it('更新不存在的 ID 不抛出错误且不影响现有条目', () => {
+      useMetricsSlice.getState().setRadarData(RADAR);
       expect(() => {
-        useMetricsSlice.getState().updateRadarData('non-existent', {
-          A: 99,
-        });
+        useMetricsSlice.getState().updateRadarData('non-existent', { A: 1 });
       }).not.toThrow();
-
-      const { radarData } = useMetricsSlice.getState();
-      expect(radarData).toHaveLength(6); // 原始数量不变
+      expect(useMetricsSlice.getState().radarData).toHaveLength(2);
     });
 
-    it('应该支持部分字段更新', () => {
-      useMetricsSlice.getState().updateRadarData('rd-2', { A: 100 });
-
-      const { radarData } = useMetricsSlice.getState();
-      const updated = radarData.find(r => r.id === 'rd-2');
-
-      expect(updated?.A).toBe(100);
-      expect(updated?.B).toBe(94); // B 字段不变
-    });
-
-    it('应该支持更新 metric 名称', () => {
-      useMetricsSlice.getState().updateRadarData('rd-3', {
-        metric: 'customMemoryEfficiency',
-      });
-
-      const { radarData } = useMetricsSlice.getState();
-      const updated = radarData.find(r => r.id === 'rd-3');
-
-      expect(updated?.metric).toBe('customMemoryEfficiency');
+    it('支持更新 metric 名称', () => {
+      useMetricsSlice.getState().setRadarData(RADAR);
+      useMetricsSlice.getState().updateRadarData('u-2', { metric: 'efficiency' });
+      expect(useMetricsSlice.getState().radarData.find((r) => r.id === 'u-2')?.metric).toBe('efficiency');
     });
   });
 
   describe('resetAll', () => {
-    it('应该将所有状态重置为默认值', () => {
-      // 先修改所有状态
-      useMetricsSlice.getState().setModelPerf([]);
-      useMetricsSlice.getState().setModelDist([]);
-      useMetricsSlice.getState().setRadarData([]);
+    it('重置后三组数据均为空（不恢复任何内置假条目）', () => {
+      useMetricsSlice.getState().setModelPerf(PERF);
+      useMetricsSlice.getState().setModelDist(DIST);
+      useMetricsSlice.getState().setRadarData(RADAR);
 
-      // 执行重置
       useMetricsSlice.getState().resetAll();
 
-      // 验证恢复到默认值
       const { modelPerf, modelDist, radarData } = useMetricsSlice.getState();
-
-      expect(modelPerf).toHaveLength(5);
-      expect(modelDist).toHaveLength(5);
-      expect(radarData).toHaveLength(6);
-    });
-
-    it('重置后 modelPerf 应该包含原始默认值', () => {
-      // 修改数据
-      useMetricsSlice.getState().setModelPerf([
-        { id: 'temp', model: 'Temp', accuracy: 50, speed: 50, memory: 50, cost: 50 },
-      ]);
-
-      // 重置
-      useMetricsSlice.getState().resetAll();
-
-      // 验证
-      const { modelPerf } = useMetricsSlice.getState();
-      const llama = modelPerf.find(m => m.model === 'LLaMA-70B');
-
-      expect(llama).toBeDefined();
-      expect(llama?.accuracy).toBe(94.2);
-    });
-
-    it('重置后 modelDist 总和应该为100', () => {
-      // 修改为无效分布
-      useMetricsSlice.getState().setModelDist([
-        { id: 'x', name: 'Invalid', value: 999 },
-      ]);
-
-      // 重置
-      useMetricsSlice.getState().resetAll();
-
-      // 验证
-      const { modelDist } = useMetricsSlice.getState();
-      const total = modelDist.reduce((sum, m) => sum + m.value, 0);
-
-      expect(total).toBe(100);
-    });
-
-    it('重置后 radarData 应该包含 inferenceSpeed', () => {
-      // 清空雷达数据
-      useMetricsSlice.getState().setRadarData([]);
-
-      // 重置
-      useMetricsSlice.getState().resetAll();
-
-      // 验证
-      const { radarData } = useMetricsSlice.getState();
-      const inferenceSpeed = radarData.find(r => r.metric === 'inferenceSpeed');
-
-      expect(inferenceSpeed).toBeDefined();
-      expect(inferenceSpeed?.A).toBe(92);
-      expect(inferenceSpeed?.B).toBe(85);
+      expect(modelPerf).toEqual([]);
+      expect(modelDist).toEqual([]);
+      expect(radarData).toEqual([]);
     });
   });
 
-  describe('边界情况和数据完整性', () => {
-    it('modelPerf accuracy 应该在 0-100 范围内（业务规则验证）', () => {
-      const { modelPerf } = useMetricsSlice.getState();
+  describe('persist 迁移', () => {
+    it('v0→v1 清除历史假种子 ID，保留用户自建条目', async () => {
+      localStorage.setItem('yyc3-metrics-slice', JSON.stringify({
+        state: {
+          modelPerf: [
+            { id: 'mp-1', model: 'LLaMA-70B', accuracy: 94.2, speed: 85, memory: 78, cost: 62 },
+            { id: 'u-mine', model: 'MyModel', accuracy: 88, speed: 77, memory: 66, cost: 55 },
+          ],
+          modelDist: [
+            { id: 'md-1', name: 'LLaMA-70B', value: 35 },
+            { id: 'u-mine', name: 'MyModel', value: 100 },
+          ],
+          radarData: [
+            { id: 'rd-1', metric: 'inferenceSpeed', A: 92, B: 85 },
+            { id: 'u-mine', metric: 'custom', A: 50, B: 50 },
+          ],
+        },
+        version: 0,
+      }));
 
-      modelPerf.forEach(entry => {
-        expect(entry.accuracy).toBeGreaterThanOrEqual(0);
-        expect(entry.accuracy).toBeLessThanOrEqual(100);
-      });
-    });
+      await useMetricsSlice.persist.rehydrate();
 
-    it('modelDist value 应该是正数', () => {
-      const { modelDist } = useMetricsSlice.getState();
-
-      modelDist.forEach(entry => {
-        expect(entry.value).toBeGreaterThan(0);
-      });
-    });
-
-    it('radarData A/B 值应该在 0-100 范围内', () => {
-      const { radarData } = useMetricsSlice.getState();
-
-      radarData.forEach(entry => {
-        expect(entry.A).toBeGreaterThanOrEqual(0);
-        expect(entry.A).toBeLessThanOrEqual(100);
-        expect(entry.B).toBeGreaterThanOrEqual(0);
-        expect(entry.B).toBeLessThanOrEqual(100);
-      });
-    });
-
-    it('所有条目应该有唯一 ID', () => {
       const { modelPerf, modelDist, radarData } = useMetricsSlice.getState();
-
-      const perfIds = modelPerf.map(m => m.id);
-      const distIds = modelDist.map(m => m.id);
-      const radarIds = radarData.map(r => r.id);
-
-      expect(new Set(perfIds).size).toBe(perfIds.length);
-      expect(new Set(distIds).size).toBe(distIds.length);
-      expect(new Set(radarIds).size).toBe(radarIds.length);
+      expect(modelPerf.map((m) => m.id)).toEqual(['u-mine']);
+      expect(modelDist.map((m) => m.id)).toEqual(['u-mine']);
+      expect(radarData.map((r) => r.id)).toEqual(['u-mine']);
     });
   });
 });

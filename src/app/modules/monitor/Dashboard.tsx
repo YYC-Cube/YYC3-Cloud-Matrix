@@ -85,16 +85,8 @@ function buildPredictionFromHistory(
 ): PredictionPoint[] {
   const recent = history.slice(-12);
   if (recent.length < 2) {
-    return [
-      { time: "now", actual: 3800, predicted: null },
-      { time: "+1h", actual: null, predicted: 4100 },
-      { time: "+2h", actual: null, predicted: 4350 },
-      { time: "+3h", actual: null, predicted: 4200 },
-      { time: "+4h", actual: null, predicted: 3900 },
-      { time: "+6h", actual: null, predicted: 3500 },
-      { time: "+8h", actual: null, predicted: 3100 },
-      { time: "+12h", actual: null, predicted: 2200 },
-    ];
+    // 零硬编码政策：历史数据不足时不编造预测，返回空由 UI 显示空态
+    return [];
   }
   const lastQps = recent[recent.length - 1].qps;
   const firstQps = recent[0].qps;
@@ -270,15 +262,15 @@ export function Dashboard() {
     delta: 40,
   });
 
-  // WebSocket data (or defaults)
-  const liveQPS = ws?.liveQPS ?? 3842;
-  const qpsTrend = ws?.qpsTrend ?? "+12.3%";
-  const liveLatency = ws?.liveLatency ?? 48;
-  const latencyTrend = ws?.latencyTrend ?? "-5.2%";
+  // WebSocket data (零硬编码：无真实数据时显示 0 / "-" 空态，不编造数字)
+  const liveQPS = ws?.liveQPS ?? 0;
+  const qpsTrend = ws?.qpsTrend ?? "-";
+  const liveLatency = ws?.liveLatency ?? 0;
+  const latencyTrend = ws?.latencyTrend ?? "-";
   const activeNodesStr = derived.activeRatio;
   const gpuUtilStr = `${derived.avgGpu}%`;
-  const tokenTP = ws?.tokenThroughput ?? "138K/s";
-  const storageStr = ws?.storageUsed ?? "12.8TB";
+  const tokenTP = ws?.tokenThroughput ?? "-";
+  const storageStr = ws?.storageUsed ?? "-";
   const throughputHistory = ws?.throughputHistory ?? [];
 
   const isQPSUp = qpsTrend.startsWith("+");
@@ -308,10 +300,10 @@ export function Dashboard() {
   const statCards = [
     { label: "QPS", value: liveQPS.toLocaleString(), icon: Activity, trend: qpsTrend, up: isQPSUp, color: "#00d4ff" },
     { label: "Latency", value: `${liveLatency}ms`, icon: Clock, trend: latencyTrend, up: isLatencyUp, color: "#00ff88" },
-    { label: t("monitor.activeNodes"), value: activeNodesStr, icon: Server, trend: "+1", up: true, color: "#aa55ff" },
-    { label: t("monitor.gpuUtil"), value: gpuUtilStr, icon: Cpu, trend: "+3.1%", up: true, color: "#ff6600" },
-    { label: t("monitor.tokenThroughput"), value: tokenTP, icon: Zap, trend: "+18.7%", up: true, color: "#ffdd00" },
-    { label: t("monitor.storageUsed"), value: storageStr, icon: HardDrive, trend: "+2.1%", up: true, color: "#ff3366" },
+    { label: t("monitor.activeNodes"), value: activeNodesStr, icon: Server, trend: "-", up: true, color: "#aa55ff" },
+    { label: t("monitor.gpuUtil"), value: gpuUtilStr, icon: Cpu, trend: "-", up: true, color: "#ff6600" },
+    { label: t("monitor.tokenThroughput"), value: tokenTP, icon: Zap, trend: "-", up: true, color: "#ffdd00" },
+    { label: t("monitor.storageUsed"), value: storageStr, icon: HardDrive, trend: "-", up: true, color: "#ff3366" },
   ];
 
   // ========================================================
@@ -481,10 +473,12 @@ export function Dashboard() {
               <div className="p-1.5 md:p-2 rounded-lg" style={{ backgroundColor: `${stat.color}15` }}>
                 <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
               </div>
-              <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded ${stat.up ? "bg-[rgba(0,255,136,0.1)] text-[#00ff88]" : "bg-[rgba(255,51,102,0.1)] text-[#ff3366]"}`} style={{ fontSize: "0.65rem" }}>
-                {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {stat.trend}
-              </div>
+              {stat.trend !== "-" && (
+                <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded ${stat.up ? "bg-[rgba(0,255,136,0.1)] text-[#00ff88]" : "bg-[rgba(255,51,102,0.1)] text-[#ff3366]"}`} style={{ fontSize: "0.65rem" }}>
+                  {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                  {stat.trend}
+                </div>
+              )}
             </div>
             <div className="mt-1" style={{ fontSize: isMobile ? "1.2rem" : "1.5rem", color: stat.color, fontFamily: "'Orbitron', sans-serif" }}>
               {stat.value}
@@ -550,8 +544,10 @@ export function Dashboard() {
             <h3 className="text-[#e0f0ff]" style={{ fontSize: "0.85rem" }}>{t("monitor.modelLoadDist")}</h3>
           </div>
           {(() => {
-            // 真连态：真实负载为空（如推理服务离线）显示空态，绝不回退模拟分布
-            if (isLive && liveModelDist.length === 0) {
+            // 零硬编码：真连态用真实节点聚合，非真连态用数据总控可编辑条目；
+            // 两者皆空时显示空态，绝不回退内置假分布
+            const distData = liveModelDist.length > 0 ? liveModelDist : modelDist;
+            if (distData.length === 0) {
               return (
                 <div
                   className="flex items-center justify-center text-[rgba(0,212,255,0.45)]"
@@ -562,7 +558,6 @@ export function Dashboard() {
                 </div>
               );
             }
-            const distData = liveModelDist.length > 0 ? liveModelDist : modelDist;
             return (
               <>
                 <ResponsiveContainer width="100%" height={isMobile ? 140 : 160}>
@@ -773,9 +768,26 @@ export function Dashboard() {
 // Sub-components extracted for cleanliness
 // ============================================================
 
+/** 图表通用空态（零硬编码政策：无可编辑/真实数据时不渲染假图） */
+function ChartEmpty({ height }: { height: number }) {
+  const { t } = useI18n();
+  return (
+    <div
+      className="flex items-center justify-center text-[rgba(0,212,255,0.45)]"
+      style={{ height, fontSize: "0.75rem" }}
+      data-testid="chart-empty"
+    >
+      {t("monitor.noChartData")}
+    </div>
+  );
+}
+
 function RadarSection({ isMobile }: { isMobile: boolean }) {
   const { t } = useI18n();
   const { radarData } = useMetricsSlice(useShallow((s) => ({ radarData: s.radarData })));
+  if (radarData.length === 0) {
+    return <ChartEmpty height={isMobile ? 240 : 220} />;
+  }
   return (
     <ResponsiveContainer width="100%" height={isMobile ? 240 : 220}>
       <RadarChart data={radarData}>
@@ -794,6 +806,9 @@ function RadarSection({ isMobile }: { isMobile: boolean }) {
 function PerformanceSection({ isMobile }: { isMobile: boolean }) {
   const { t } = useI18n();
   const { modelPerf } = useMetricsSlice(useShallow((s) => ({ modelPerf: s.modelPerf })));
+  if (modelPerf.length === 0) {
+    return <ChartEmpty height={isMobile ? 220 : 220} />;
+  }
   return (
     <div className={isMobile ? "overflow-x-auto -mx-3" : ""}>
       <div style={isMobile ? { minWidth: "420px", paddingLeft: 12, paddingRight: 12 } : undefined}>
@@ -816,6 +831,17 @@ function PerformanceSection({ isMobile }: { isMobile: boolean }) {
 function PredictionSection({ isMobile, throughputHistory }: { isMobile: boolean; throughputHistory: { time: string; qps: number }[] }) {
   const { t } = useI18n();
   const data = useMemo(() => buildPredictionFromHistory(throughputHistory), [throughputHistory]);
+  if (data.length === 0) {
+    return (
+      <div
+        className="flex items-center justify-center text-[rgba(0,212,255,0.45)]"
+        style={{ height: isMobile ? 220 : 220, fontSize: "0.75rem" }}
+        data-testid="prediction-empty"
+      >
+        {t("monitor.noPredictionData")}
+      </div>
+    );
+  }
   return (
     <ResponsiveContainer width="100%" height={isMobile ? 220 : 220}>
       <LineChart data={data}>
