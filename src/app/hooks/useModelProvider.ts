@@ -143,6 +143,7 @@ export function useModelProvider() {
     updateProvider: slice.updateProvider,
     removeProvider: slice.removeProvider,
     resetProvider: slice.resetProvider,
+    resetAllProviders: slice.resetAllProviders,
     addModelToProvider: slice.addModelToProvider,
     removeModelFromProvider: slice.removeModelFromProvider,
 

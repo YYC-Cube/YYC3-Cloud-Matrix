@@ -12,7 +12,7 @@
  * - 从 useModelProvider.ts 迁移的 Zustand slice
  * - 管理 9 个内置服务商 + 自定义服务商
  * - 管理已配置模型实例 (ConfiguredModel)
- * - Ollama 自动发现 + mock fallback
+ * - Ollama 自动发现（不可达时如实报错；演示模型仅 demoMode 可见）
  * - localStorage 持久化 + 旧键迁移
  */
 
@@ -21,6 +21,7 @@ import { persist } from 'zustand/middleware';
 import { testAIConnection, type AIConnectionConfig } from '../../lib/connection-test-engine';
 import { env } from '../../lib/env-config';
 import { getOllamaTagsUrl } from '../../lib/ollama-url';
+import { useSettingsSSOT } from './settings-ssot-slice';
 import type {
   ConfiguredModel,
   ModelProviderDef,
@@ -121,6 +122,8 @@ export interface ProviderSlice {
   updateProvider: (id: ModelProviderId, updates: Partial<ModelProviderDef>) => void;
   removeProvider: (id: ModelProviderId) => void;
   resetProvider: (id: ModelProviderId) => void;
+  /** 重置全部服务商：内置恢复规范定义，自定义服务商及其已配置模型移除 */
+  resetAllProviders: () => void;
   addModelToProvider: (providerId: ModelProviderId, modelName: string) => void;
   removeModelFromProvider: (providerId: ModelProviderId, modelName: string) => void;
 
@@ -201,6 +204,21 @@ export const useProviderSlice = create<ProviderSlice>()(
         set((s) => ({
           providers: s.providers.map((p) => (p.id === id ? { ...builtin, updatedAt: Date.now() } : p)),
         }));
+      },
+
+      resetAllProviders: () => {
+        const builtinIds = new Set(BUILTIN_PROVIDERS.map((p) => p.id));
+        set((s) => {
+          // 保留挂在内置服务商下的已配置模型（含用户 API Key），
+          // 自定义服务商被移除，其模型一并清除
+          const keptModels = s.configuredModels.filter((m) => builtinIds.has(m.providerId));
+          const keptIds = new Set(keptModels.map((m) => m.id));
+          return {
+            providers: BUILTIN_PROVIDERS.map((p) => ({ ...p })),
+            configuredModels: keptModels,
+            activeModelId: s.activeModelId && keptIds.has(s.activeModelId) ? s.activeModelId : null,
+          };
+        });
       },
 
       addModelToProvider: (providerId, modelName) => {
@@ -359,26 +377,32 @@ export const useProviderSlice = create<ProviderSlice>()(
 
           return models;
         } catch (err: unknown) {
-          // Mock fallback for development
-          const mockModels: OllamaModel[] = [
-            { name: "codegeex4:latest", model: "codegeex4:latest", modified_at: "2026-02-22T00:55:15.920502035+08:00", size: 5455323291, digest: "867b8e81d03898ac2289d809edb718d67a6d706d6a644bb1a922ee1607c7e5ed", details: { parent_model: "", format: "gguf", family: "chatglm", parameter_size: "9.4B", quantization_level: "Q4_0" } },
-            { name: "qwen2.5:7b", model: "qwen2.5:7b", modified_at: "2026-02-22T00:28:20.785576365+08:00", size: 4683087332, digest: "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e", details: { parent_model: "", format: "gguf", family: "qwen2", parameter_size: "7.6B", quantization_level: "Q4_K_M" } },
-            { name: "gpt-oss:120b-cloud", model: "gpt-oss:120b-cloud", modified_at: "2026-02-20T19:35:46.930016073+08:00", size: 384, digest: "569662207105c69bb0eca2f79a3fdf8691ad6301def477a5ec66f8e8bae237e3", details: { parent_model: "", format: "", family: "gptoss", parameter_size: "116.8B", quantization_level: "MXFP4" } },
-            { name: "nomic-embed-text:latest", model: "nomic-embed-text:latest", modified_at: "2026-02-17T22:24:23.909072343+08:00", size: 274302450, digest: "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f", details: { parent_model: "", format: "gguf", family: "nomic-bert", parameter_size: "137M", quantization_level: "F16" } },
-            { name: "deepseek-v3.1:671b-cloud", model: "deepseek-v3.1:671b-cloud", modified_at: "2025-12-11T12:32:45.905310644+08:00", size: 405, digest: "d3749919e45f955731da7a7e76849e20f7ed310725d3b8b52822e811f55d0a90", details: { parent_model: "", format: "", family: "deepseek2", parameter_size: "671.0B", quantization_level: "FP8_E4M3" } },
-            { name: "qwen2.5-coder:1.5b", model: "qwen2.5-coder:1.5b", modified_at: "2025-09-26T03:48:11.422863972+08:00", size: 986062089, digest: "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668", details: { parent_model: "", format: "gguf", family: "qwen2", parameter_size: "1.5B", quantization_level: "Q4_K_M" } },
-          ];
+          // 真实化政策：Ollama 不可达时如实报错 + 空列表，
+          // 绝不把演示模型伪装成已发现模型注入 provider.models。
+          // 演示模式下才提供演示模型（明确标注，不写入 provider.models）。
+          const demoMode = useSettingsSSOT.getState().toggles.demoMode;
 
-          set((s) => ({
-            ollamaModels: mockModels,
-            ollamaError: `连接失败 (Mock 模式): ${(err as Error).message}`,
+          if (demoMode) {
+            const demoModels: OllamaModel[] = [
+              { name: "demo-llm:latest", model: "demo-llm:latest", modified_at: new Date().toISOString(), size: 0, digest: "demo", details: { parent_model: "", format: "gguf", family: "demo", parameter_size: "0B", quantization_level: "DEMO" } },
+            ];
+
+            set({
+              ollamaModels: demoModels,
+              ollamaError: `连接失败（演示模式，以下为演示模型）: ${(err as Error).message}`,
+              ollamaLoading: false,
+            });
+
+            return demoModels;
+          }
+
+          set({
+            ollamaModels: [],
+            ollamaError: `Ollama 连接失败: ${(err as Error).message}`,
             ollamaLoading: false,
-            providers: s.providers.map((p) =>
-              p.id === "ollama" ? { ...p, models: mockModels.map((m) => m.name) } : p
-            ),
-          }));
+          });
 
-          return mockModels;
+          return [];
         }
       },
 

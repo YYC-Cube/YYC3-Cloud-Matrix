@@ -228,8 +228,9 @@ export function ConfigExportCenter() {
   const handleReset = useCallback((moduleId: string) => {
     switch (moduleId) {
       case "providers":
-        // 重置只能重置自定义服务商，内置服务商不变
-        toast.info("服务商已重置为初始配置", { style: toastStyle });
+        // 内置服务商恢复规范定义；自定义服务商及其已配置模型移除
+        modelProvider.resetAllProviders();
+        toast.info("服务商已重置：内置恢复定义，自定义已移除", { style: toastStyle });
         break;
       case "settings":
         settingsStore.resetSettings();
@@ -239,7 +240,7 @@ export function ConfigExportCenter() {
         resetDbModels();
         resetDbAgents();
         resetDbNodes();
-        toast.info("业务数据已重置为初始 Mock 数据", { style: toastStyle });
+        toast.info("业务数据已清空", { style: toastStyle });
         break;
       case "envConfig":
         resetEnvConfig();

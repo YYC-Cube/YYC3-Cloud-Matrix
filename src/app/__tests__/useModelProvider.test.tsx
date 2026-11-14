@@ -142,11 +142,16 @@ describe("useModelProvider", () => {
       expect(result.current.stats.providers).toBe(2);
     });
 
-    it("fetchOllamaModels should fetch models (Mock fallback)", async () => {
+    it("fetchOllamaModels should return empty + honest error when Ollama unreachable (no fake models)", async () => {
       // Test directly through the store to avoid useEffect timing issues
-      await useProviderSlice.getState().fetchOllamaModels();
-      const ollamaModels = useProviderSlice.getState().ollamaModels;
-      expect(ollamaModels.length).toBe(6);
+      const result = await useProviderSlice.getState().fetchOllamaModels();
+      const state = useProviderSlice.getState();
+      expect(result.length).toBe(0);
+      expect(state.ollamaModels.length).toBe(0);
+      expect(state.ollamaError).toContain("Ollama 连接失败");
+      // 假模型不得注入 provider.models
+      const ollama = state.providers.find((p) => p.id === "ollama");
+      expect(ollama?.models).toEqual([]);
     });
   });
 });
