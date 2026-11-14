@@ -2,7 +2,7 @@
 title: AI 智能域 — AI 诊断真实规则分析 + SDK 对话/AI 决策审计
 date: 2026-11-14
 stage: AI 智能（AI 诊断 / SDK 对话 / AI 决策）
-commit: 待填
+commit: 9614662
 gates: tsc 0 错 / vitest 292 文件 5095 用例全绿 / vite build 通过
 ---
 
