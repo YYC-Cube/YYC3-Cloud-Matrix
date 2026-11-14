@@ -2,7 +2,7 @@
 title: 数据备份（配置中心）真实化 + Ollama 假模型回退清除
 date: 2026-11-14
 stage: 运维管理 · 数据备份（#/export-center）
-commit: 待填
+commit: e926be5
 gates: tsc 0 错 / vitest 292 文件 5094 用例全绿 / vite build 通过
 ---
 
