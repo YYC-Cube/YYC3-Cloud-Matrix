@@ -144,7 +144,11 @@ function SecurityTabContent({ state, t }: { state: ReturnType<typeof useSecurity
             <Cookie className="w-4 h-4 text-[#00d4ff]" />
             <span className="text-[#e0f0ff]" style={{ fontSize: "0.85rem" }}>{t("security.cookieTitle")}</span>
           </div>
-          <ScoreRing score={cookie.score} size={48} />
+          {cookie.score >= 0 ? (
+            <ScoreRing score={cookie.score} size={48} />
+          ) : (
+            <span className="text-[rgba(224,240,255,0.35)]" style={{ fontSize: "0.7rem" }}>N/A</span>
+          )}
         </div>
         <div className="flex items-center gap-2 mb-3" style={{ fontSize: "0.75rem" }}>
           <span className="text-[rgba(0,212,255,0.5)]">{t("security.cookieCount")}:</span>
@@ -297,7 +301,7 @@ function PerformanceTabContent({ state, t }: { state: ReturnType<typeof useSecur
           {[
             { label: t("security.memoryUsed"), value: formatBytes(memory.usedJSHeap) },
             { label: t("security.memoryLimit"), value: formatBytes(memory.jsHeapLimit) },
-            { label: t("security.memoryListeners"), value: String(memory.listeners) },
+            { label: t("security.memoryListeners"), value: memory.listeners < 0 ? "N/A" : String(memory.listeners) },
             { label: t("security.memoryDomNodes"), value: String(memory.domNodes) },
           ].map((m) => (
             <div key={m.label}>

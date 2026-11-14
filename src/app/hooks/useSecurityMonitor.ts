@@ -1,29 +1,33 @@
 /**
  * @file: useSecurityMonitor.ts
- * @description: 安全与性能监控 Hook · CSP、Cookie、敏感数据、性能指标监控
+ * @description: 安全与性能监控 Hook · 真实浏览器采集（demoMode 关闭）/ 演示数据（demoMode 开启）
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v2.0.0
  * @created: 2026-02-26
- * @updated: 2026-04-09
+ * @updated: 2026-11-14
  * @status: active
- * @tags: [hook],[security],[monitoring]
+ * @tags: [hook],[security],[monitoring],[real-data]
  *
  * @brief: 安全与性能监控
  *
  * @details:
- * - CSP (Content Security Policy) 检测
- * - Cookie 安全性检测
- * - 敏感数据泄露检测
- * - 性能指标监控（Web Vitals）
- * - 设备能力和网络质量检测
- * - 浏览器兼容性检测
+ * - demoMode 关闭（默认）：全部指标来自真实浏览器 API
+ *   · CSP：解析 meta[http-equiv] 标签；响应头 CSP 页面上下文不可读，如实标注
+ *   · Cookie：仅可统计数量；Secure/HttpOnly/SameSite 属性 JS 不可读，如实标注
+ *   · 敏感数据：真实枚举 localStorage / sessionStorage 键并按名称启发式评估
+ *   · 性能：PerformanceResourceTiming / PerformanceNavigationTiming 真实条目
+ *   · 内存：performance.memory（Chromium）；listeners/timers JS 不可测，输出 -1（UI 显示 N/A）
+ *   · Web Vitals：TTFB / LCP（buffered 观察者）真实值，FID/INP 无法回溯不产出
+ *   · 设备：WebGL UNMASKED_RENDERER 真实 GPU；navigator 真实值
+ *   · 存储：localStorage 体积实算 + navigator.storage.estimate()
+ * - demoMode 开启：使用演示生成器，用于界面演示
  *
- * @dependencies: React
+ * @dependencies: React, settings-ssot-slice (demoMode)
  * @exports: useSecurityMonitor
- * @notes: 提供模拟数据用于演示
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import type {
   SecurityTab,
   RiskLevel,
@@ -42,10 +46,350 @@ import type {
 
 // RF-011: Re-export 已移除 — 所有类型统一从 types/index.ts 导入
 
+// 备份时间戳键：由 full-backup.ts 的 downloadFullBackup 写入
+const LAST_BACKUP_KEY = "yyc3_last_backup_at";
+
+// 敏感键名启发式（真实枚举仅做提示，不读取值内容）
+const SENSITIVE_KEY_RE = /token|secret|password|apikey|api_key|credential|private/i;
+
 // ============================================================
-// Mock Data Generators
+// Real Collectors（demoMode 关闭路径 · 2026-11-14）
 // ============================================================
 
+/** CSP：页面上下文只能读到 meta 标签声明；响应头 CSP 不可读，如实标注 */
+function realCSP(): CSPResult {
+  if (typeof document === "undefined") {
+    return { enabled: false, directives: [], inlineBlocked: false, recommendations: ["非浏览器环境，无法检测"], score: 0 };
+  }
+  const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+  const content = meta?.getAttribute("content") ?? "";
+  if (!content) {
+    return {
+      enabled: false,
+      directives: [],
+      inlineBlocked: false,
+      recommendations: [
+        "页面未通过 meta 标签声明 CSP",
+        "响应头 Content-Security-Policy 在页面上下文中不可读，如需完整审计请在服务端检查",
+        "建议配置 default-src 'self' 并逐步收紧 script-src / style-src",
+      ],
+      score: 0,
+    };
+  }
+  const directives = content.split(";").map((d) => d.trim()).filter(Boolean).map((d) => {
+    const [name, ...rest] = d.split(/\s+/);
+    const value = rest.join(" ");
+    const risky = /'unsafe-inline'|'unsafe-eval'|\*/.test(value);
+    return { name, value, status: (risky ? "warn" : "pass") as "pass" | "warn" | "fail" };
+  });
+  const warnCount = directives.filter((d) => d.status === "warn").length;
+  const recommendations: string[] = [];
+  if (warnCount > 0) {
+    recommendations.push(`${warnCount} 条指令包含 unsafe-inline / unsafe-eval / 通配符，建议收紧`);
+  }
+  if (!directives.some((d) => d.name === "default-src")) {
+    recommendations.push("缺少 default-src 兜底指令");
+  }
+  if (recommendations.length === 0) {
+    recommendations.push("CSP 指令配置良好");
+  }
+  recommendations.push("响应头 CSP 页面上下文不可读，完整审计需服务端配合");
+  return {
+    enabled: true,
+    directives,
+    inlineBlocked: !/'unsafe-inline'/.test(content),
+    recommendations,
+    score: Math.max(0, 100 - warnCount * 15),
+  };
+}
+
+/** Cookie：JS 仅可见数量；Secure/HttpOnly/SameSite 标志不可读，不参与评分 */
+function realCookie(): CookieResult {
+  const count = typeof document === "undefined" || !document.cookie
+    ? 0
+    : document.cookie.split(";").filter((c) => c.trim()).length;
+  return {
+    count,
+    checks: [
+      {
+        name: "可观测性说明",
+        status: "warn",
+        detail: "Cookie 的 Secure / HttpOnly / SameSite 属性在 JS 中不可读，需在服务端审计 Set-Cookie 响应头",
+      },
+    ],
+    // -1 表示不参与总评（无真实评分能力）
+    score: -1,
+  };
+}
+
+/** 敏感数据：真实枚举两个 Web Storage 的键 */
+function realSensitive(): SensitiveDataResult {
+  const scan = (storage: Storage | undefined): { key: string; risk: RiskLevel; detail: string }[] => {
+    if (!storage) {return [];}
+    const out: { key: string; risk: RiskLevel; detail: string }[] = [];
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (!key) {continue;}
+      const sizeKB = ((storage.getItem(key)?.length ?? 0) * 2 / 1024).toFixed(1);
+      if (SENSITIVE_KEY_RE.test(key)) {
+        out.push({ key, risk: "warning", detail: `键名疑似敏感（${sizeKB} KB），请确认内容已加密` });
+      } else {
+        out.push({ key, risk: "safe", detail: `${sizeKB} KB，未发现敏感特征` });
+      }
+    }
+    return out;
+  };
+  const local = scan(typeof localStorage !== "undefined" ? localStorage : undefined);
+  const session = scan(typeof sessionStorage !== "undefined" ? sessionStorage : undefined);
+  const warnings = [...local, ...session].filter((e) => e.risk === "warning").length;
+  return {
+    localStorage: local,
+    sessionStorage: session,
+    consoleRisks: 0,
+    totalRisks: warnings,
+    score: Math.max(0, 100 - warnings * 10),
+  };
+}
+
+/** 性能：PerformanceResourceTiming / NavigationTiming 真实条目 */
+function realPerformance(): PerformanceResult {
+  if (typeof performance === "undefined" || !performance.getEntriesByType) {
+    return { resources: [], totalResources: 0, totalSize: 0, pageLoadTime: 0, imgOptimizations: [], jsBundles: [], lazyLoadSavings: 0 };
+  }
+  const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+  const resources = entries.map((e) => ({
+    name: e.name.split("/").pop()?.split("?")[0] || e.name,
+    type: e.initiatorType,
+    size: e.transferSize,
+    loadTime: Math.round(e.duration),
+    cached: e.transferSize === 0 && e.decodedBodySize > 0,
+  }));
+  const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  const jsBundles = entries
+    .filter((e) => e.initiatorType === "script" || e.initiatorType === "link")
+    .map((e) => ({
+      name: e.name.split("/").pop()?.split("?")[0] || e.name,
+      size: e.decodedBodySize,
+      gzipped: e.transferSize,
+    }));
+  const imgOptimizations: string[] = [];
+  if (typeof document !== "undefined") {
+    const imgs = Array.from(document.querySelectorAll("img"));
+    const noLazy = imgs.filter((img) => img.loading !== "lazy").length;
+    if (noLazy > 0) {
+      imgOptimizations.push(`${noLazy} 张图片未启用懒加载（loading="lazy"）`);
+    }
+  }
+  const totalSize = entries.reduce((a, e) => a + e.transferSize, 0);
+  return {
+    resources,
+    totalResources: entries.length,
+    totalSize,
+    pageLoadTime: nav ? Math.round(nav.duration) : 0,
+    imgOptimizations,
+    jsBundles,
+    lazyLoadSavings: 0,
+  };
+}
+
+/** 内存：performance.memory（Chromium 专有）；listeners/timers JS 不可测 → -1（UI 显示 N/A） */
+function realMemory(): MemoryResult {
+  const nav = typeof performance !== "undefined"
+    ? (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory
+    : undefined;
+  const domNodes = typeof document !== "undefined" ? document.querySelectorAll("*").length : 0;
+  const used = nav?.usedJSHeapSize ?? 0;
+  const total = nav?.totalJSHeapSize ?? 0;
+  const limit = nav?.jsHeapSizeLimit ?? 0;
+  const usageRatio = limit > 0 ? used / limit : 0;
+  const leakRisk: RiskLevel = usageRatio > 0.7 ? "danger" : usageRatio > 0.4 ? "warning" : "safe";
+  return {
+    usedJSHeap: used,
+    totalJSHeap: total,
+    jsHeapLimit: limit,
+    listeners: -1, // JS 无法统计事件监听器数量
+    timers: -1,    // JS 无法统计活动定时器数量
+    domNodes,
+    leakRisk,
+    trend: [Math.round(used / 1024 / 1024)], // 单点真实采样；历史趋势需多次扫描累积
+  };
+}
+
+/** Web Vitals：TTFB / LCP 真实可回溯指标；FID/INP 需用户交互，扫描时点无法回溯，不产出 */
+function realVitals(): WebVital[] {
+  const vitals: WebVital[] = [];
+  if (typeof performance === "undefined") {return vitals;}
+  const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  if (nav) {
+    const ttfb = Math.round(nav.responseStart);
+    vitals.push({
+      name: "TTFB",
+      value: ttfb,
+      unit: "ms",
+      rating: ttfb < 800 ? "good" : ttfb < 1800 ? "needs-improvement" : "poor",
+      target: "< 800ms",
+    });
+  }
+  try {
+    const lcpEntries = performance.getEntriesByType("largest-contentful-paint");
+    const lcp = lcpEntries[lcpEntries.length - 1];
+    if (lcp) {
+      const sec = Math.round(lcp.startTime) / 1000;
+      vitals.push({
+        name: "LCP",
+        value: Math.round(sec * 100) / 100,
+        unit: "s",
+        rating: sec < 2.5 ? "good" : sec < 4 ? "needs-improvement" : "poor",
+        target: "< 2.5s",
+      });
+    }
+  } catch {
+    // 部分浏览器不支持该 entryType，跳过
+  }
+  try {
+    const clsEntries = performance.getEntriesByType("layout-shift") as (PerformanceEntry & { value?: number; hadRecentInput?: boolean })[];
+    const cls = clsEntries.filter((e) => !e.hadRecentInput).reduce((a, e) => a + (e.value ?? 0), 0);
+    if (clsEntries.length > 0) {
+      vitals.push({
+        name: "CLS",
+        value: Math.round(cls * 1000) / 1000,
+        unit: "",
+        rating: cls < 0.1 ? "good" : cls < 0.25 ? "needs-improvement" : "poor",
+        target: "< 0.1",
+      });
+    }
+  } catch {
+    // 同上
+  }
+  return vitals;
+}
+
+/** 设备信息：全部真实采集，GPU 经 WebGL 调试扩展读取 */
+function realDevice(): DeviceInfo {
+  let gpu = "未知（浏览器未暴露）";
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+    if (gl) {
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      if (ext) {
+        gpu = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string;
+      }
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+    }
+  } catch {
+    // 保持「未知」
+  }
+  return {
+    cpuCores: typeof navigator !== "undefined" ? navigator.hardwareConcurrency || 0 : 0,
+    memory: typeof navigator !== "undefined" ? (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? null : null,
+    screen: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "未知",
+    pixelRatio: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+    touchSupport: typeof window !== "undefined" ? "ontouchstart" in window : false,
+    gpu,
+    platform: typeof navigator !== "undefined" ? navigator.platform || "未知" : "未知",
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "未知",
+  };
+}
+
+/** 网络信息：navigator.connection 真实值，不支持的浏览器如实标注 */
+function realNetwork(): NetworkInfo {
+  const conn = typeof navigator !== "undefined"
+    ? (navigator as unknown as { connection?: { type?: string; downlink?: number; rtt?: number; effectiveType?: string; saveData?: boolean } }).connection
+    : undefined;
+  return {
+    type: conn?.type || "unknown",
+    downlink: conn?.downlink ?? 0,
+    rtt: conn?.rtt ?? 0,
+    effectiveType: conn?.effectiveType || "unknown",
+    isStable: typeof navigator !== "undefined" ? navigator.onLine : false,
+    saveData: conn?.saveData ?? false,
+  };
+}
+
+/** 浏览器信息：UA 真实解析 + 特性真实探测 */
+function realBrowser(): BrowserInfo {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  let name = "未知";
+  let version = "未知";
+  const pick = (re: RegExp): string | null => {
+    const m = ua.match(re);
+    return m ? m[1] : null;
+  };
+  if (ua.includes("Edg/")) { name = "Edge"; version = pick(/Edg\/([\d.]+)/) ?? "未知"; }
+  else if (ua.includes("Firefox/")) { name = "Firefox"; version = pick(/Firefox\/([\d.]+)/) ?? "未知"; }
+  else if (ua.includes("Chrome/")) { name = "Chrome"; version = pick(/Chrome\/([\d.]+)/) ?? "未知"; }
+  else if (ua.includes("Safari/")) { name = "Safari"; version = pick(/Version\/([\d.]+)/) ?? "未知"; }
+
+  const w = typeof window !== "undefined" ? window : ({} as Window);
+  const hasGL2 = (() => {
+    try { return !!document.createElement("canvas").getContext("webgl2"); } catch { return false; }
+  })();
+  const features = [
+    { name: "WebSocket", supported: "WebSocket" in w, polyfillNeeded: false },
+    { name: "Service Worker", supported: typeof navigator !== "undefined" && "serviceWorker" in navigator, polyfillNeeded: false },
+    { name: "IndexedDB", supported: "indexedDB" in w, polyfillNeeded: false },
+    { name: "Web Crypto API", supported: typeof crypto !== "undefined" && !!crypto.subtle, polyfillNeeded: false },
+    { name: "ResizeObserver", supported: "ResizeObserver" in w, polyfillNeeded: false },
+    { name: "IntersectionObserver", supported: "IntersectionObserver" in w, polyfillNeeded: false },
+    { name: "File System Access API", supported: "showOpenFilePicker" in w, polyfillNeeded: false },
+    { name: "WebGL 2.0", supported: hasGL2, polyfillNeeded: false },
+    { name: "CSS Container Queries", supported: typeof CSS !== "undefined" && CSS.supports?.("container-type: inline-size") === true, polyfillNeeded: false },
+    { name: "View Transitions API", supported: "startViewTransition" in document, polyfillNeeded: false },
+    { name: "Web Bluetooth", supported: typeof navigator !== "undefined" && "bluetooth" in navigator, polyfillNeeded: false },
+    { name: "WebXR", supported: typeof navigator !== "undefined" && "xr" in navigator, polyfillNeeded: false },
+  ];
+  const unsupported = features.filter((f) => !f.supported).length;
+  return { name, version, features, upgradeNeeded: unsupported > 4 };
+}
+
+/** 数据管理：真实存储体积 + storage.estimate() */
+async function realDataManagement(): Promise<DataManagementState> {
+  const sizeOf = (storage: Storage | undefined): number => {
+    if (!storage) {return 0;}
+    let bytes = 0;
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (!key) {continue;}
+      bytes += (key.length + (storage.getItem(key)?.length ?? 0)) * 2; // UTF-16
+    }
+    return bytes;
+  };
+  const localBytes = sizeOf(typeof localStorage !== "undefined" ? localStorage : undefined);
+  const sessionBytes = sizeOf(typeof sessionStorage !== "undefined" ? sessionStorage : undefined);
+  let idbBytes = 0;
+  let cacheBytes = 0;
+  let total = localBytes + sessionBytes;
+  try {
+    if (typeof navigator !== "undefined" && navigator.storage?.estimate) {
+      const est = await navigator.storage.estimate();
+      const details = (est as unknown as { usageDetails?: { indexedDB?: number; caches?: number } }).usageDetails;
+      idbBytes = details?.indexedDB ?? 0;
+      cacheBytes = details?.caches ?? 0;
+      // usage 总量优先采用浏览器估值（含 idb/caches 等），但不少于两项 Web Storage 实算
+      total = Math.max(est.usage ?? 0, localBytes + sessionBytes);
+    }
+  } catch {
+    // estimate 不可用时保留实算总量
+  }
+  const lastBackupRaw = typeof localStorage !== "undefined" ? localStorage.getItem(LAST_BACKUP_KEY) : null;
+  const lastBackup = lastBackupRaw ? Number(lastBackupRaw) : null;
+  return {
+    storage: {
+      localStorage: localBytes,
+      sessionStorage: sessionBytes,
+      indexedDB: idbBytes,
+      cacheAPI: cacheBytes,
+      total,
+    },
+    lastBackup: lastBackup && Number.isFinite(lastBackup) ? lastBackup : null,
+    syncEnabled: typeof window !== "undefined" && "BroadcastChannel" in window,
+    expiredItems: 0, // 无 TTL 体系，如实为 0
+    cacheSize: cacheBytes,
+  };
+}
+
+/** 演示数据生成器（仅 demoMode 开启时使用） */
 function mockCSP(): CSPResult {
   return {
     enabled: true,
@@ -155,7 +499,7 @@ function mockDevice(): DeviceInfo {
     screen: typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "1920x1080",
     pixelRatio: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 2,
     touchSupport: typeof window !== "undefined" ? "ontouchstart" in window : false,
-    gpu: "Apple M4 Max GPU (Simulated)",
+    gpu: "演示 GPU（demoMode）",
     platform: typeof navigator !== "undefined" ? navigator.platform || "MacIntel" : "MacIntel",
     userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Mock UA",
   };
@@ -222,6 +566,7 @@ function mockDataManagement(): DataManagementState {
 // ============================================================
 
 export function useSecurityMonitor() {
+  const demoMode = useSettingsSSOT((s) => s.toggles.demoMode);
   const [state, setState] = useState<SecurityMonitorState>({
     activeTab: "security",
     scanStatus: "idle",
@@ -240,65 +585,96 @@ export function useSecurityMonitor() {
     dataManagement: null,
   });
 
-  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const setActiveTab = useCallback((tab: SecurityTab) => {
     setState((prev) => ({ ...prev, activeTab: tab }));
   }, []);
 
-  const startScan = useCallback(() => {
+  const startScan = useCallback(async () => {
     setState((prev) => ({ ...prev, scanStatus: "scanning" }));
 
-    // Simulate scanning delay
-    scanTimer.current = setTimeout(() => {
-      const csp = mockCSP();
-      const cookie = mockCookie();
-      const sensitive = mockSensitive();
-      const perf = mockPerformance();
-      const mem = mockMemory();
-      const vitals = mockVitals();
-      const device = mockDevice();
-      const network = mockNetwork();
-      const browser = mockBrowser();
-      const dataMgmt = mockDataManagement();
+    let csp: CSPResult;
+    let cookie: CookieResult;
+    let sensitive: SensitiveDataResult;
+    let perf: PerformanceResult;
+    let mem: MemoryResult;
+    let vitals: WebVital[];
+    let device: DeviceInfo;
+    let network: NetworkInfo;
+    let browser: BrowserInfo;
+    let dataMgmt: DataManagementState;
 
-      const scores = [csp.score, cookie.score, sensitive.score];
-      const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      const risk: RiskLevel = avgScore >= 80 ? "safe" : avgScore >= 60 ? "warning" : "danger";
+    if (demoMode) {
+      // 演示路径：界面演示专用
+      csp = mockCSP();
+      cookie = mockCookie();
+      sensitive = mockSensitive();
+      perf = mockPerformance();
+      mem = mockMemory();
+      vitals = mockVitals();
+      device = mockDevice();
+      network = mockNetwork();
+      browser = mockBrowser();
+      dataMgmt = mockDataManagement();
+    } else {
+      // 真实路径：全部来自浏览器真实 API
+      csp = realCSP();
+      cookie = realCookie();
+      sensitive = realSensitive();
+      perf = realPerformance();
+      mem = realMemory();
+      vitals = realVitals();
+      device = realDevice();
+      network = realNetwork();
+      browser = realBrowser();
+      dataMgmt = await realDataManagement();
+    }
 
-      setState((prev) => ({
-        ...prev,
-        scanStatus: "complete",
-        lastScanTime: Date.now(),
-        overallScore: avgScore,
-        overallRisk: risk,
-        csp,
-        cookie,
-        sensitive,
-        performance: perf,
-        memory: mem,
-        vitals,
-        device,
-        network,
-        browser,
-        dataManagement: dataMgmt,
-      }));
-    }, 1800);
-  }, []);
+    // 仅对有真实评分能力的项求均值（cookie.score = -1 表示不参与）
+    const scores = [csp.score, cookie.score, sensitive.score].filter((s) => s >= 0);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const risk: RiskLevel = avgScore >= 80 ? "safe" : avgScore >= 60 ? "warning" : "danger";
 
-  const cleanupData = useCallback((type: "expired" | "cache" | "privacy") => {
-    setState((prev) => {
-      if (!prev.dataManagement) {return prev;}
-      const dm = { ...prev.dataManagement };
-      if (type === "expired") {dm.expiredItems = 0;}
-      if (type === "cache") { dm.cacheSize = 0; dm.storage = { ...dm.storage, cacheAPI: 0 }; }
-      if (type === "privacy") {
-        dm.storage = { ...dm.storage, sessionStorage: 0 };
+    setState((prev) => ({
+      ...prev,
+      scanStatus: "complete",
+      lastScanTime: Date.now(),
+      overallScore: avgScore,
+      overallRisk: risk,
+      csp,
+      cookie,
+      sensitive,
+      performance: perf,
+      memory: mem,
+      vitals,
+      device,
+      network,
+      browser,
+      dataManagement: dataMgmt,
+    }));
+  }, [demoMode]);
+
+  const cleanupData = useCallback(async (type: "expired" | "cache" | "privacy") => {
+    if (!demoMode) {
+      // 真实清理动作
+      if (type === "cache" && typeof caches !== "undefined") {
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        } catch {
+          // Cache API 不可用时忽略
+        }
       }
-      dm.storage.total = dm.storage.localStorage + dm.storage.sessionStorage + dm.storage.indexedDB + dm.storage.cacheAPI;
-      return { ...prev, dataManagement: dm };
-    });
-  }, []);
+      if (type === "privacy" && typeof sessionStorage !== "undefined") {
+        sessionStorage.clear();
+      }
+      // expired：无 TTL 体系，本就为 0
+    }
+    // 重新实算存储状态
+    const dm = demoMode
+      ? mockDataManagement()
+      : await realDataManagement();
+    setState((prev) => ({ ...prev, dataManagement: dm }));
+  }, [demoMode]);
 
   const exportData = useCallback(() => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -309,13 +685,6 @@ export function useSecurityMonitor() {
     a.click();
     URL.revokeObjectURL(url);
   }, [state]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (scanTimer.current) {clearTimeout(scanTimer.current);}
-    };
-  }, []);
 
   return {
     ...state,

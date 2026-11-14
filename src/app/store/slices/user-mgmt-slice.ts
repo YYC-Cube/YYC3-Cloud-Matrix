@@ -14,13 +14,8 @@ import { persist } from 'zustand/middleware';
 import { newId } from '../../lib/id';
 import type { UserRecord } from '../../types';
 
-const DEFAULT_USERS: UserRecord[] = [
-  { id: "usr-1", name: "张管理", username: "admin", email: "admin@cloudpivot.ai", role: "超级管理员", status: "online", lastLogin: "2026-02-22 14:30", sessions: 3, apiCalls: 1284, locked: false },
-  { id: "usr-2", name: "李运维", username: "ops_li", email: "ops_li@cloudpivot.ai", role: "运维工程师", status: "online", lastLogin: "2026-02-22 14:25", sessions: 1, apiCalls: 856, locked: false },
-  { id: "usr-3", name: "王开发", username: "dev_wang", email: "dev_wang@cloudpivot.ai", role: "开发者", status: "online", lastLogin: "2026-02-22 14:18", sessions: 2, apiCalls: 2105, locked: false },
-  { id: "usr-4", name: "赵分析", username: "analyst_zhao", email: "zhao@cloudpivot.ai", role: "数据分析师", status: "online", lastLogin: "2026-02-22 13:55", sessions: 1, apiCalls: 432, locked: false },
-  { id: "usr-5", name: "刘测试", username: "qa_liu", email: "qa_liu@cloudpivot.ai", role: "测试工程师", status: "offline", lastLogin: "2026-02-21 18:30", sessions: 0, apiCalls: 321, locked: false },
-];
+// 历史假种子 ID（v0 写入的 5 个演示用户），migrate 时精确清除
+const LEGACY_FAKE_USER_IDS = new Set(["usr-1", "usr-2", "usr-3", "usr-4", "usr-5"]);
 
 export interface UserMgmtSlice {
   users: UserRecord[];
@@ -33,7 +28,8 @@ export interface UserMgmtSlice {
 export const useUserMgmtSlice = create<UserMgmtSlice>()(
   persist(
     (set, _get) => ({
-      users: DEFAULT_USERS,
+      // 无后端设计：用户列表由管理员真实维护，绝不预置演示账号
+      users: [],
       addUser: (user) => set((s) => ({ users: [...s.users, { ...user, id: newId('usr') }] })),
       updateUser: (id, updates) => set((s) => ({ users: s.users.map((u) => u.id === id ? { ...u, ...updates } : u) })),
       removeUser: (id) => set((s) => ({ users: s.users.filter((u) => u.id !== id) })),
@@ -41,7 +37,16 @@ export const useUserMgmtSlice = create<UserMgmtSlice>()(
     }),
     {
       name: 'yyc3-user-mgmt-slice',
+      version: 1,
       partialize: (state) => ({ users: state.users }),
+      migrate: (persisted, version) => {
+        const state = persisted as { users?: UserRecord[] } | undefined;
+        if (version < 1 && state?.users) {
+          // 精确清除历史假种子，保留管理员自建用户
+          return { users: state.users.filter((u) => !LEGACY_FAKE_USER_IDS.has(u.id)) };
+        }
+        return state as { users: UserRecord[] };
+      },
     }
   )
 );

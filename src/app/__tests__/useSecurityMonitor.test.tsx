@@ -1,32 +1,33 @@
 /**
  * @file: useSecurityMonitor.test.tsx
- * @description: useSecurityMonitor.test.tsx description
+ * @description: useSecurityMonitor 测试 · 真实采集语义（demoMode 关闭）+ 演示分支
  * @author: YanYuCloudCube Team
- * @version: v1.0.0
+ * @version: v2.0.0
  * @created: 2026-03-31
- * @updated: 2026-03-31
+ * @updated: 2026-11-14
  * @status: active
- * @tags: [component]
+ * @tags: [component],[real-data]
  */
 
 // @vitest-environment jsdom
-/**
- * useSecurityMonitor.test.tsx
- * =============================
- * Hook 测试: useSecurityMonitor
- */
 
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { useSecurityMonitor } from "../hooks/useSecurityMonitor";
+import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 
-describe("useSecurityMonitor", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
+/** 执行一次完整扫描（startScan 已改为 async 真实采集） */
+async function runScan(result: { current: ReturnType<typeof useSecurityMonitor> }) {
+  await act(async () => {
+    await result.current.startScan();
   });
+}
 
-  afterEach(() => {
-    vi.useRealTimers();
+describe("useSecurityMonitor（真实采集路径 · demoMode 关闭）", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    useSettingsSSOT.setState((s) => ({ toggles: { ...s.toggles, demoMode: false } }));
   });
 
   it("initializes with idle state", () => {
@@ -48,67 +49,39 @@ describe("useSecurityMonitor", () => {
 
   it("switches active tab", () => {
     const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.setActiveTab("performance");
-    });
+    act(() => { result.current.setActiveTab("performance"); });
     expect(result.current.activeTab).toBe("performance");
-
-    act(() => {
-      result.current.setActiveTab("diagnostics");
-    });
+    act(() => { result.current.setActiveTab("diagnostics"); });
     expect(result.current.activeTab).toBe("diagnostics");
-
-    act(() => {
-      result.current.setActiveTab("dataManagement");
-    });
+    act(() => { result.current.setActiveTab("dataManagement"); });
     expect(result.current.activeTab).toBe("dataManagement");
   });
 
-  it("starts scan and transitions to scanning state", () => {
+  it("starts scan and transitions through scanning to complete", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
 
+    let scanPromise: Promise<void> | undefined;
     act(() => {
-      result.current.startScan();
-    });
-    expect(result.current.scanStatus).toBe("scanning");
-  });
-
-  it("completes scan after timeout", () => {
-    const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.startScan();
+      scanPromise = result.current.startScan();
     });
     expect(result.current.scanStatus).toBe("scanning");
 
-    act(() => {
-      vi.advanceTimersByTime(2000);
+    await act(async () => {
+      await scanPromise;
     });
     expect(result.current.scanStatus).toBe("complete");
     expect(result.current.lastScanTime).not.toBeNull();
   });
 
-  it("populates all result fields after scan", () => {
+  it("populates all result fields from real browser APIs", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
+    await runScan(result);
 
     expect(result.current.csp).not.toBeNull();
-    expect(result.current.csp!.directives.length).toBeGreaterThan(0);
     expect(result.current.cookie).not.toBeNull();
-    expect(result.current.cookie!.checks.length).toBeGreaterThan(0);
     expect(result.current.sensitive).not.toBeNull();
     expect(result.current.performance).not.toBeNull();
-    expect(result.current.performance!.resources.length).toBeGreaterThan(0);
     expect(result.current.memory).not.toBeNull();
-    expect(result.current.memory!.usedJSHeap).toBeGreaterThan(0);
-    expect(result.current.vitals.length).toBeGreaterThan(0);
     expect(result.current.device).not.toBeNull();
     expect(result.current.network).not.toBeNull();
     expect(result.current.browser).not.toBeNull();
@@ -116,104 +89,179 @@ describe("useSecurityMonitor", () => {
     expect(result.current.dataManagement).not.toBeNull();
   });
 
-  it("calculates overall score and risk level", () => {
+  it("CSP: 无 meta 声明时如实标注并提示响应头不可读", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
 
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
+    const csp = result.current.csp!;
+    expect(csp.enabled).toBe(false);
+    expect(csp.directives).toEqual([]);
+    expect(csp.recommendations.some((r) => r.includes("响应头"))).toBe(true);
+    expect(csp.score).toBe(0);
+  });
 
-    expect(result.current.overallScore).toBeGreaterThan(0);
+  it("CSP: 解析真实 meta 标签并标记 unsafe-inline 风险", async () => {
+    const meta = document.createElement("meta");
+    meta.setAttribute("http-equiv", "Content-Security-Policy");
+    meta.setAttribute("content", "default-src 'self'; script-src 'self' 'unsafe-inline'");
+    document.head.appendChild(meta);
+
+    try {
+      const { result } = renderHook(() => useSecurityMonitor());
+      await runScan(result);
+
+      const csp = result.current.csp!;
+      expect(csp.enabled).toBe(true);
+      expect(csp.directives).toHaveLength(2);
+      expect(csp.directives.find((d) => d.name === "script-src")?.status).toBe("warn");
+      expect(csp.directives.find((d) => d.name === "default-src")?.status).toBe("pass");
+      expect(csp.inlineBlocked).toBe(false);
+      expect(csp.score).toBe(85); // 100 - 1 warn × 15
+    } finally {
+      meta.remove();
+    }
+  });
+
+  it("Cookie: 仅可统计数量，属性审计如实标注不可读且不参与总评", async () => {
+    document.cookie = "test_cookie=1";
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const cookie = result.current.cookie!;
+    expect(cookie.count).toBeGreaterThanOrEqual(1);
+    expect(cookie.checks.some((c) => c.detail.includes("不可读"))).toBe(true);
+    expect(cookie.score).toBe(-1); // 不参与总评
+  });
+
+  it("敏感数据: 真实枚举存储键并按名称启发式标记风险", async () => {
+    localStorage.setItem("yyc3_theme", "dark");
+    localStorage.setItem("api_token_backup", "should-be-flagged");
+    sessionStorage.setItem("session_cache", "ok");
+
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const sensitive = result.current.sensitive!;
+    const flagged = sensitive.localStorage.find((e) => e.key === "api_token_backup");
+    expect(flagged?.risk).toBe("warning");
+    const safeEntry = sensitive.localStorage.find((e) => e.key === "yyc3_theme");
+    expect(safeEntry?.risk).toBe("safe");
+    const sessionEntry = sensitive.sessionStorage.find((e) => e.key === "session_cache");
+    expect(sessionEntry?.risk).toBe("safe");
+    expect(sensitive.totalRisks).toBe(1);
+    expect(sensitive.score).toBe(90); // 100 - 1 warning × 10
+  });
+
+  it("内存: DOM 节点数为真实统计，listeners/timers 不可测输出 -1", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const mem = result.current.memory!;
+    expect(mem.domNodes).toBeGreaterThan(0);
+    expect(mem.domNodes).toBe(document.querySelectorAll("*").length);
+    expect(mem.listeners).toBe(-1);
+    expect(mem.timers).toBe(-1);
+    expect(mem.trend).toHaveLength(1);
+  });
+
+  it("设备信息: 全部真实采集，无模拟 GPU 字符串", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const device = result.current.device!;
+    expect(typeof device.cpuCores).toBe("number");
+    expect(typeof device.touchSupport).toBe("boolean");
+    expect(device.screen).toMatch(/\d+x\d+/);
+    expect(device.pixelRatio).toBeGreaterThan(0);
+    expect(device.gpu).not.toContain("Simulated");
+    expect(device.userAgent).toBe(navigator.userAgent);
+  });
+
+  it("网络信息: navigator.onLine 为真实在线状态", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    expect(result.current.network!.isStable).toBe(navigator.onLine);
+  });
+
+  it("浏览器特性: 真实探测结果与 jsdom 环境一致", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const browser = result.current.browser!;
+    expect(browser.name).toBeTruthy();
+    expect(browser.version).toBeTruthy();
+    const ws = browser.features.find((f) => f.name === "WebSocket");
+    expect(ws?.supported).toBe("WebSocket" in window);
+    const idb = browser.features.find((f) => f.name === "IndexedDB");
+    expect(idb?.supported).toBe("indexedDB" in window);
+    browser.features.forEach((f) => {
+      expect(typeof f.supported).toBe("boolean");
+      expect(f.name).toBeTruthy();
+    });
+  });
+
+  it("数据管理: localStorage 体积为真实实算", async () => {
+    localStorage.setItem("probe_key", "x".repeat(100));
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    const dm = result.current.dataManagement!;
+    // "probe_key"(9) + 100 字符 = 109 × 2 字节
+    expect(dm.storage.localStorage).toBeGreaterThanOrEqual(218);
+    expect(dm.storage.total).toBeGreaterThanOrEqual(dm.storage.localStorage);
+    expect(dm.expiredItems).toBe(0); // 无 TTL 体系，如实为 0
+  });
+
+  it("总评: 仅对有真实评分能力的项求均值，范围 0-100", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+
+    expect(result.current.overallScore).toBeGreaterThanOrEqual(0);
     expect(result.current.overallScore).toBeLessThanOrEqual(100);
     expect(["safe", "warning", "danger"]).toContain(result.current.overallRisk);
+    // cookie.score = -1 不参与总评：均值 = (csp + sensitive) / 2
+    const expected = Math.round((result.current.csp!.score + result.current.sensitive!.score) / 2);
+    expect(result.current.overallScore).toBe(expected);
   });
 
-  it("cleanupData reduces expired items count", () => {
+  it("cleanupData(privacy): 真实清空 sessionStorage 并重算体积", async () => {
+    sessionStorage.setItem("privacy_item", "sensitive-session-data");
     const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
+    expect(result.current.dataManagement!.storage.sessionStorage).toBeGreaterThan(0);
 
-    // First scan to populate data
-    act(() => {
-      result.current.startScan();
+    await act(async () => {
+      await result.current.cleanupData("privacy");
     });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    const beforeCount = result.current.dataManagement!.expiredItems;
-    expect(beforeCount).toBeGreaterThan(0);
-
-    act(() => {
-      result.current.cleanupData("expired");
-    });
-    expect(result.current.dataManagement!.expiredItems).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+    expect(result.current.dataManagement!.storage.sessionStorage).toBe(0);
   });
 
-  it("cleanupData clears cache", () => {
+  it("cleanupData(cache): 无 Cache API 时如实为 0", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
 
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    act(() => {
-      result.current.cleanupData("cache");
+    await act(async () => {
+      await result.current.cleanupData("cache");
     });
     expect(result.current.dataManagement!.cacheSize).toBe(0);
     expect(result.current.dataManagement!.storage.cacheAPI).toBe(0);
   });
 
-  it("cleanupData handles privacy cleanup", () => {
+  it("cleanupData(expired): 无 TTL 体系，保持 0", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
 
-    act(() => {
-      result.current.startScan();
+    await act(async () => {
+      await result.current.cleanupData("expired");
     });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    act(() => {
-      result.current.cleanupData("privacy");
-    });
-    expect(result.current.dataManagement!.storage.sessionStorage).toBe(0);
+    expect(result.current.dataManagement!.expiredItems).toBe(0);
   });
 
-  it("CSP mock has valid structure", () => {
+  it("Web Vitals: 仅产出真实可回溯指标，评级合法", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    const csp = result.current.csp!;
-    expect(typeof csp.enabled).toBe("boolean");
-    expect(csp.score).toBeGreaterThanOrEqual(0);
-    expect(csp.score).toBeLessThanOrEqual(100);
-    expect(Array.isArray(csp.directives)).toBe(true);
-    expect(Array.isArray(csp.recommendations)).toBe(true);
-    csp.directives.forEach((d) => {
-      expect(["pass", "warn", "fail"]).toContain(d.status);
-    });
-  });
-
-  it("Web Vitals have valid ratings", () => {
-    const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
+    await runScan(result);
 
     result.current.vitals.forEach((v) => {
       expect(["good", "needs-improvement", "poor"]).toContain(v.rating);
@@ -222,41 +270,37 @@ describe("useSecurityMonitor", () => {
       expect(v.target).toBeTruthy();
     });
   });
+});
 
-  it("device info provides expected fields", () => {
-    const { result } = renderHook(() => useSecurityMonitor());
-
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    const device = result.current.device!;
-    expect(device.cpuCores).toBeGreaterThan(0);
-    expect(typeof device.touchSupport).toBe("boolean");
-    expect(device.screen).toMatch(/\d+x\d+/);
-    expect(device.pixelRatio).toBeGreaterThan(0);
+describe("useSecurityMonitor（演示分支 · demoMode 开启）", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    useSettingsSSOT.setState((s) => ({ toggles: { ...s.toggles, demoMode: true } }));
   });
 
-  it("browser features have valid structure", () => {
+  it("demoMode 开启时使用演示数据生成器", async () => {
     const { result } = renderHook(() => useSecurityMonitor());
+    await runScan(result);
 
-    act(() => {
-      result.current.startScan();
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
+    expect(result.current.scanStatus).toBe("complete");
+    expect(result.current.csp!.enabled).toBe(true);
+    expect(result.current.csp!.directives.length).toBeGreaterThan(0);
+    expect(result.current.cookie!.score).toBeGreaterThan(0);
+    expect(result.current.memory!.listeners).toBeGreaterThan(0); // 演示值
+    expect(result.current.vitals.length).toBeGreaterThan(0);
+    expect(result.current.overallScore).toBeGreaterThan(0);
+  });
 
-    const browser = result.current.browser!;
-    expect(browser.name).toBeTruthy();
-    expect(browser.version).toBeTruthy();
-    browser.features.forEach((f) => {
-      expect(typeof f.supported).toBe("boolean");
-      expect(typeof f.polyfillNeeded).toBe("boolean");
-      expect(f.name).toBeTruthy();
+  it("演示分支关闭后恢复真实采集", async () => {
+    const { result } = renderHook(() => useSecurityMonitor());
+    act(() => {
+      useSettingsSSOT.setState((s) => ({ toggles: { ...s.toggles, demoMode: false } }));
     });
+    await runScan(result);
+
+    // 真实路径：listeners 不可测
+    expect(result.current.memory!.listeners).toBe(-1);
+    expect(result.current.cookie!.score).toBe(-1);
   });
 });

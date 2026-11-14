@@ -187,4 +187,10 @@ export async function downloadFullBackup(): Promise<void> {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  // 记录真实备份时间，供安全监控「数据管理」读取
+  try {
+    localStorage.setItem("yyc3_last_backup_at", String(Date.now()));
+  } catch {
+    // 存储不可用时忽略
+  }
 }
