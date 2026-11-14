@@ -100,6 +100,8 @@ export interface DiagnosticsOptions {
   liveNodes?: WsNodeSnapshot[];
   liveQPS?: number;
   liveLatency?: number;
+  /** 实时吞吐采样历史（真实模式下的趋势/外推数据源） */
+  throughputHistory?: { time: string; qps: number; latency: number; tokens: number }[];
 }
 
 /** 诊断历史条目 */
@@ -108,6 +110,8 @@ export interface DiagnosticHistoryEntry {
   time: number;
   patterns: number;
   actions: number;
+  /** 演示模式产物标记：真实化政策下演示历史仅 demoMode 开启时可见 */
+  demo?: boolean;
 }
 
 /** 诊断视图类型 */

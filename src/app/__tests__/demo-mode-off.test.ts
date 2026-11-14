@@ -12,7 +12,7 @@
  * 本文件在 beforeEach 中显式置为 false 验证生产语义。
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useSettingsSSOT } from "../store/slices/settings-ssot-slice";
 import { usePatrol } from "../hooks/usePatrol";
@@ -67,13 +67,58 @@ describe("usePatrol · 演示模式关闭", () => {
 });
 
 describe("useAIDiagnostics · 演示模式关闭", () => {
-  it("startDiagnosis 不产生模拟诊断会话", async () => {
-    const { result } = renderHook(() => useAIDiagnostics());
-    await act(async () => {
-      result.current.startDiagnosis();
-    });
-    expect(result.current.session).toBeNull();
-    expect(result.current.status).toBe("idle");
+  it("startDiagnosis 执行真实规则分析（无实时数据时如实给出无结论会话）", async () => {
+    // 2026-11-14 起：demoMode 关闭 = 真实规则分析（阈值越限+真实采样趋势），不再拒绝执行
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useAIDiagnostics());
+      act(() => {
+        result.current.startDiagnosis();
+      });
+      expect(result.current.status).toBe("analyzing");
+      await act(async () => {
+        vi.advanceTimersByTime(700);
+      });
+      expect(result.current.status).toBe("complete");
+      const s = result.current.session!;
+      expect(s).not.toBeNull();
+      // 无节点数据且采样历史不足：全部为空 + 摘要如实说明
+      expect(s.anomalies).toEqual([]);
+      expect(s.patterns).toEqual([]);
+      expect(s.actions).toEqual([]);
+      expect(s.forecasts).toEqual([]);
+      expect(s.summary).toContain("未产生诊断结论");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("startDiagnosis 基于真实越限节点产出异常与处置建议（不模拟执行）", async () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() =>
+        useAIDiagnostics({
+          liveNodes: [{ id: "GPU-REAL-01", gpu: 95, mem: 60, temp: 65, status: "active" }],
+        })
+      );
+      act(() => {
+        result.current.startDiagnosis();
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(700);
+      });
+      const s = result.current.session!;
+      // 异常来自真实值：actualValue 恰为节点真实 GPU 95
+      const gpuAnomaly = s.anomalies.find((a) => a.nodeId === "GPU-REAL-01" && a.metric === "GPU 利用率");
+      expect(gpuAnomaly).toBeDefined();
+      expect(gpuAnomaly!.actualValue).toBe(95);
+      // 处置建议由真实异常驱动，且不模拟执行
+      expect(s.actions.length).toBeGreaterThan(0);
+      expect(s.actions.every((a) => a.autoExecutable === false)).toBe(true);
+      expect(s.summary).toContain("规则分析");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("诊断历史为空（不展示模拟种子）", () => {

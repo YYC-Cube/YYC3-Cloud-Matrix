@@ -347,6 +347,7 @@ export function AIDiagnostics() {
     liveNodes: wsData.nodes,
     liveQPS: wsData.liveQPS,
     liveLatency: wsData.liveLatency,
+    throughputHistory: wsData.throughputHistory,
   });
 
   const views: { key: typeof activeView; labelKey: string; icon: React.ElementType }[] = [
